@@ -1,12 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { demoHistory, demoProfile } from '@/data/demoSeed';
+import { demoHistory, demoProfile, withDemoPersonas } from '@/data/demoSeed';
 import { localRepository } from '@/data/localRepository';
 import type { AccountMode, Repository } from '@/data/repository';
 import { supabaseRepository } from '@/data/supabaseRepository';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
-import type { ParentNote, PlayResponse, PlaySession, Profile } from '@/types';
+import { uuid } from '@/lib/util';
+import type { ParentNote, Person, PlayResponse, PlaySession, Profile } from '@/types';
 
 const MODE_KEY = 'mn:mode';
 const HISTORY_DAYS = 60;
@@ -29,6 +30,11 @@ interface AppState {
   signOut(): Promise<void>;
   saveProfile(p: Profile): Promise<void>;
   recordSession(session: PlaySession, responses: PlayResponse[], sticker: string): Promise<void>;
+  /** 공방에서 만든/고친 사람을 저장하고, 아이가 고른 이미지 응답을 기록한다 */
+  savePerson(person: Person, responses: PlayResponse[]): Promise<void>;
+  removePerson(id: string): Promise<void>;
+  /** 프로필 저장 직후 온보딩 중 모아둔 응답을 한꺼번에 기록 */
+  saveResponses(responses: PlayResponse[]): Promise<void>;
   addNote(note: ParentNote): Promise<void>;
   loadDemoData(): Promise<void>;
   resetAll(): Promise<void>;
@@ -169,6 +175,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setProfile(next);
           }
         }),
+      savePerson: (person, rs) =>
+        run(async () => {
+          const r = need();
+          if (!profile) throw new Error('프로필이 없어요');
+          const exists = profile.people.some((p) => p.id === person.id);
+          const people = exists ? profile.people.map((p) => (p.id === person.id ? person : p)) : [...profile.people, person];
+          const next: Profile = { ...profile, people, stars: profile.stars + (rs.length ? 3 : 0) };
+          await r.saveProfile(next);
+          setProfile(next);
+          if (rs.length) {
+            const now = new Date().toISOString();
+            await r.saveSession({ id: rs[0].sessionId, startedAt: now, finishedAt: now }, rs);
+            setResponses((prev) => [...prev, ...rs]);
+          }
+        }),
+      removePerson: (id) =>
+        run(async () => {
+          if (!profile) return;
+          const next: Profile = { ...profile, people: profile.people.filter((p) => p.id !== id) };
+          await need().saveProfile(next);
+          setProfile(next);
+        }),
+      saveResponses: (rs) =>
+        run(async () => {
+          if (!rs.length) return;
+          const now = new Date().toISOString();
+          const sessionId = uuid();
+          const withSession = rs.map((x) => ({ ...x, sessionId }));
+          await need().saveSession({ id: sessionId, startedAt: now, finishedAt: now }, withSession);
+          setResponses((prev) => [...prev, ...withSession]);
+        }),
       addNote: (n) =>
         run(async () => {
           await need().addNote(n);
@@ -177,9 +214,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loadDemoData: () =>
         run(async () => {
           const r = need();
-          const p = profile ?? demoProfile();
-          const base = profile ? p : { ...p };
-          if (!profile) await r.saveProfile(base);
+          const base = withDemoPersonas(profile ?? demoProfile());
+          await r.saveProfile(base);
           const { sessions, responses: rs } = demoHistory(base);
           for (const s of sessions) {
             await r.saveSession(

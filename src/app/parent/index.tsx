@@ -2,10 +2,10 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Avatar } from '@/components/Avatar';
 import { DayStrip, TrendBadge, WeatherBar } from '@/components/report/charts';
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
 import { SignalCard } from '@/components/report/SignalCard';
+import { PersonCard as MiniCard } from '@/components/studio/PersonCard';
 import { WeatherIcon } from '@/components/WeatherIcon';
 import { TOPICS } from '@/games/content';
 import { buildReport, describeResponse, weatherLabel, type TargetSummary } from '@/report/analyze';
@@ -142,7 +142,7 @@ function PersonCard({ s, person, compact }: { s: TargetSummary; person: Person; 
     <Pressable onPress={() => router.push({ pathname: '/parent/person/[id]', params: { id: s.targetId } })}>
       <Panel>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Avatar avatar={person.avatar} size={compact ? 52 : 64} expression="calm" />
+          <MiniCard person={person} size={compact ? 52 : 64} expression="calm" showName={false} showTraits={false} />
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={styles.personName}>{s.name}</Text>
             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>

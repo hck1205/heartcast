@@ -48,12 +48,14 @@ export const shadow = {
 };
 
 export const palettes = {
-  hairColors: ['#3B2A20', '#6B4226', '#A0652D', '#E0B15C', '#1F1F1F', '#C0504D', '#8A8FA3'],
-  shirts: ['#FF8A5B', '#5CCFB1', '#4FB3FF', '#B79CFF', '#FF9EC4', '#FFD84D', '#7BD389', '#2E3A59'],
+  hairColors: ['#1F1F1F', '#3B2A20', '#6B4226', '#A0652D', '#E0B15C', '#C0504D', '#8A8FA3', '#F4F1EA', '#5B8DEF', '#FF8FB8'],
+  shirts: ['#FF8A5B', '#FF5C7A', '#FFD84D', '#7BD389', '#5CCFB1', '#4FB3FF', '#B79CFF', '#FF9EC4', '#A0714F', '#2E3A59', '#F4F1EA'],
   skins: {
+    fair: '#FFEDE1',
     light: '#FFE3CF',
     peach: '#F9CBA7',
     tan: '#E0A77A',
+    olive: '#C9A06E',
     brown: '#B67A4E',
     deep: '#7A4B2E',
   },

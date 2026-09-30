@@ -29,7 +29,7 @@ export const supabaseRepository: Repository = {
     ) as any[];
     return {
       child: { id: child.id, name: child.name, avatar: child.avatar, className: child.class_name ?? '' },
-      people: people.map((p): Person => ({ id: p.id, kind: p.kind, name: p.name, avatar: p.avatar })),
+      people: people.map((p): Person => ({ id: p.id, kind: p.kind, name: p.name, avatar: p.avatar, persona: p.persona ?? undefined })),
       pinHash: family.pin_hash,
       stars: family.stars ?? 0,
       stickers: family.stickers ?? [],
@@ -68,6 +68,7 @@ export const supabaseRepository: Repository = {
             kind: x.kind,
             name: x.name,
             avatar: x.avatar,
+            persona: x.persona ?? null,
             sort_order: i,
           })),
         ),

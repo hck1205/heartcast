@@ -37,13 +37,13 @@ function Art({ kind }: { kind: 'kid' | 'report' | 'talk' }) {
           <Floating>
             <WeatherIcon code="sunny" size={70} />
           </Floating>
-          <Avatar avatar={{ skin: 'peach', hair: 'long', hairColor: '#6B4226', shirt: '#FF9EC4', accessory: 'flower' }} expression="happy" size={110} />
+          <Avatar avatar={{ skin: 'peach', hair: 'long', hairColor: '#6B4226', shirt: '#FF9EC4', headwear: 'flower', eyes: 'lashes', top: 'apron' }} expression="happy" size={110} />
         </View>
         <View style={{ alignItems: 'center' }}>
           <Floating duration={2200}>
             <WeatherIcon code="partly" size={70} />
           </Floating>
-          <Avatar avatar={{ skin: 'tan', hair: 'spiky', hairColor: '#3B2A20', shirt: '#7BD389', accessory: 'cap' }} expression="calm" size={110} />
+          <Avatar avatar={{ skin: 'tan', hair: 'spiky', hairColor: '#3B2A20', shirt: '#7BD389', headwear: 'cap', top: 'hoodie', pattern: 'stripe' }} expression="calm" size={110} />
         </View>
       </View>
     );

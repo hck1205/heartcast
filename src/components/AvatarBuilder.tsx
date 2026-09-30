@@ -1,40 +1,40 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { BROWS, CHEEKS, EYES, FACE_SHAPES, GLASSES, HAIRS, HEADWEAR, normalizeAvatar, PATTERNS, randomAvatar, SKINS, TOPS } from '@/lib/avatar';
 import { tap } from '@/lib/feedback';
-import { ACCESSORIES, HAIRS, SKINS, randomAvatar } from '@/lib/util';
 import { colors, fonts, palettes, radius } from '@/theme';
-import type { AvatarConfig, Expression } from '@/types';
+import type { AvatarConfig, Expression, FullAvatar } from '@/types';
 import { Avatar } from './Avatar';
 import { Floating } from './Mascot';
-import { Chip } from './ui';
+import { OptionTile, Swatch } from './studio/pickers';
 
-type Tab = 'skin' | 'hair' | 'hairColor' | 'shirt' | 'accessory';
+type Tab = 'face' | 'eyes' | 'hair' | 'clothes' | 'deco';
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
+  { key: 'face', label: '얼굴', icon: '🙂' },
+  { key: 'eyes', label: '눈', icon: '👀' },
   { key: 'hair', label: '머리', icon: '💇' },
-  { key: 'hairColor', label: '머리색', icon: '🎨' },
-  { key: 'skin', label: '피부', icon: '🖐️' },
-  { key: 'shirt', label: '옷', icon: '👕' },
-  { key: 'accessory', label: '꾸미기', icon: '🎀' },
+  { key: 'clothes', label: '옷', icon: '👕' },
+  { key: 'deco', label: '꾸미기', icon: '🎀' },
 ];
-
-const ACCESSORY_LABEL: Record<string, string> = {
-  none: '없음',
-  glasses: '안경',
-  ribbon: '리본',
-  cap: '모자',
-  flower: '꽃핀',
-  crown: '왕관',
-};
 
 const EXPRESSIONS: Expression[] = ['happy', 'calm', 'happy', 'neutral'];
 
-/** 옷입히기 놀이처럼 아바타를 꾸미는 빌더 */
+function Row({ children }: { children: React.ReactNode }) {
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.options}>
+      {children}
+    </ScrollView>
+  );
+}
+
+/** 아이 자신의 아바타 꾸미기 (선생님·친구는 공방 Studio 를 쓴다) */
 export function AvatarBuilder({ value, onChange, previewSize = 150 }: { value: AvatarConfig; onChange: (v: AvatarConfig) => void; previewSize?: number }) {
   const [tab, setTab] = useState<Tab>('hair');
   const [exprIdx, setExprIdx] = useState(0);
-  const set = <K extends keyof AvatarConfig>(k: K, v: AvatarConfig[K]) => onChange({ ...value, [k]: v });
+  const a = normalizeAvatar(value);
+  const set = <K extends keyof FullAvatar>(k: K, v: FullAvatar[K]) => onChange({ ...a, [k]: v });
 
   return (
     <View style={{ gap: 12 }}>
@@ -47,7 +47,7 @@ export function AvatarBuilder({ value, onChange, previewSize = 150 }: { value: A
           }}
         >
           <Floating distance={5}>
-            <Avatar avatar={value} size={previewSize} expression={EXPRESSIONS[exprIdx]} bg="#FFFFFFAA" />
+            <Avatar avatar={a} size={previewSize} expression={EXPRESSIONS[exprIdx]} bg="#FFFFFFAA" />
           </Floating>
         </Pressable>
         <Pressable
@@ -82,40 +82,111 @@ export function AvatarBuilder({ value, onChange, previewSize = 150 }: { value: A
         ))}
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.options}>
-        {tab === 'hair' &&
-          HAIRS.map((h) => (
-            <Chip key={h} label={h} selected={value.hair === h} onPress={() => set('hair', h)}>
-              <Avatar avatar={{ ...value, hair: h, accessory: 'none' }} size={62} />
-            </Chip>
-          ))}
-        {tab === 'hairColor' &&
-          palettes.hairColors.map((c) => (
-            <Chip key={c} label={`머리색 ${c}`} selected={value.hairColor === c} onPress={() => set('hairColor', c)}>
-              <View style={[styles.swatch, { backgroundColor: c }]} />
-            </Chip>
-          ))}
-        {tab === 'skin' &&
-          SKINS.map((s) => (
-            <Chip key={s} label={`피부 ${s}`} selected={value.skin === s} onPress={() => set('skin', s)}>
-              <View style={[styles.swatch, { backgroundColor: palettes.skins[s] }]} />
-            </Chip>
-          ))}
-        {tab === 'shirt' &&
-          palettes.shirts.map((c) => (
-            <Chip key={c} label={`옷 색 ${c}`} selected={value.shirt === c} onPress={() => set('shirt', c)}>
-              <Text style={{ fontSize: 34 }}>👕</Text>
-              <View style={[styles.shirtBar, { backgroundColor: c }]} />
-            </Chip>
-          ))}
-        {tab === 'accessory' &&
-          ACCESSORIES.map((a) => (
-            <Chip key={a} label={ACCESSORY_LABEL[a]} selected={value.accessory === a} onPress={() => set('accessory', a)}>
-              <Avatar avatar={{ ...value, accessory: a }} size={56} />
-              <Text style={styles.accLabel}>{ACCESSORY_LABEL[a]}</Text>
-            </Chip>
-          ))}
-      </ScrollView>
+      {tab === 'face' && (
+        <>
+          <Row>
+            {FACE_SHAPES.map((o) => (
+              <OptionTile key={o.id} label={o.label} selected={a.faceShape === o.id} onPress={() => set('faceShape', o.id)} width={70}>
+                <Avatar avatar={{ ...a, faceShape: o.id }} size={54} />
+              </OptionTile>
+            ))}
+          </Row>
+          <Row>
+            {SKINS.map((s) => (
+              <OptionTile key={s} selected={a.skin === s} onPress={() => set('skin', s)} width={58}>
+                <Swatch color={palettes.skins[s]} />
+              </OptionTile>
+            ))}
+          </Row>
+        </>
+      )}
+      {tab === 'eyes' && (
+        <>
+          <Row>
+            {EYES.map((o) => (
+              <OptionTile key={o.id} label={o.label} selected={a.eyes === o.id} onPress={() => set('eyes', o.id)} width={70}>
+                <Avatar avatar={{ ...a, eyes: o.id }} size={54} />
+              </OptionTile>
+            ))}
+          </Row>
+          <Row>
+            {BROWS.map((o) => (
+              <OptionTile key={o.id} label={`눈썹 ${o.label}`} selected={a.brows === o.id} onPress={() => set('brows', o.id)} width={76}>
+                <Avatar avatar={{ ...a, brows: o.id }} size={50} />
+              </OptionTile>
+            ))}
+            {CHEEKS.map((o) => (
+              <OptionTile key={o.id} label={`볼 ${o.label}`} selected={a.cheeks === o.id} onPress={() => set('cheeks', o.id)} width={76}>
+                <Avatar avatar={{ ...a, cheeks: o.id }} size={50} />
+              </OptionTile>
+            ))}
+          </Row>
+        </>
+      )}
+      {tab === 'hair' && (
+        <>
+          <Row>
+            {HAIRS.map((o) => (
+              <OptionTile key={o.id} label={o.label} selected={a.hair === o.id} onPress={() => set('hair', o.id)} width={72}>
+                <Avatar avatar={{ ...a, hair: o.id, headwear: 'none' }} size={54} />
+              </OptionTile>
+            ))}
+          </Row>
+          <Row>
+            {palettes.hairColors.map((c) => (
+              <OptionTile key={c} selected={a.hairColor === c} onPress={() => set('hairColor', c)} width={58}>
+                <Swatch color={c} />
+              </OptionTile>
+            ))}
+          </Row>
+        </>
+      )}
+      {tab === 'clothes' && (
+        <>
+          <Row>
+            {TOPS.map((o) => (
+              <OptionTile key={o.id} label={o.label} selected={a.top === o.id} onPress={() => set('top', o.id)} width={70}>
+                <Avatar avatar={{ ...a, top: o.id }} size={54} />
+              </OptionTile>
+            ))}
+            {PATTERNS.map((o) => (
+              <OptionTile key={o.id} label={o.label} selected={a.pattern === o.id} onPress={() => set('pattern', o.id)} width={70}>
+                <Avatar avatar={{ ...a, pattern: o.id }} size={54} />
+              </OptionTile>
+            ))}
+          </Row>
+          <Row>
+            {palettes.shirts.map((c) => (
+              <OptionTile key={c} selected={a.shirt === c} onPress={() => set('shirt', c)} width={58}>
+                <Swatch color={c} />
+              </OptionTile>
+            ))}
+          </Row>
+        </>
+      )}
+      {tab === 'deco' && (
+        <>
+          <Row>
+            {HEADWEAR.map((o) => (
+              <OptionTile key={o.id} label={o.label} selected={a.headwear === o.id} onPress={() => set('headwear', o.id)} width={70}>
+                <Avatar avatar={{ ...a, headwear: o.id }} size={54} />
+              </OptionTile>
+            ))}
+          </Row>
+          <Row>
+            {GLASSES.map((o) => (
+              <OptionTile key={o.id} label={`안경 ${o.label}`} selected={a.glasses === o.id} onPress={() => set('glasses', o.id)} width={76}>
+                <Avatar avatar={{ ...a, glasses: o.id }} size={50} />
+              </OptionTile>
+            ))}
+            {[false, true].map((on) => (
+              <OptionTile key={String(on)} label={on ? '귀걸이' : '귀걸이 없음'} selected={a.earrings === on} onPress={() => set('earrings', on)} width={80}>
+                <Avatar avatar={{ ...a, earrings: on }} size={50} />
+              </OptionTile>
+            ))}
+          </Row>
+        </>
+      )}
     </View>
   );
 }
@@ -141,8 +212,5 @@ const styles = StyleSheet.create({
   },
   tabOn: { backgroundColor: colors.paper },
   tabText: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft, marginTop: 2 },
-  options: { gap: 10, paddingVertical: 4, paddingHorizontal: 2 },
-  swatch: { width: 52, height: 52, borderRadius: 26, borderWidth: 3, borderColor: '#fff' },
-  shirtBar: { width: 40, height: 8, borderRadius: 4, marginTop: 2 },
-  accLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.inkSoft },
+  options: { gap: 10, paddingVertical: 6, paddingHorizontal: 4 },
 });

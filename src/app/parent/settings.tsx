@@ -25,14 +25,16 @@ function confirm(message: string, onYes: () => void) {
 
 export default function Settings() {
   const app = useApp();
-  const [draft, setDraft] = useState<Profile | null>(app.profile);
+  // 아이 정보만 초안으로 편집한다. 선생님·친구는 공방에서 바로 저장된다.
+  const [draft, setDraft] = useState<Profile['child'] | null>(app.profile?.child ?? null);
   const [saved, setSaved] = useState(false);
   const [changingPin, setChangingPin] = useState(false);
-  if (!draft) return null;
+  if (!draft || !app.profile) return null;
+  const profile = app.profile;
 
-  const dirty = JSON.stringify(draft) !== JSON.stringify(app.profile);
+  const dirty = JSON.stringify(draft) !== JSON.stringify(profile.child);
   const save = async () => {
-    await app.saveProfile(draft);
+    await app.saveProfile({ ...profile, child: draft });
     setSaved(true);
     setTimeout(() => setSaved(false), 1500);
   };
@@ -42,38 +44,35 @@ export default function Settings() {
       <Section title="우리 아이">
         <Panel>
           <TextInput
-            value={draft.child.name}
-            onChangeText={(name) => setDraft({ ...draft, child: { ...draft.child, name } })}
+            value={draft.name}
+            onChangeText={(name) => setDraft({ ...draft, name })}
             style={styles.input}
             placeholder="아이 이름"
           />
           <TextInput
-            value={draft.child.className}
-            onChangeText={(className) => setDraft({ ...draft, child: { ...draft.child, className } })}
+            value={draft.className}
+            onChangeText={(className) => setDraft({ ...draft, className })}
             style={styles.input}
             placeholder="반 이름"
           />
-          <AvatarBuilder value={draft.child.avatar} onChange={(avatar) => setDraft({ ...draft, child: { ...draft.child, avatar } })} previewSize={110} />
+          <AvatarBuilder value={draft.avatar} onChange={(avatar) => setDraft({ ...draft, avatar })} previewSize={110} />
+          <BigButton small label={saved ? '저장했어요!' : '아이 정보 저장'} icon={saved ? '✅' : '💾'} disabled={!dirty && !saved} onPress={save} />
         </Panel>
       </Section>
 
-      <Section title="선생님" sub="선생님이 바뀌면 새로 추가해 주세요. 지운 선생님의 지난 기록은 리포트에서 빠져요.">
-        <PeopleEditor kind="teacher" people={draft.people} onChange={(people) => setDraft({ ...draft, people })} />
+      <Section title="선생님" sub="카드를 누르면 공방에서 다시 꾸미거나 🗑️ 로 지울 수 있어요. 선생님이 바뀌면 새로 만들어 주세요.">
+        <PeopleEditor kind="teacher" people={profile.people} studioPath="/parent/studio" />
       </Section>
       <Section title="친구">
-        <PeopleEditor kind="friend" people={draft.people} onChange={(people) => setDraft({ ...draft, people })} />
+        <PeopleEditor kind="friend" people={profile.people} studioPath="/parent/studio" />
       </Section>
-
-      <BigButton label={saved ? '저장했어요!' : '변경사항 저장'} icon={saved ? '✅' : '💾'} disabled={!dirty && !saved} onPress={save} />
 
       <Section title="부모 PIN">
         <Panel style={{ alignItems: 'center' }}>
           {changingPin ? (
             <PinPad
               onComplete={async (pin) => {
-                const next = { ...draft, pinHash: hashPin(pin) };
-                setDraft(next);
-                await app.saveProfile(next);
+                await app.saveProfile({ ...profile, pinHash: hashPin(pin) });
                 setChangingPin(false);
               }}
             />

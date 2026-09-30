@@ -1,26 +1,59 @@
 import { FACES, SCENES, WEATHERS } from '@/games/content';
+import { FACET_CHOICES } from '@/games/persona';
 import { planSession, seededRandom } from '@/games/planner';
+import { portraitDiff } from '@/games/portrait';
 import { hashPin, uuid } from '@/lib/util';
-import type { Person, PlayResponse, PlaySession, Profile } from '@/types';
+import type { Persona, Person, PlayResponse, PlaySession, Profile } from '@/types';
 
 /**
  * "먼저 둘러보기"용 예시 데이터: 2주치 놀이 기록.
  * 한 선생님(해님반 '미소')은 대체로 맑고, 다른 선생님('단비')은 최근 흐려지며
  * 무서운 장면 선택이 섞이도록 만들어 리포트의 신호 기능을 보여준다.
  */
+const DEMO_PERSONA: Record<'miso' | 'danbiBefore' | 'danbiNow', Persona> = {
+  miso: { color: 'sun', animal: 'rabbit', shape: 'heart', traits: ['kind', 'smiles', 'praises'] },
+  // 처음엔 강아지·하늘색·구름이었는데, 최근 다시 꾸밀 때 사자·빨강·번개로 바뀐 흐름
+  danbiBefore: { color: 'sky', animal: 'puppy', shape: 'cloud', traits: ['plays', 'fun'] },
+  danbiNow: { color: 'red', animal: 'lion', shape: 'bolt', traits: ['yells', 'busy'] },
+};
+
 export function demoProfile(): Profile {
   const people: Person[] = [
-    { id: uuid(), kind: 'teacher', name: '미소', avatar: { skin: 'peach', hair: 'long', hairColor: '#6B4226', shirt: '#FF9EC4', accessory: 'flower' } },
-    { id: uuid(), kind: 'teacher', name: '단비', avatar: { skin: 'light', hair: 'bob', hairColor: '#1F1F1F', shirt: '#4FB3FF', accessory: 'glasses' } },
-    { id: uuid(), kind: 'friend', name: '하준', avatar: { skin: 'tan', hair: 'spiky', hairColor: '#3B2A20', shirt: '#7BD389', accessory: 'cap' } },
-    { id: uuid(), kind: 'friend', name: '서아', avatar: { skin: 'light', hair: 'pigtails', hairColor: '#A0652D', shirt: '#FFD84D', accessory: 'ribbon' } },
+    {
+      id: uuid(),
+      kind: 'teacher',
+      name: '미소',
+      avatar: { skin: 'peach', faceShape: 'oval', eyes: 'lashes', brows: 'arched', cheeks: 'blush', hair: 'ponytail', hairColor: '#6B4226', top: 'apron', pattern: 'none', shirt: '#FF9EC4', glasses: 'none', headwear: 'flower', earrings: true },
+      persona: DEMO_PERSONA.miso,
+    },
+    {
+      id: uuid(),
+      kind: 'teacher',
+      name: '단비',
+      avatar: { skin: 'light', faceShape: 'square', eyes: 'dot', brows: 'thick', cheeks: 'none', hair: 'bob', hairColor: '#1F1F1F', top: 'cardigan', pattern: 'none', shirt: '#4FB3FF', glasses: 'square', headwear: 'none', earrings: false },
+      persona: DEMO_PERSONA.danbiNow,
+    },
+    {
+      id: uuid(),
+      kind: 'friend',
+      name: '하준',
+      avatar: { skin: 'tan', faceShape: 'round', eyes: 'sparkle', hair: 'spiky', hairColor: '#3B2A20', top: 'hoodie', pattern: 'stripe', shirt: '#7BD389', headwear: 'cap' },
+      persona: { color: 'grass', animal: 'puppy', shape: 'star', traits: ['fun', 'plays'] },
+    },
+    {
+      id: uuid(),
+      kind: 'friend',
+      name: '서아',
+      avatar: { skin: 'fair', faceShape: 'heart', eyes: 'round', hair: 'pigtails', hairColor: '#A0652D', top: 'tshirt', pattern: 'dots', shirt: '#FFD84D', headwear: 'ribbon' },
+      persona: { color: 'pink', animal: 'rabbit', shape: 'heart', traits: ['kind', 'smiles'] },
+    },
   ];
   return {
     child: {
       id: uuid(),
       name: '콩이',
       className: '햇님반',
-      avatar: { skin: 'peach', hair: 'curly', hairColor: '#6B4226', shirt: '#FF8A5B', accessory: 'none' },
+      avatar: { skin: 'peach', faceShape: 'round', eyes: 'sparkle', hair: 'curly', hairColor: '#6B4226', top: 'tshirt', pattern: 'stars', shirt: '#FF8A5B' },
     },
     people,
     pinHash: hashPin('0000'),
@@ -35,6 +68,20 @@ export function demoHistory(profile: Profile, now = new Date()): { sessions: Pla
   const [miso, danbi] = profile.people;
   const sessions: PlaySession[] = [];
   const responses: PlayResponse[] = [];
+
+  // 선생님 공방 기록: 13일 전 처음 만들기, 3일 전 단비 선생님 다시 꾸미기
+  const studio = (daysAgo: number, person: Person | undefined, before: Persona | undefined, after: Persona) => {
+    if (!person) return;
+    const at = new Date(now);
+    at.setDate(at.getDate() - daysAgo);
+    at.setHours(17, 30, 0, 0);
+    const sessionId = uuid();
+    responses.push(...portraitDiff(person.id, before, after, sessionId, at));
+    sessions.push({ id: sessionId, startedAt: at.toISOString(), finishedAt: at.toISOString() });
+  };
+  studio(13, miso, undefined, DEMO_PERSONA.miso);
+  studio(13, danbi, undefined, DEMO_PERSONA.danbiBefore);
+  studio(3, danbi, DEMO_PERSONA.danbiBefore, DEMO_PERSONA.danbiNow);
 
   for (let daysAgo = 13; daysAgo >= 0; daysAgo--) {
     const d = new Date(now);
@@ -70,6 +117,14 @@ export function demoHistory(profile: Profile, now = new Date()): { sessions: Pla
         value = f.code;
         score = f.score;
         fear = f.fear;
+      } else if (step.game === 'portrait') {
+        const choices = FACET_CHOICES[step.facet ?? 'animal'];
+        const best = Math.min(...choices.map((c) => Math.abs(c.score - noisy)));
+        const opts = choices.filter((c) => Math.abs(c.score - noisy) === best);
+        const c = opts[Math.floor(rand() * opts.length)];
+        value = `${step.facet ?? 'animal'}:${c.id}`;
+        score = c.score;
+        fear = c.fear;
       } else {
         const scene = SCENES.find((s) => s.id === step.sceneId)!;
         const opts = scene.reactions.filter((r) => (noisy <= -1 ? r.score < 0 : r.score >= noisy - 1 && r.score > 0));
@@ -94,4 +149,14 @@ export function demoHistory(profile: Profile, now = new Date()): { sessions: Pla
     sessions.push({ id: sessionId, startedAt: d.toISOString(), finishedAt: new Date(d.getTime() + 200000).toISOString() });
   }
   return { sessions, responses };
+}
+
+/** 예시 기록을 기존 프로필에 넣을 때, 이미지가 없는 선생님에게 예시 이미지를 채운다 */
+export function withDemoPersonas(profile: Profile): Profile {
+  const fallback = [DEMO_PERSONA.miso, DEMO_PERSONA.danbiNow];
+  let t = 0;
+  return {
+    ...profile,
+    people: profile.people.map((p) => (p.kind === 'teacher' && !p.persona && t < 2 ? { ...p, persona: fallback[t++] } : p)),
+  };
 }

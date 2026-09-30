@@ -1,11 +1,14 @@
 import type { GameType, Person, PlayResponse, TargetType, TopicId } from '@/types';
 import { SCENES } from './content';
+import type { PersonaFacet } from './persona';
 
 export interface Step {
   game: GameType;
   targetType: TargetType;
   targetId: string;
   sceneId?: string;
+  /** portrait 문항: 어떤 이미지(동물·색·모양·성격)를 물을지 */
+  facet?: PersonaFacet;
 }
 
 /** 작은 시드 난수 (테스트에서 결정적으로 돌리기 위함) */
@@ -61,6 +64,14 @@ export function planSession(people: Person[], history: PlayResponse[], seed = Da
     const scene = pool[Math.floor(rand() * pool.length)];
     const storyTeacher = teachers[2] ?? teachers[0];
     steps.push({ game: 'story', targetType: 'person', targetId: storyTeacher, sceneId: scene.id });
+  }
+
+  // 오늘의 선생님 이미지: "오늘 ○○ 선생님은 어떤 동물 같아?" (동물→색→모양→성격 순으로 돌아가며)
+  if (teachers.length) {
+    const portraitHistory = history.filter((r) => r.game === 'portrait');
+    const who = leastAsked(teachers, portraitHistory, rand)[0];
+    const facets: PersonaFacet[] = ['animal', 'color', 'shape', 'trait'];
+    steps.push({ game: 'portrait', targetType: 'person', targetId: who, facet: facets[portraitHistory.length % facets.length] });
   }
 
   steps.push({ game: 'weather', targetType: 'topic', targetId: 'class' });

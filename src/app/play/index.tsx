@@ -78,11 +78,11 @@ export default function PlayHome() {
             <Text style={styles.tileText}>스티커북</Text>
             <Text style={styles.tileSub}>{profile.stickers.length}개 모았어요</Text>
           </Pressable>
-          <View style={[styles.tile, { backgroundColor: '#FFF6D6' }]}>
-            <Text style={{ fontSize: 34 }}>{done ? '✅' : '🗓️'}</Text>
-            <Text style={styles.tileText}>{done ? '오늘 완료!' : '오늘의 놀이'}</Text>
-            <Text style={styles.tileSub}>{done ? '내일 또 만나요' : '5분이면 끝나요'}</Text>
-          </View>
+          <Pressable onPress={() => router.push('/play/workshop')} style={[styles.tile, { backgroundColor: '#FFF1DA' }]}>
+            <Text style={{ fontSize: 34 }}>🎨</Text>
+            <Text style={styles.tileText}>선생님 공방</Text>
+            <Text style={styles.tileSub}>만들고 꾸미기</Text>
+          </Pressable>
         </View>
       </View>
     </SkyBackground>

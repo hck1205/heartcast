@@ -55,6 +55,20 @@ export function talkCardFor(signal: Signal): TalkCard {
         avoid: COMMON_AVOID,
         tip: '좋은 점과 싫은 점을 함께 물으면 아이가 부담 없이 이야기해요. 아이의 표현은 그날 기분에 따라 달라질 수 있으니 추이를 함께 봐 주세요.',
       };
+    case 'portrait-shift':
+      return {
+        id: signal.id,
+        title: '달라진 선생님 그림, 궁금해하기',
+        when: signal.title,
+        openQuestions: [
+          `"선생님 공방에서 ${josa(who, '을/를')} 새로 꾸몄더라! 이번엔 왜 이 동물이야?"`,
+          `"${josa(who, '이/가')} 이 색깔 같다고 했지? 어떤 점이 그런 것 같아?"`,
+          '"예전 그림이랑 지금 그림이랑 뭐가 달라진 것 같아?"',
+        ],
+        empathy: ['"아~ 그렇게 느꼈구나. 말해줘서 고마워."', ...COMMON_EMPATHY],
+        avoid: ['"선생님이 사자처럼 무섭게 했어?"처럼 아이의 그림을 어른이 먼저 해석하기', ...COMMON_AVOID.slice(1)],
+        tip: '아이는 말보다 그림·동물·색으로 먼저 마음을 보여줘요. 해석은 아이에게 맡기고, 아이 말 그대로를 대화 기록에 남겨 두면 흐름을 보는 데 도움이 돼요.',
+      };
     case 'self-low':
       return {
         id: signal.id,

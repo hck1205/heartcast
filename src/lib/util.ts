@@ -1,6 +1,3 @@
-import type { Accessory, AvatarConfig, HairStyle, SkinTone } from '@/types';
-import { palettes } from '@/theme';
-
 /** RFC4122 v4 형식 UUID (Supabase uuid 컬럼용) */
 export function uuid(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -21,20 +18,4 @@ export function hashPin(pin: string): string {
     h = Math.imul(h, 0x01000193) >>> 0;
   }
   return h.toString(16).padStart(8, '0');
-}
-
-export const SKINS = Object.keys(palettes.skins) as SkinTone[];
-export const HAIRS: HairStyle[] = ['short', 'bob', 'long', 'bun', 'curly', 'pigtails', 'spiky'];
-export const ACCESSORIES: Accessory[] = ['none', 'glasses', 'ribbon', 'cap', 'flower', 'crown'];
-
-const pick = <T,>(xs: readonly T[]) => xs[Math.floor(Math.random() * xs.length)];
-
-export function randomAvatar(): AvatarConfig {
-  return {
-    skin: pick(SKINS),
-    hair: pick(HAIRS),
-    hairColor: pick(palettes.hairColors),
-    shirt: pick(palettes.shirts),
-    accessory: pick(ACCESSORIES),
-  };
 }

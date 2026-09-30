@@ -42,6 +42,7 @@ export default function PinStep() {
         stickers: app.profile?.stickers ?? [],
         onboardedAt: new Date().toISOString(),
       });
+      await app.saveResponses(draft.pendingResponses);
       router.replace('/onboarding/done');
     } catch (e: any) {
       setFirst(null);

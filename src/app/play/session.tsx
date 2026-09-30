@@ -10,11 +10,15 @@ import { WeatherIcon } from '@/components/WeatherIcon';
 import { FACES, SCENES, STICKERS, TOPICS, WEATHERS, type Reaction } from '@/games/content';
 import { planSession, type Step } from '@/games/planner';
 import { celebrate, say, stopSpeaking, tap } from '@/lib/feedback';
+import { PersonaPicker } from '@/components/studio/pickers';
+import { PersonCard } from '@/components/studio/PersonCard';
+import { EMPTY_PERSONA, facetQuestion, findChoice } from '@/games/persona';
+import { withoutHeadwear } from '@/lib/avatar';
 import { josa } from '@/lib/josa';
 import { uuid } from '@/lib/util';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius, shadow } from '@/theme';
-import type { PlayResponse, Profile, TopicId } from '@/types';
+import type { Person, PlayResponse, Profile, TopicId } from '@/types';
 
 const CHEERS = ['고마워!', '알려줘서 고마워~', '좋아, 다음 날씨로 슝!', '우와, 그랬구나!', '멋지게 골랐어!'];
 
@@ -33,6 +37,11 @@ function promptFor(step: Step, profile: Profile): string {
   if (step.game === 'face') {
     if (t.kind === 'topic') return '오늘 내 얼굴은 어땠어?';
     return `오늘 ${josa(displayName(t.person), '은/는')} 어떤 얼굴이었어?`;
+  }
+  if (step.game === 'portrait' && t.kind === 'person') {
+    const who = displayName(t.person);
+    if (step.facet === 'trait') return `오늘 ${who}에게 어울리는 스티커 하나를 골라줘!`;
+    return `오늘 ${facetQuestion(step.facet ?? 'animal', t.person.name, t.person.kind)}`;
   }
   const scene = SCENES.find((s) => s.id === step.sceneId)!;
   return scene.prompt.replace('{name}', t.kind === 'person' ? t.person.name : '');
@@ -116,7 +125,9 @@ export default function Session() {
       ? { top: SCENES.find((s) => s.id === step.sceneId)!.bg, bottom: '#FFFFFF' }
       : step.game === 'face'
         ? { top: '#FFD9A8', bottom: '#FFF6EA' }
-        : { top: colors.skyTop, bottom: colors.skyBottom };
+        : step.game === 'portrait'
+          ? { top: '#E4D9FF', bottom: '#FAF7FF' }
+          : { top: colors.skyTop, bottom: colors.skyBottom };
 
   return (
     <SkyBackground top={bg.top} bottom={bg.bottom} hills={step.game === 'weather'}>
@@ -143,8 +154,9 @@ export default function Session() {
         {step.game === 'weather' && <WeatherGame step={step} profile={profile} picked={picked} onPick={choose} />}
         {step.game === 'face' && <FaceGame step={step} profile={profile} picked={picked} onPick={choose} />}
         {step.game === 'story' && <StoryGame step={step} profile={profile} picked={picked} onPick={choose} />}
+        {step.game === 'portrait' && <PortraitGame step={step} profile={profile} picked={picked} onPick={choose} />}
 
-        {!picked && (
+        {!picked && step.game !== 'portrait' && (
           <Pressable onPress={() => choose({ value: 'unknown', score: null, fear: false })} style={styles.unknown}>
             <Text style={styles.unknownText}>🤔 잘 모르겠어</Text>
           </Pressable>
@@ -213,7 +225,7 @@ function FaceGame({ step, profile, picked, onPick }: GameProps) {
             style={[styles.faceBtn, picked?.value === f.code && styles.pickedBtn, picked && picked.value !== f.code && styles.dim]}
           >
             <View style={styles.faceCrop}>
-              <Avatar avatar={{ ...avatar, accessory: 'none' }} expression={f.code} size={96} />
+              <Avatar avatar={withoutHeadwear(avatar)} expression={f.code} size={96} />
             </View>
             <Text style={styles.stickerLabel}>{f.label}</Text>
           </Pressable>
@@ -230,6 +242,40 @@ function shuffleOnce<T>(xs: T[]): T[] {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+/** 오늘의 선생님 이미지: 선생님 카드 옆에 동물·색·모양·성격 중 하나를 고른다 */
+function PortraitGame({ step, profile, picked, onPick }: GameProps) {
+  const t = resolveTarget(profile, step.targetType, step.targetId);
+  const facet = step.facet ?? 'animal';
+  if (!t || t.kind !== 'person') return null;
+  const chosenId = picked?.value.split(':')[1] ?? null;
+  // 예전에 고른 이미지는 숨기고(답을 따라 하지 않도록) 오늘 고른 답만 카드에 보여준다
+  const preview: Person = {
+    ...t.person,
+    persona: {
+      ...EMPTY_PERSONA,
+      ...(chosenId && chosenId !== 'unknown' && facet !== 'trait' ? { [facet]: chosenId } : {}),
+      traits: chosenId && chosenId !== 'unknown' && facet === 'trait' ? [chosenId] : [],
+    },
+  };
+  return (
+    <View style={{ gap: 14, alignItems: 'center' }}>
+      <Floating distance={5}>
+        <PersonCard person={preview} size={150} showTraits />
+      </Floating>
+      <PersonaPicker
+        facet={facet}
+        value={chosenId}
+        dimOthers
+        onChange={(v) => {
+          if (picked || typeof v !== 'string') return;
+          const c = findChoice(facet, v);
+          onPick({ value: `${facet}:${c ? c.id : 'unknown'}`, score: c ? c.score : null, fear: c ? c.fear : false });
+        }}
+      />
+    </View>
+  );
 }
 
 function StoryGame({ step, profile, picked, onPick }: GameProps) {
@@ -258,7 +304,7 @@ function StoryGame({ step, profile, picked, onPick }: GameProps) {
             ]}
           >
             <View style={styles.faceCrop}>
-              <Avatar avatar={{ ...t.person.avatar, accessory: 'none' }} expression={r.face} size={84} />
+              <Avatar avatar={withoutHeadwear(t.person.avatar)} expression={r.face} size={84} />
             </View>
             <Text style={{ fontSize: 26 }}>{r.emoji}</Text>
             <Text style={styles.reactionLabel}>{r.label}</Text>

@@ -1,4 +1,6 @@
 import { FACES, SCENES, TOPICS, WEATHERS, faceByCode, sceneById, weatherByCode } from '@/games/content';
+import { animalOf, callName, choiceEmoji, FACET_LABEL, findChoice, type PersonaFacet } from '@/games/persona';
+import { parsePortraitValue } from '@/games/portrait';
 import { josa } from '@/lib/josa';
 import type { Person, PlayResponse, TargetType, WeatherCode } from '@/types';
 
@@ -27,10 +29,20 @@ export interface TargetSummary {
   distribution: Record<WeatherCode, number>;
   daily: DailyPoint[];
   lastAt: string | null;
+  /** 아이가 그린 이미지(동물·색·모양·성격)의 변화 — 사람일 때만 */
+  portrait: PortraitShift | null;
+}
+
+export interface PortraitShift {
+  prevAvg: number | null;
+  recentAvg: number | null;
+  /** 이전/최근에 고른 동물 (예: 🐰 → 🦁) */
+  prevAnimal: string | null;
+  recentAnimal: string | null;
 }
 
 export type SignalLevel = 'talk' | 'watch' | 'good';
-export type SignalKind = 'fear' | 'streak' | 'low' | 'drop' | 'bright' | 'self-low';
+export type SignalKind = 'fear' | 'streak' | 'low' | 'drop' | 'bright' | 'self-low' | 'portrait-shift';
 
 export interface Signal {
   id: string;
@@ -163,7 +175,27 @@ function summarize(
     distribution,
     daily,
     lastAt: mine.length ? mine[mine.length - 1].createdAt : null,
+    portrait: targetType === 'person' ? portraitShift(mine, start, end) : null,
   };
+}
+
+function portraitShift(mine: PlayResponse[], start: number, end: number): PortraitShift | null {
+  const portraits = mine.filter((r) => r.game === 'portrait');
+  if (!portraits.length) return null;
+  const before = portraits.filter((r) => Date.parse(r.createdAt) < start);
+  const recent = portraits.filter((r) => {
+    const t = Date.parse(r.createdAt);
+    return t >= start && t <= end;
+  });
+  const scoreOf = (rs: PlayResponse[]) => mean(rs.map((r) => r.score).filter((x): x is number => x !== null));
+  const lastAnimal = (rs: PlayResponse[]) => {
+    for (let i = rs.length - 1; i >= 0; i--) {
+      const p = parsePortraitValue(rs[i].value);
+      if (p?.facet === 'animal' && p.id !== 'unknown') return p.id;
+    }
+    return null;
+  };
+  return { prevAvg: scoreOf(before), recentAvg: scoreOf(recent), prevAnimal: lastAnimal(before), recentAnimal: lastAnimal(recent) };
 }
 
 function signalsFor(s: TargetSummary): Signal[] {
@@ -178,9 +210,9 @@ function signalsFor(s: TargetSummary): Signal[] {
       id: `${s.targetId}:fear`,
       level: 'talk',
       kind: 'fear',
-      title: `${josa(who, '과/와')} 관련해 '무서운' 장면을 ${s.fearCount}번 골랐어요`,
+      title: `${josa(who, '과/와')} 관련해 '무서운' 느낌을 ${s.fearCount}번 골랐어요`,
       detail: isTeacher
-        ? '큰 소리, 무서운 눈빛, 화난 얼굴 같은 선택이 반복됐어요. 아이가 어떤 장면을 떠올렸는지 편하게 들어봐 주세요.'
+        ? '큰 소리, 무서운 눈빛, 화난 얼굴, 무서운 동물 같은 선택이 반복됐어요. 아이가 어떤 모습을 떠올렸는지 편하게 들어봐 주세요.'
         : '친구와 지낼 때 무섭거나 화난 느낌을 고른 적이 있어요. 어떤 일이 있었는지 가볍게 물어봐 주세요.',
     });
   }
@@ -194,7 +226,21 @@ function signalsFor(s: TargetSummary): Signal[] {
       detail: '최근 선택이 연달아 비나 천둥이었어요. 하루 기분일 수도 있으니, 판단보다는 이야기를 먼저 들어봐 주세요.',
     });
   }
-  const alreadyTalk = out.length > 0;
+  const ps = s.portrait;
+  if (ps && ps.prevAvg !== null && ps.recentAvg !== null && ps.prevAvg - ps.recentAvg >= 1.5) {
+    const pa = animalOf(ps.prevAnimal);
+    const ra = animalOf(ps.recentAnimal);
+    const animalLine = pa && ra && pa.id !== ra.id ? `예전엔 ${pa.emoji} ${pa.label} 같다고 했는데, 요즘은 ${ra.emoji} ${ra.label} 같대요. ` : '';
+    out.push({
+      ...base,
+      id: `${s.targetId}:portrait`,
+      level: 'watch',
+      kind: 'portrait-shift',
+      title: `아이가 그린 ${who}의 이미지가 달라졌어요`,
+      detail: `${animalLine}고른 색·모양·성격 스티커도 전보다 어두워졌어요. 무엇이 달라졌는지 궁금해하며 물어봐 주세요.`,
+    });
+  }
+  const alreadyTalk = out.some((x) => x.level === 'talk');
   if (!alreadyTalk && s.avg !== null && s.answered >= 3 && s.avg <= -0.75) {
     out.push({
       ...base,
@@ -282,6 +328,9 @@ export function buildReport(
   };
 }
 
+/** '토끼'를 처럼 따옴표 뒤에 조사를 붙인다 */
+const quoted = (word: string, pair: `${string}/${string}`) => `'${word}'${josa(word, pair).slice(word.length)}`;
+
 /** 한 응답을 부모가 읽을 수 있는 문장으로 */
 export function describeResponse(r: PlayResponse, people: Person[]): { emoji: string; text: string } {
   const who = targetName(r.targetType, r.targetId, people);
@@ -298,6 +347,22 @@ export function describeResponse(r: PlayResponse, people: Person[]): { emoji: st
   if (r.game === 'face') {
     const label = faceByCode(r.value)?.parentLabel ?? r.value;
     return { emoji: faceEmoji[r.value] ?? '🙂', text: `${who}의 오늘 얼굴로 '${label}'${josa(label, '을/를').slice(label.length)} 골랐어요` };
+  }
+  if (r.game === 'portrait') {
+    const p = parsePortraitValue(r.value);
+    const facet = (p?.facet ?? 'animal') as PersonaFacet;
+    const c = p ? findChoice(facet, p.id) : undefined;
+    if (!c) return { emoji: '🤔', text: `${who}의 ${FACET_LABEL[facet]}: "잘 모르겠어"를 골랐어요` };
+    const emoji = choiceEmoji(facet, c.id);
+    const text =
+      facet === 'animal'
+        ? `${josa(who, '은/는')} ${quoted(c.label, '을/를')} 닮았대요 (${c.hint})`
+        : facet === 'color'
+          ? `${who}의 색깔은 ${quoted(c.label, '이래요/래요')} (${c.hint})`
+          : facet === 'shape'
+            ? `${who}의 모양은 ${quoted(c.label, '이래요/래요')} (${c.hint})`
+            : `${who}에게 '${c.label}' 스티커를 붙였어요`;
+    return { emoji, text };
   }
   const [sceneId, code] = r.value.split(':');
   const scene = sceneById(sceneId);
@@ -329,3 +394,38 @@ export const weatherLabel = (w: WeatherCode | null) => (w ? WEATHERS.find((x) =>
 
 // re-export for convenience
 export { FACES, SCENES, WEATHERS };
+
+export interface PortraitEntry {
+  id: string;
+  createdAt: string;
+  facet: PersonaFacet;
+  choiceId: string | null;
+  emoji: string;
+  label: string;
+  score: number | null;
+}
+
+/** 한 사람에 대해 아이가 고른 이미지 기록 (오래된 순) */
+export function portraitHistory(responses: PlayResponse[], personId: string): PortraitEntry[] {
+  return responses
+    .filter((r) => r.game === 'portrait' && r.targetId === personId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    .flatMap((r) => {
+      const p = parsePortraitValue(r.value);
+      if (!p) return [];
+      const c = findChoice(p.facet, p.id);
+      return [
+        {
+          id: r.id,
+          createdAt: r.createdAt,
+          facet: p.facet,
+          choiceId: c?.id ?? null,
+          emoji: c ? choiceEmoji(p.facet, c.id) : '🤔',
+          label: c?.label ?? '잘 모르겠어',
+          score: r.score,
+        },
+      ];
+    });
+}
+
+export { callName };

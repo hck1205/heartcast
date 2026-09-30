@@ -7,9 +7,12 @@ import { MoodLine, TrendBadge, WeatherBar } from '@/components/report/charts';
 import { NoteBox } from '@/components/report/NoteBox';
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
 import { SignalCard } from '@/components/report/SignalCard';
+import { PortraitSection } from '@/components/report/PortraitSection';
+import { PersonCard } from '@/components/studio/PersonCard';
 import { BigButton } from '@/components/ui';
 import { WeatherIcon } from '@/components/WeatherIcon';
 import { FACES, SCENES } from '@/games/content';
+import { withoutHeadwear } from '@/lib/avatar';
 import { buildReport, describeResponse, faceEmoji, weatherLabel } from '@/report/analyze';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
@@ -33,7 +36,7 @@ export default function PersonDetail() {
     <ParentShell title={s.name}>
       <Panel style={{ alignItems: 'center', backgroundColor: '#EAF6FF' }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-          <Avatar avatar={person.avatar} size={110} expression="calm" />
+          <PersonCard person={person} size={110} expression="calm" showName={false} showTraits={false} />
           {s.weather && <WeatherIcon code={s.weather} size={80} />}
         </View>
         <Text style={styles.big}>최근 2주: {s.weather ? `'${weatherLabel(s.weather)}'` : '기록 없음'}</Text>
@@ -47,6 +50,8 @@ export default function PersonDetail() {
         <SignalCard key={sig.id} signal={sig} />
       ))}
 
+      <PortraitSection person={person} responses={responses} />
+
       <Section title="날씨 흐름 (14일)" sub="-2(천둥) ~ +2(맑음). 하루에 여러 번 고르면 평균이에요">
         <Panel>
           <MoodLine daily={s.daily} width={Math.min(width, 720) - 64} />
@@ -59,7 +64,7 @@ export default function PersonDetail() {
           <Panel style={styles.faceRow}>
             {faceTally.map((f) => (
               <View key={f.code} style={styles.faceItem}>
-                <Avatar avatar={{ ...person.avatar, accessory: 'none' }} expression={f.code} size={58} />
+                <Avatar avatar={withoutHeadwear(person.avatar)} expression={f.code} size={58} />
                 <Text style={styles.meta}>
                   {faceEmoji[f.code]} {f.parentLabel} {f.n}
                 </Text>
