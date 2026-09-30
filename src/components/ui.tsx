@@ -3,6 +3,7 @@ import {
   Animated,
   Easing,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -206,25 +207,28 @@ export function Chip({
   );
 }
 
-/** 작은 탭(세그먼트) */
+/** 작은 탭(세그먼트). 탭이 5개를 넘으면 가로로 스크롤되는 칩 탭이 된다. */
 export function Tabs<T extends string>({ items, value, onChange }: { items: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  const scroll = items.length > 4;
+  const tabs = items.map((t) => (
+    <Pressable
+      key={t.id}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: value === t.id }}
+      onPress={() => {
+        tap();
+        onChange(t.id);
+      }}
+      style={[scroll ? styles.chipTab : styles.tab, value === t.id && (scroll ? styles.chipTabOn : styles.tabOn)]}
+    >
+      <Text style={[styles.tabText, value === t.id && (scroll ? styles.chipTabTextOn : styles.tabTextOn)]}>{t.label}</Text>
+    </Pressable>
+  ));
+  if (!scroll) return <View style={styles.tabs}>{tabs}</View>;
   return (
-    <View style={styles.tabs}>
-      {items.map((t) => (
-        <Pressable
-          key={t.id}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: value === t.id }}
-          onPress={() => {
-            tap();
-            onChange(t.id);
-          }}
-          style={[styles.tab, value === t.id && styles.tabOn]}
-        >
-          <Text style={[styles.tabText, value === t.id && styles.tabTextOn]}>{t.label}</Text>
-        </Pressable>
-      ))}
-    </View>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipTabs} style={{ flexGrow: 0 }}>
+      {tabs}
+    </ScrollView>
   );
 }
 
@@ -267,4 +271,8 @@ export const styles = StyleSheet.create({
   tabOn: { backgroundColor: colors.paper },
   tabText: { fontFamily: fonts.body, fontSize: 14, color: colors.inkSoft, fontWeight: '600' },
   tabTextOn: { color: colors.ink },
+  chipTabs: { gap: 6, paddingRight: 8 },
+  chipTab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: '#F1ECE4' },
+  chipTabOn: { backgroundColor: colors.ink },
+  chipTabTextOn: { color: '#FFFFFF' },
 });

@@ -55,15 +55,19 @@ export const shadow = {
 };
 
 export const palettes = {
-  // 흑발 · 흑갈 · 짙은 갈색 · 밝은 갈색 · 애쉬 · 와인 · 회색
-  hairColors: ['#1E1B1A', '#2F2320', '#4A3226', '#7A5236', '#8C7B6B', '#6B2E3A', '#A9A9AD'],
-  // 파스텔 옷색: 코랄 · 버터 · 민트 · 하늘 · 라벤더 · 베이지 · 데님 · 차콜
-  shirts: ['#F4A6A0', '#FFD58A', '#AEDCC0', '#A8CFF2', '#C9B8F0', '#EBCDB0', '#8FA7C9', '#5E6B7D'],
+  // 흑발 · 흑갈 · 짙은 갈색 · 밝은 갈색 · 애쉬 · 와인 · 회색 · 오렌지브라운 · 금발 · 핑크브라운 · 블루블랙 · 흰머리
+  hairColors: ['#1E1B1A', '#2F2320', '#4A3226', '#7A5236', '#8C7B6B', '#6B2E3A', '#A9A9AD', '#A8582C', '#D9B26A', '#B0706E', '#1F2A3D', '#EDEBE6'],
+  // 파스텔: 코랄 · 버터 · 민트 · 하늘 · 라벤더 · 베이지 · 핑크 · 레몬 / 진한: 데님 · 차콜 · 네이비 · 버건디 · 올리브 · 흰색
+  shirts: ['#F4A6A0', '#FFD58A', '#AEDCC0', '#A8CFF2', '#C9B8F0', '#EBCDB0', '#F7C3D8', '#F4EDA0', '#8FA7C9', '#5E6B7D', '#34466B', '#8A3A4A', '#7C8A55', '#FFFFFF'],
   skins: {
+    snow: '#FFF1E8',
     porcelain: '#FCEADF',
     light: '#F7DCC6',
+    warm: '#F2CFAE',
     medium: '#EFC7A6',
     tan: '#D9A57C',
     deep: '#A8714B',
+    cocoa: '#7C4E33',
   },
+  eyeColors: { black: '#1E1715', brown: '#4A3228', hazel: '#7A5A36', gray: '#5B6470' },
 };

@@ -1,28 +1,84 @@
 // 마음날씨 공용 타입
 
-export type SkinTone = 'porcelain' | 'light' | 'medium' | 'tan' | 'deep';
-export type FaceShape = 'round' | 'oval' | 'square' | 'heart' | 'long';
-export type EyeStyle = 'basic' | 'double' | 'smile' | 'narrow' | 'big';
-export type BrowStyle = 'straight' | 'arched' | 'thick';
-export type CheekStyle = 'blush' | 'none';
+export type SkinTone = 'snow' | 'porcelain' | 'light' | 'warm' | 'medium' | 'tan' | 'deep' | 'cocoa';
+export type FaceShape = 'round' | 'oval' | 'square' | 'heart' | 'long' | 'chubby' | 'diamond' | 'pear' | 'baby';
+export type EyeStyle =
+  | 'basic'
+  | 'double'
+  | 'smile'
+  | 'narrow'
+  | 'big'
+  | 'droopy'
+  | 'cat'
+  | 'sparkle'
+  | 'sleepy'
+  | 'round'
+  | 'lashes'
+  | 'dot';
+export type EyeColor = 'black' | 'brown' | 'hazel' | 'gray';
+export type BrowStyle = 'straight' | 'arched' | 'thick' | 'thin' | 'short' | 'angled' | 'droopy';
+export type NoseStyle = 'hook' | 'dot' | 'round' | 'tall' | 'tiny';
+export type MouthStyle = 'smile' | 'small' | 'lips' | 'teeth' | 'cat' | 'flat';
+export type CheekStyle = 'blush' | 'lines' | 'freckles' | 'mole' | 'none';
+export type FacialHair = 'none' | 'mustache' | 'beard' | 'stubble';
 /** 한국에서 흔한 머리 모양 (일상툰 스타일) */
 export type HairStyle =
+  // 짧은 머리
   | 'dandy'
   | 'twoblock'
+  | 'gail'
+  | 'slick'
+  | 'comma'
+  | 'buzz'
   | 'shortPerm'
+  | 'pixie'
+  // 단발
   | 'bobBangs'
   | 'bobPart'
+  | 'blunt'
+  | 'hush'
+  // 긴 머리
   | 'longBangs'
   | 'longPart'
+  | 'wave'
+  | 'hippie'
+  // 묶은 머리
   | 'halfUp'
   | 'ponytail'
+  | 'lowPony'
   | 'bun'
+  | 'doubleBun'
   | 'pigtails'
-  | 'wave';
-export type TopStyle = 'apron' | 'cardigan' | 'sweatshirt' | 'shirt' | 'hoodie';
-export type Pattern = 'none' | 'stripe' | 'dots';
-export type GlassesStyle = 'none' | 'round' | 'horn';
-export type Headwear = 'none' | 'headband' | 'pin' | 'scrunchie' | 'ribbon' | 'cap';
+  | 'braids'
+  | 'sideBraid';
+export type TopStyle =
+  | 'apron'
+  | 'cardigan'
+  | 'sweatshirt'
+  | 'shirt'
+  | 'hoodie'
+  | 'vest'
+  | 'dress'
+  | 'turtleneck'
+  | 'track'
+  | 'overalls';
+export type Pattern = 'none' | 'stripe' | 'dots' | 'check' | 'flower' | 'star';
+export type GlassesStyle = 'none' | 'round' | 'horn' | 'square' | 'half' | 'gold';
+export type Headwear =
+  | 'none'
+  | 'headband'
+  | 'pin'
+  | 'scrunchie'
+  | 'ribbon'
+  | 'cap'
+  | 'flower'
+  | 'beanie'
+  | 'bucket'
+  | 'claw'
+  | 'wideband'
+  | 'bigBow';
+export type Neckwear = 'none' | 'necklace' | 'scarf' | 'tie' | 'bowtie' | 'whistle' | 'lanyard';
+export type Earrings = 'none' | 'stud' | 'hoop' | 'drop';
 export type Expression = 'happy' | 'calm' | 'neutral' | 'sad' | 'angry' | 'scared';
 
 /**
@@ -33,8 +89,12 @@ export interface AvatarConfig {
   skin: SkinTone;
   faceShape?: FaceShape;
   eyes?: EyeStyle;
+  eyeColor?: EyeColor;
   brows?: BrowStyle;
+  nose?: NoseStyle;
+  mouth?: MouthStyle;
   cheeks?: CheekStyle;
+  facialHair?: FacialHair;
   hair: HairStyle;
   hairColor: string;
   top?: TopStyle;
@@ -42,6 +102,8 @@ export interface AvatarConfig {
   shirt: string;
   glasses?: GlassesStyle;
   headwear?: Headwear;
+  neckwear?: Neckwear;
+  earrings?: Earrings;
   /** 가슴에 다는 이름표 */
   nameTag?: boolean;
 }

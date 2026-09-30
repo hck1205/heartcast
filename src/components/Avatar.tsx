@@ -4,7 +4,22 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { normalizeAvatar } from '@/lib/avatar';
 import { palettes } from '@/theme';
 import type { AvatarConfig, Expression } from '@/types';
-import { Clothes, Ears, EmotionMarks, Face, Glasses, HairBack, HairFront, Head, headGeometry, HeadwearLayer, OL } from './avatar/parts';
+import {
+  Clothes,
+  Ears,
+  EarringsLayer,
+  EmotionMarks,
+  Face,
+  FacialHairLayer,
+  Glasses,
+  HairBack,
+  HairFront,
+  Head,
+  headGeometry,
+  HeadwearLayer,
+  NeckLayer,
+  OL,
+} from './avatar/parts';
 
 interface Props {
   avatar: AvatarConfig;
@@ -27,9 +42,21 @@ export function Avatar({ avatar, expression = 'calm', size = 120, bg }: Props) {
       <Clothes top={a.top} pattern={a.pattern} color={a.shirt} skin={skin} clipId={clipId} nameTag={a.nameTag} />
       {/* 목 */}
       <Path d="M53 88 L53 104 Q60 108 67 104 L67 88 Z" fill={skin} stroke={OL} strokeWidth={2} strokeLinejoin="round" />
+      <NeckLayer top={a.top} color={a.shirt} neckwear={a.neckwear} />
       <Ears halfW={halfW} skin={skin} />
       <Head shape={a.faceShape} skin={skin} />
-      <Face expression={expression} eyes={a.eyes} brows={a.brows} cheeks={a.cheeks} hairColor={a.hairColor} />
+      <EarringsLayer kind={a.earrings} halfW={halfW} />
+      <Face
+        expression={expression}
+        eyes={a.eyes}
+        eyeColor={a.eyeColor}
+        brows={a.brows}
+        nose={a.nose}
+        mouth={a.mouth}
+        cheeks={a.cheeks}
+        hairColor={a.hairColor}
+      />
+      <FacialHairLayer kind={a.facialHair} color={a.hairColor} />
       <HairFront style={a.hair} color={a.hairColor} />
       <Glasses style={a.glasses} />
       <HeadwearLayer kind={a.headwear} hair={a.hair} />

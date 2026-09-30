@@ -4,7 +4,7 @@ import { demoHistory, demoProfile } from '@/data/demoSeed';
 import { FACET_CHOICES, PERSONA_ANIMALS, PERSONA_TRAITS } from '@/games/persona';
 import { planSession } from '@/games/planner';
 import { parsePortraitValue, portraitDiff, portraitResponse } from '@/games/portrait';
-import { normalizeAvatar, randomAvatar } from '@/lib/avatar';
+import { ALL_OPTIONS, normalizeAvatar, randomAvatar } from '@/lib/avatar';
 import { buildReport, describeResponse, portraitHistory } from '@/report/analyze';
 import { talkCardFor } from '@/report/talkCards';
 import type { Person, PlayResponse } from '@/types';
@@ -42,17 +42,42 @@ describe('normalizeAvatar', () => {
     } as any);
     expect(a).toMatchObject({
       skin: 'porcelain',
-      eyes: 'big',
-      brows: 'straight',
-      cheeks: 'blush',
+      eyes: 'sparkle',
+      brows: 'thin',
+      cheeks: 'freckles',
       hair: 'shortPerm',
       top: 'sweatshirt',
-      pattern: 'dots',
+      pattern: 'star',
       glasses: 'horn',
-      headwear: 'cap',
+      headwear: 'beanie',
+      // 2차 버전의 earrings: true 는 작은 귀걸이로
+      earrings: 'stud',
       nameTag: false,
+      nose: 'hook',
+      mouth: 'smile',
+      facialHair: 'none',
+      neckwear: 'none',
+      eyeColor: 'black',
     });
-    expect('earrings' in a).toBe(false);
+  });
+
+  it('keeps every option of every part (round-trip) and has no duplicate ids', () => {
+    for (const [field, values] of Object.entries(ALL_OPTIONS)) {
+      expect(new Set(values).size).toBe(values.length);
+      for (const v of values) {
+        const a = normalizeAvatar({ skin: 'light', hair: 'dandy', hairColor: '#000000', shirt: '#ffffff', [field]: v } as any);
+        expect((a as any)[field]).toBe(v);
+      }
+    }
+  });
+
+  it('offers lots of choices in every category', () => {
+    expect(ALL_OPTIONS.faceShape.length).toBeGreaterThanOrEqual(9);
+    expect(ALL_OPTIONS.eyes.length).toBeGreaterThanOrEqual(12);
+    expect(ALL_OPTIONS.hair.length).toBeGreaterThanOrEqual(24);
+    expect(ALL_OPTIONS.top.length).toBeGreaterThanOrEqual(10);
+    expect(ALL_OPTIONS.headwear.length).toBeGreaterThanOrEqual(12);
+    expect(ALL_OPTIONS.skin.length).toBeGreaterThanOrEqual(8);
   });
 
   it('falls back safely on garbage', () => {
