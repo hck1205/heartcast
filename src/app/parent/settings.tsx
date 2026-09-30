@@ -56,7 +56,7 @@ export default function Settings() {
             placeholder="반 이름"
           />
           <AvatarBuilder value={draft.avatar} onChange={(avatar) => setDraft({ ...draft, avatar })} previewSize={110} />
-          <BigButton small label={saved ? '저장했어요!' : '아이 정보 저장'} icon={saved ? '✅' : '💾'} disabled={!dirty && !saved} onPress={save} />
+          <BigButton small label={saved ? '저장했어요!' : '아이 정보 저장'} disabled={!dirty && !saved} onPress={save} />
         </Panel>
       </Section>
 
@@ -77,7 +77,7 @@ export default function Settings() {
               }}
             />
           ) : (
-            <BigButton small label="PIN 바꾸기" icon="🔑" color={colors.sky} onPress={() => setChangingPin(true)} />
+            <BigButton small variant="secondary" label="비밀번호 바꾸기" onPress={() => setChangingPin(true)} />
           )}
         </Panel>
       </Section>
@@ -85,14 +85,13 @@ export default function Settings() {
       <Section title="계정">
         <Panel>
           <Text style={styles.body}>
-            {app.mode === 'cloud' ? `☁️ 클라우드 계정: ${app.email ?? ''}` : '📱 체험 모드 (이 기기에만 저장돼요)'}
+            {app.mode === 'cloud' ? `클라우드 계정 · ${app.email ?? ''}` : '체험 모드 · 이 기기에만 저장돼요'}
           </Text>
           {app.mode === 'demo' && (
             <BigButton
               small
+              variant="secondary"
               label="예시 기록 채우기 (2주치)"
-              icon="📊"
-              color={colors.mint}
               onPress={async () => {
                 await app.loadDemoData();
                 router.replace('/parent');
@@ -101,10 +100,8 @@ export default function Settings() {
           )}
           <BigButton
             small
-            label="로그아웃 / 처음 화면으로"
-            icon="🚪"
-            color="#EEF1F6"
-            textColor={colors.inkSoft}
+            variant="secondary"
+            label="로그아웃"
             onPress={async () => {
               await app.signOut();
               router.replace('/');
@@ -112,10 +109,8 @@ export default function Settings() {
           />
           <BigButton
             small
+            variant="ghost"
             label="모든 기록 지우기"
-            icon="🗑️"
-            color="#FFE3DC"
-            textColor={colors.signal.talk}
             onPress={() =>
               confirm('아이 정보와 모든 놀이 기록을 지울까요? 되돌릴 수 없어요.', async () => {
                 await app.resetAll();

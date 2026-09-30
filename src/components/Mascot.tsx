@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
 
-import { colors, fonts, shadow } from '@/theme';
+import { colors, fonts } from '@/theme';
 
 type Mood = 'happy' | 'wink' | 'wow';
 
@@ -54,15 +54,12 @@ export function Floating({ children, distance = 8, duration = 1800 }: { children
   return <Animated.View style={{ transform: [{ translateY }] }}>{children}</Animated.View>;
 }
 
-/** 마루가 말풍선으로 안내 */
-export function MaruSays({ text, mood = 'happy', size = 96 }: { text: string; mood?: Mood; size?: number }) {
+/** 마루가 짧은 말풍선으로 안내 */
+export function MaruSays({ text, mood = 'happy', size = 56 }: { text: string; mood?: Mood; size?: number }) {
   return (
     <View style={styles.row}>
-      <Floating>
-        <Maru size={size} mood={mood} />
-      </Floating>
+      <Maru size={Math.min(size, 64)} mood={mood} />
       <View style={styles.bubble}>
-        <View style={styles.tail} />
         <Text style={styles.text}>{text}</Text>
       </View>
     </View>
@@ -70,24 +67,16 @@ export function MaruSays({ text, mood = 'happy', size = 96 }: { text: string; mo
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   bubble: {
     flex: 1,
     backgroundColor: colors.paper,
-    borderRadius: 22,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    ...shadow,
+    borderRadius: 16,
+    borderTopLeftRadius: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.line,
   },
-  tail: {
-    position: 'absolute',
-    left: -8,
-    top: '50%',
-    marginTop: -8,
-    width: 16,
-    height: 16,
-    backgroundColor: colors.paper,
-    transform: [{ rotate: '45deg' }],
-  },
-  text: { fontFamily: fonts.body, fontSize: 19, lineHeight: 27, color: colors.ink },
+  text: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: colors.ink },
 });

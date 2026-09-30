@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { TOPICS } from '@/games/content';
-import { colors, fonts, radius, shadow } from '@/theme';
+import { colors, fonts, radius } from '@/theme';
 import type { Expression, Person, Profile, TopicId } from '@/types';
 import { Avatar } from '../Avatar';
 import { Floating } from '../Mascot';
@@ -88,19 +88,20 @@ const styles = StyleSheet.create({
     borderRadius: 42,
     borderWidth: 4,
     borderStyle: 'dashed',
-    borderColor: 'rgba(255,255,255,0.95)',
+    borderColor: '#C9D6EA',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  q: { fontFamily: fonts.title, fontSize: 40, color: '#fff' },
+  q: { fontFamily: fonts.title, fontSize: 36, color: '#A9B7CC' },
   topicBubble: {
     width: 160,
     height: 160,
     borderRadius: 80,
     backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow,
   },
   faceCover: {
     position: 'absolute',
@@ -116,9 +117,11 @@ const styles = StyleSheet.create({
   faceQ: { fontFamily: fonts.title, fontSize: 44, color: colors.sky },
   name: {
     fontFamily: fonts.title,
-    fontSize: 22,
+    fontSize: 20,
     color: colors.ink,
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
     paddingHorizontal: 16,
     paddingVertical: 4,
     borderRadius: radius.pill,

@@ -9,6 +9,7 @@ import {
   EYES,
   FACE_SHAPES,
   GLASSES,
+  HAIR_COLOR_LABELS,
   HAIRS,
   HEADWEAR,
   normalizeAvatar,
@@ -20,55 +21,42 @@ import {
 import { celebrate, say, stopSpeaking, tap } from '@/lib/feedback';
 import { josa } from '@/lib/josa';
 import { uuid } from '@/lib/util';
-import { colors, fonts, palettes, radius, shadow } from '@/theme';
+import { colors, fonts, palettes, radius } from '@/theme';
 import type { FullAvatar, Persona, Person, PlayResponse } from '@/types';
 import { Avatar } from '../Avatar';
-import { Floating, Maru } from '../Mascot';
-import { BigButton, Confetti, SkyBackground } from '../ui';
+import { Maru } from '../Mascot';
+import { BigButton, Confetti, Dots, Screen, Tabs } from '../ui';
 import { PersonCard } from './PersonCard';
 import { OptionTile, PersonaPicker, Section, Swatch } from './pickers';
 
-type StepId = 'name' | 'face' | 'eyes' | 'hair' | 'clothes' | 'deco' | PersonaFacet | 'done';
+/** 공방 단계: 이름 → 얼굴 → 머리 → 옷·소품 → 색깔 → 동물 → 모양 → 성격 → 완성 */
+type StepId = 'name' | 'face' | 'hair' | 'outfit' | PersonaFacet | 'done';
 
 const LOOK_KEYS: Partial<Record<StepId, (keyof FullAvatar)[]>> = {
-  face: ['faceShape', 'skin'],
-  eyes: ['eyes', 'brows', 'cheeks'],
+  face: ['faceShape', 'skin', 'eyes', 'brows', 'cheeks'],
   hair: ['hair', 'hairColor'],
-  clothes: ['top', 'pattern', 'shirt'],
-  deco: ['glasses', 'headwear', 'earrings'],
+  outfit: ['top', 'pattern', 'shirt', 'glasses', 'headwear'],
 };
 
-const STEP_ICON: Record<StepId, string> = {
-  name: '✏️',
-  face: '🙂',
-  eyes: '👀',
-  hair: '💇',
-  clothes: '👕',
-  deco: '🎀',
-  color: '🎨',
-  animal: '🐾',
-  shape: '🔷',
-  trait: '💬',
-  done: '🎉',
-};
+type FaceTab = 'shape' | 'skin' | 'eyes' | 'brows';
+type HairTab = 'style' | 'color';
+type OutfitTab = 'top' | 'color' | 'acc';
 
 function question(step: StepId, name: string, kind: Person['kind']): string {
   const who = callName(name || (kind === 'teacher' ? '우리' : '친구'), kind);
   switch (step) {
     case 'name':
-      return kind === 'teacher' ? '누구 선생님을 만들어 볼까? 이름을 알려줘!' : '어떤 친구를 만들어 볼까? 이름을 알려줘!';
+      return kind === 'teacher' ? '누구 선생님을 만들어 볼까?' : '어떤 친구를 만들어 볼까?';
     case 'face':
-      return `${josa(who, '은/는')} 얼굴이 어떤 모양이야?`;
-    case 'eyes':
-      return `${who}의 눈이랑 눈썹은 어떻게 생겼어?`;
+      return `${who} 얼굴은 어떻게 생겼어?`;
     case 'hair':
-      return `${who}의 머리는 어떻게 생겼어?`;
-    case 'clothes':
-      return `${josa(who, '은/는')} 무슨 옷을 입었어?`;
-    case 'deco':
-      return `${who}에게 꾸미기를 해 볼까?`;
+      return `${who} 머리는 어때?`;
+    case 'outfit':
+      return `${josa(who, '은/는')} 뭘 입고 있어?`;
     case 'done':
-      return `짜잔! ${who} 완성!`;
+      return `${who} 완성!`;
+    case 'trait':
+      return `${josa(who, '은/는')} 어떤 사람이야? (3개까지)`;
     default:
       return facetQuestion(step, name, kind);
   }
@@ -81,7 +69,7 @@ export interface StudioResult {
 
 /**
  * 선생님(친구) 만들기 공방.
- * 생김새(얼굴·눈·머리·옷·꾸미기) → 이미지(색·동물·모양·성격) → 완성.
+ * 생김새(얼굴·머리·옷) → 이미지(색·동물·모양·성격) → 완성.
  * 이미지 단계는 아이의 느낌을 기록하는 곳이라 🎲 랜덤이 없고 "잘 모르겠어"가 있다.
  */
 export function Studio({
@@ -102,10 +90,8 @@ export function Studio({
   const [steps] = useState<StepId[]>(() => [
     ...(initial.name ? [] : (['name'] as StepId[])),
     'face',
-    'eyes',
     'hair',
-    'clothes',
-    'deco',
+    'outfit',
     'color',
     'animal',
     'shape',
@@ -113,6 +99,9 @@ export function Studio({
     'done',
   ]);
   const [idx, setIdx] = useState(0);
+  const [faceTab, setFaceTab] = useState<FaceTab>('shape');
+  const [hairTab, setHairTab] = useState<HairTab>('style');
+  const [outfitTab, setOutfitTab] = useState<OutfitTab>('top');
   const [saving, setSaving] = useState(false);
   const [bounce] = useState(() => new Animated.Value(1));
   const step = steps[idx];
@@ -129,8 +118,8 @@ export function Studio({
   useEffect(() => () => stopSpeaking(), []);
 
   const pop = () => {
-    bounce.setValue(0.9);
-    Animated.spring(bounce, { toValue: 1, friction: 3, tension: 160, useNativeDriver: true }).start();
+    bounce.setValue(0.94);
+    Animated.spring(bounce, { toValue: 1, friction: 4, tension: 160, useNativeDriver: true }).start();
   };
   const setLook = <K extends keyof FullAvatar>(k: K, v: FullAvatar[K]) => {
     setAvatar((a) => ({ ...a, [k]: v }));
@@ -145,9 +134,7 @@ export function Studio({
       return n;
     });
     setPersona((p) =>
-      facet === 'trait'
-        ? { ...p, traits: isUnknown ? [] : (v as string[]) }
-        : { ...p, [facet]: isUnknown ? null : (v as string) },
+      facet === 'trait' ? { ...p, traits: isUnknown ? [] : (v as string[]) } : { ...p, [facet]: isUnknown ? null : (v as string) },
     );
     pop();
   };
@@ -176,56 +163,91 @@ export function Studio({
     }
   };
 
-  const bgColor = colorOf(persona.color)?.color;
+  const look = LOOK_KEYS[step];
 
   return (
-    <SkyBackground top={bgColor ? mixWithWhite(bgColor, 0.45) : colors.skyTop} bottom={colors.skyBottom} hills={false}>
-      {/* 상단: 닫기 + 별 진행 */}
+    <Screen>
+      {/* 상단: 닫기 · 진행 점 · 지우기 */}
       <View style={styles.header}>
-        <Pressable accessibilityLabel="그만 만들기" onPress={onCancel} style={styles.close}>
-          <Text style={styles.closeText}>✕</Text>
+        <Pressable accessibilityLabel="그만 만들기" onPress={onCancel} style={styles.iconBtn}>
+          <Text style={styles.iconText}>✕</Text>
         </Pressable>
-        <View style={styles.progress}>
-          {steps.map((s, i) => (
-            <Text key={s} style={[styles.progressIcon, i > idx && { opacity: 0.25 }]}>
-              {i < idx ? '⭐' : STEP_ICON[s]}
-            </Text>
-          ))}
-        </View>
+        <Dots index={idx} total={steps.length} />
         {onDelete ? (
-          <Pressable accessibilityLabel="지우기" onPress={onDelete} style={styles.close}>
-            <Text style={{ fontSize: 18 }}>🗑️</Text>
+          <Pressable accessibilityLabel="지우기" onPress={onDelete} style={styles.iconBtn}>
+            <Text style={[styles.iconText, { fontSize: 14 }]}>지우기</Text>
           </Pressable>
         ) : (
-          <View style={styles.close} />
+          <View style={styles.iconBtn} />
         )}
       </View>
 
-      {/* 마루의 질문 */}
-      <Pressable onPress={() => say(q)} style={styles.ask}>
-        <Maru size={48} mood={step === 'done' ? 'wow' : 'happy'} />
+      {/* 질문 한 줄 */}
+      <Pressable onPress={() => say(q)} style={styles.ask} accessibilityHint="다시 듣기">
+        <Maru size={36} mood={step === 'done' ? 'wow' : 'happy'} />
         <Text style={styles.askText}>{q}</Text>
-        <Text style={{ fontSize: 20 }}>🔊</Text>
+        <Text style={styles.speaker}>🔊</Text>
       </Pressable>
 
       {/* 미리보기 */}
       <View style={styles.preview}>
         <Animated.View style={{ transform: [{ scale: bounce }] }}>
-          <Floating distance={4}>
-            {step === 'done' ? (
-              <PersonCard person={personNow} size={150} />
-            ) : (
-              <PersonCard person={personNow} size={step === 'trait' ? 104 : 124} showName={!!name.trim()} showTraits={step === 'trait'} />
-            )}
-          </Floating>
+          <PersonCard person={personNow} size={step === 'done' ? 148 : 118} showName={step === 'done' || !!name.trim()} showTraits={step === 'trait' || step === 'done'} />
         </Animated.View>
+        {look ? (
+          <Pressable
+            accessibilityLabel="랜덤"
+            onPress={() => {
+              tap();
+              setAvatar((a) => randomize(a, look));
+              pop();
+            }}
+            style={styles.dice}
+          >
+            <Text style={{ fontSize: 22 }}>🎲</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {/* 고르기 판 */}
       <View style={styles.sheet}>
-        <ScrollView key={step} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
+        {step === 'face' && (
+          <Tabs
+            items={[
+              { id: 'shape', label: '얼굴형' },
+              { id: 'skin', label: '피부' },
+              { id: 'eyes', label: '눈' },
+              { id: 'brows', label: '눈썹·볼' },
+            ]}
+            value={faceTab}
+            onChange={setFaceTab}
+          />
+        )}
+        {step === 'hair' && (
+          <Tabs
+            items={[
+              { id: 'style', label: '머리 모양' },
+              { id: 'color', label: '머리색' },
+            ]}
+            value={hairTab}
+            onChange={setHairTab}
+          />
+        )}
+        {step === 'outfit' && (
+          <Tabs
+            items={[
+              { id: 'top', label: '옷' },
+              { id: 'color', label: '색·무늬' },
+              { id: 'acc', label: '소품' },
+            ]}
+            value={outfitTab}
+            onChange={setOutfitTab}
+          />
+        )}
+
+        <ScrollView key={`${step}-${faceTab}-${hairTab}-${outfitTab}`} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
           {step === 'name' && (
-            <View style={{ gap: 10 }}>
+            <View style={{ gap: 8 }}>
               <TextInput
                 value={name}
                 onChangeText={setName}
@@ -235,81 +257,90 @@ export function Studio({
                 maxLength={10}
                 autoFocus
               />
-              {kind === 'teacher' && <Text style={styles.nameSuffix}>→ “{callName(name || '○○', 'teacher')}”</Text>}
-              <Text style={styles.helper}>✏️ 글씨는 엄마·아빠가 도와줘도 좋아요</Text>
+              <Text style={styles.helper}>{kind === 'teacher' ? `“${callName(name || '○○', 'teacher')}”으로 불러요 · ` : ''}글씨는 엄마·아빠가 도와줘도 좋아요</Text>
             </View>
           )}
 
-          {step === 'face' && (
-            <>
-              <Section title="얼굴 모양">
-                {FACE_SHAPES.map((o) => (
-                  <OptionTile key={o.id} label={o.label} selected={avatar.faceShape === o.id} onPress={() => setLook('faceShape', o.id)}>
-                    <FaceCrop avatar={{ ...avatar, faceShape: o.id, headwear: 'none', hair: 'buzz' }} />
-                  </OptionTile>
-                ))}
-              </Section>
-              <Section title="피부색">
-                {SKINS.map((s) => (
-                  <OptionTile key={s} selected={avatar.skin === s} onPress={() => setLook('skin', s)} width={60}>
-                    <Swatch color={palettes.skins[s]} />
-                  </OptionTile>
-                ))}
-              </Section>
-            </>
+          {step === 'face' && faceTab === 'shape' && (
+            <Section title="얼굴형">
+              {FACE_SHAPES.map((o) => (
+                <OptionTile key={o.id} label={o.label} selected={avatar.faceShape === o.id} onPress={() => setLook('faceShape', o.id)}>
+                  <Crop avatar={{ ...avatar, faceShape: o.id, headwear: 'none', hair: 'dandy' }} />
+                </OptionTile>
+              ))}
+            </Section>
           )}
-
-          {step === 'eyes' && (
+          {step === 'face' && faceTab === 'skin' && (
+            <Section title="피부">
+              {SKINS.map((s) => (
+                <OptionTile key={s} selected={avatar.skin === s} onPress={() => setLook('skin', s)} width={64}>
+                  <Swatch color={palettes.skins[s]} />
+                </OptionTile>
+              ))}
+            </Section>
+          )}
+          {step === 'face' && faceTab === 'eyes' && (
+            <Section title="눈">
+              {EYES.map((o) => (
+                <OptionTile key={o.id} label={o.label} selected={avatar.eyes === o.id} onPress={() => setLook('eyes', o.id)}>
+                  <Crop avatar={{ ...avatar, eyes: o.id }} zoom />
+                </OptionTile>
+              ))}
+            </Section>
+          )}
+          {step === 'face' && faceTab === 'brows' && (
             <>
-              <Section title="눈">
-                {EYES.map((o) => (
-                  <OptionTile key={o.id} label={o.label} selected={avatar.eyes === o.id} onPress={() => setLook('eyes', o.id)}>
-                    <FaceCrop avatar={{ ...avatar, eyes: o.id }} />
-                  </OptionTile>
-                ))}
-              </Section>
               <Section title="눈썹">
                 {BROWS.map((o) => (
                   <OptionTile key={o.id} label={o.label} selected={avatar.brows === o.id} onPress={() => setLook('brows', o.id)}>
-                    <FaceCrop avatar={{ ...avatar, brows: o.id }} />
+                    <Crop avatar={{ ...avatar, brows: o.id }} zoom />
                   </OptionTile>
                 ))}
               </Section>
               <Section title="볼">
                 {CHEEKS.map((o) => (
                   <OptionTile key={o.id} label={o.label} selected={avatar.cheeks === o.id} onPress={() => setLook('cheeks', o.id)}>
-                    <FaceCrop avatar={{ ...avatar, cheeks: o.id }} />
+                    <Crop avatar={{ ...avatar, cheeks: o.id }} zoom />
                   </OptionTile>
                 ))}
               </Section>
             </>
           )}
 
-          {step === 'hair' && (
-            <>
-              <Section title="머리 모양">
-                {HAIRS.map((o) => (
-                  <OptionTile key={o.id} label={o.label} selected={avatar.hair === o.id} onPress={() => setLook('hair', o.id)}>
-                    <Avatar avatar={{ ...avatar, hair: o.id, headwear: 'none' }} size={60} />
-                  </OptionTile>
-                ))}
-              </Section>
-              <Section title="머리색">
-                {palettes.hairColors.map((c) => (
-                  <OptionTile key={c} selected={avatar.hairColor === c} onPress={() => setLook('hairColor', c)} width={60}>
-                    <Swatch color={c} />
-                  </OptionTile>
-                ))}
-              </Section>
-            </>
+          {step === 'hair' && hairTab === 'style' && (
+            <Section title="머리 모양">
+              {HAIRS.map((o) => (
+                <OptionTile key={o.id} label={o.label} selected={avatar.hair === o.id} onPress={() => setLook('hair', o.id)} width={84}>
+                  <Avatar avatar={{ ...avatar, hair: o.id, headwear: 'none', glasses: 'none' }} size={58} />
+                </OptionTile>
+              ))}
+            </Section>
+          )}
+          {step === 'hair' && hairTab === 'color' && (
+            <Section title="머리색">
+              {palettes.hairColors.map((c, i) => (
+                <OptionTile key={c} label={HAIR_COLOR_LABELS[i]} selected={avatar.hairColor === c} onPress={() => setLook('hairColor', c)} width={72}>
+                  <Swatch color={c} />
+                </OptionTile>
+              ))}
+            </Section>
           )}
 
-          {step === 'clothes' && (
+          {step === 'outfit' && outfitTab === 'top' && (
+            <Section title="옷">
+              {TOPS.map((o) => (
+                <OptionTile key={o.id} label={o.label} selected={avatar.top === o.id} onPress={() => setLook('top', o.id)}>
+                  <BodyCrop avatar={{ ...avatar, top: o.id }} />
+                </OptionTile>
+              ))}
+            </Section>
+          )}
+          {step === 'outfit' && outfitTab === 'color' && (
             <>
-              <Section title="옷">
-                {TOPS.map((o) => (
-                  <OptionTile key={o.id} label={o.label} selected={avatar.top === o.id} onPress={() => setLook('top', o.id)}>
-                    <BodyCrop avatar={{ ...avatar, top: o.id }} />
+              <Section title="옷 색">
+                {palettes.shirts.map((c) => (
+                  <OptionTile key={c} selected={avatar.shirt === c} onPress={() => setLook('shirt', c)} width={60}>
+                    <Swatch color={c} size={38} />
                   </OptionTile>
                 ))}
               </Section>
@@ -320,39 +351,33 @@ export function Studio({
                   </OptionTile>
                 ))}
               </Section>
-              <Section title="옷 색깔">
-                {palettes.shirts.map((c) => (
-                  <OptionTile key={c} selected={avatar.shirt === c} onPress={() => setLook('shirt', c)} width={60}>
-                    <Swatch color={c} />
-                  </OptionTile>
-                ))}
-              </Section>
             </>
           )}
-
-          {step === 'deco' && (
+          {step === 'outfit' && outfitTab === 'acc' && (
             <>
               <Section title="안경">
                 {GLASSES.map((o) => (
                   <OptionTile key={o.id} label={o.label} selected={avatar.glasses === o.id} onPress={() => setLook('glasses', o.id)}>
-                    <FaceCrop avatar={{ ...avatar, glasses: o.id }} />
+                    <Crop avatar={{ ...avatar, glasses: o.id }} zoom />
                   </OptionTile>
                 ))}
               </Section>
               <Section title="머리 장식">
                 {HEADWEAR.map((o) => (
                   <OptionTile key={o.id} label={o.label} selected={avatar.headwear === o.id} onPress={() => setLook('headwear', o.id)}>
-                    <Avatar avatar={{ ...avatar, headwear: o.id }} size={60} />
+                    <Avatar avatar={{ ...avatar, headwear: o.id }} size={52} />
                   </OptionTile>
                 ))}
               </Section>
-              <Section title="귀걸이">
-                {[false, true].map((on) => (
-                  <OptionTile key={String(on)} label={on ? '달기' : '없음'} selected={avatar.earrings === on} onPress={() => setLook('earrings', on)}>
-                    <FaceCrop avatar={{ ...avatar, earrings: on }} />
-                  </OptionTile>
-                ))}
-              </Section>
+              {kind === 'teacher' && (
+                <Section title="이름표">
+                  {[false, true].map((on) => (
+                    <OptionTile key={String(on)} label={on ? '달기' : '없음'} selected={avatar.nameTag === on} onPress={() => setLook('nameTag', on)}>
+                      <BodyCrop avatar={{ ...avatar, nameTag: on }} />
+                    </OptionTile>
+                  ))}
+                </Section>
+              )}
             </>
           )}
 
@@ -364,70 +389,41 @@ export function Studio({
           )}
 
           {step === 'done' && (
-            <View style={{ alignItems: 'center', gap: 8 }}>
-              <Text style={styles.doneTitle}>🎉 {callName(name, kind)} 완성!</Text>
+            <View style={{ alignItems: 'center', gap: 10 }}>
               <View style={styles.summary}>
                 {persona.color && <Text style={styles.summaryChip}>🎨 {colorOf(persona.color)?.label}</Text>}
                 {persona.animal && <Text style={styles.summaryChip}>{animalOf(persona.animal)?.emoji} {animalOf(persona.animal)?.label}</Text>}
                 {persona.shape && <Text style={styles.summaryChip}>{shapeOf(persona.shape)?.emoji} {shapeOf(persona.shape)?.label}</Text>}
               </View>
-              <Text style={styles.helper}>마음이 바뀌면 언제든 선생님 공방에서 다시 꾸밀 수 있어요</Text>
+              <Text style={styles.helper}>마음이 바뀌면 선생님 공방에서 다시 꾸밀 수 있어요</Text>
             </View>
           )}
         </ScrollView>
 
-        {/* 아래 버튼 */}
+        {/* 아래 버튼: 이전 / 다음 */}
         <View style={styles.footer}>
           {idx > 0 && step !== 'done' ? (
-            <BigButton small label="이전" color="#EEF1F6" textColor={colors.inkSoft} onPress={() => setIdx(idx - 1)} />
-          ) : null}
-          {LOOK_KEYS[step] ? (
-            <BigButton
-              small
-              label="랜덤"
-              icon="🎲"
-              color={colors.lilac}
-              onPress={() => {
-                setAvatar((a) => randomize(a, LOOK_KEYS[step]!));
-                pop();
-              }}
-            />
+            <BigButton small variant="secondary" label="이전" onPress={() => setIdx(idx - 1)} style={{ minWidth: 88 }} />
           ) : null}
           {step === 'done' ? (
-            <BigButton label={saving ? '저장 중…' : '완성!'} icon="✨" disabled={saving} onPress={finish} style={{ flex: 1 }} />
+            <BigButton label={saving ? '저장 중…' : '완성'} disabled={saving} onPress={finish} style={{ flex: 1 }} />
           ) : (
-            <BigButton
-              small
-              label="다음"
-              icon="👉"
-              disabled={!canNext}
-              onPress={() => {
-                tap();
-                setIdx(idx + 1);
-              }}
-              style={{ flex: 1 }}
-            />
+            <BigButton small label="다음" disabled={!canNext} onPress={() => setIdx(idx + 1)} style={{ flex: 1 }} />
           )}
         </View>
       </View>
       {step === 'done' && <Confetti />}
-    </SkyBackground>
+    </Screen>
   );
 }
 
-/** 성격 색을 배경으로 쓸 때 연하게 */
-function mixWithWhite(hex: string, amount: number) {
-  const n = parseInt(hex.slice(1), 16);
-  const ch = (shift: number) => Math.round(((n >> shift) & 255) * (1 - amount) + 255 * amount);
-  return `rgb(${ch(16)}, ${ch(8)}, ${ch(0)})`;
-}
-
-/** 얼굴만 크게 보이도록 자른 미리보기 */
-function FaceCrop({ avatar }: { avatar: FullAvatar }) {
+/** 얼굴이 잘 보이도록 자른 미리보기 (zoom: 눈 주변을 크게) */
+function Crop({ avatar, zoom }: { avatar: FullAvatar; zoom?: boolean }) {
+  const size = zoom ? 104 : 78;
   return (
-    <View style={{ width: 64, height: 58, overflow: 'hidden', alignItems: 'center' }}>
-      <View style={{ marginTop: -14 }}>
-        <Avatar avatar={avatar} size={80} />
+    <View style={{ width: 62, height: zoom ? 40 : 58, overflow: 'hidden', alignItems: 'center' }}>
+      <View style={{ marginTop: zoom ? -44 : -12 }}>
+        <Avatar avatar={avatar} size={size} />
       </View>
     </View>
   );
@@ -436,9 +432,9 @@ function FaceCrop({ avatar }: { avatar: FullAvatar }) {
 /** 옷만 보이도록 자른 미리보기 */
 function BodyCrop({ avatar }: { avatar: FullAvatar }) {
   return (
-    <View style={{ width: 64, height: 50, overflow: 'hidden', alignItems: 'center' }}>
-      <View style={{ marginTop: -56 }}>
-        <Avatar avatar={avatar} size={90} />
+    <View style={{ width: 62, height: 46, overflow: 'hidden', alignItems: 'center' }}>
+      <View style={{ marginTop: -60 }}>
+        <Avatar avatar={avatar} size={92} />
       </View>
     </View>
   );
@@ -446,57 +442,63 @@ function BodyCrop({ avatar }: { avatar: FullAvatar }) {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 4 },
-  close: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontSize: 22, color: colors.inkSoft },
-  progress: { flexDirection: 'row', gap: 2, flexWrap: 'wrap', justifyContent: 'center', flex: 1 },
-  progressIcon: { fontSize: 18 },
-  ask: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginHorizontal: 14,
-    marginTop: 4,
-    backgroundColor: colors.paper,
-    borderRadius: radius.lg,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    ...shadow,
-  },
-  askText: { flex: 1, fontFamily: fonts.title, fontSize: 18, lineHeight: 25, color: colors.ink },
+  iconBtn: { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  iconText: { fontSize: 20, color: colors.inkSoft, fontFamily: fonts.body },
+  ask: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 4 },
+  askText: { flex: 1, fontFamily: fonts.title, fontSize: 21, lineHeight: 28, color: colors.ink },
+  speaker: { fontSize: 18, opacity: 0.6 },
   preview: { alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
+  dice: {
+    position: 'absolute',
+    right: 28,
+    bottom: 14,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sheet: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.72)',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    overflow: 'hidden',
-  },
-  sheetContent: { padding: 14, gap: 16, paddingBottom: 24 },
-  footer: { flexDirection: 'row', gap: 8, padding: 12, paddingBottom: 16, backgroundColor: 'rgba(255,255,255,0.9)' },
-  nameInput: {
     backgroundColor: colors.paper,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    borderColor: colors.line,
+    paddingTop: 12,
+    paddingHorizontal: 12,
+    gap: 10,
+  },
+  sheetContent: { paddingVertical: 6, gap: 14, paddingBottom: 20 },
+  footer: { flexDirection: 'row', gap: 8, paddingVertical: 10, borderTopWidth: 1, borderColor: colors.line },
+  nameInput: {
+    backgroundColor: colors.bg,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontFamily: fonts.title,
-    fontSize: 26,
+    fontSize: 24,
     color: colors.ink,
     textAlign: 'center',
-    ...shadow,
-    shadowOpacity: 0.06,
   },
-  nameSuffix: { fontFamily: fonts.title, fontSize: 18, color: colors.inkSoft, textAlign: 'center' },
-  helper: { fontFamily: fonts.body, fontSize: 14, color: colors.inkSoft, textAlign: 'center' },
+  helper: { fontFamily: fonts.body, fontSize: 13, color: colors.inkMuted, textAlign: 'center' },
   summary: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   summaryChip: {
-    fontFamily: fonts.title,
-    fontSize: 16,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    fontWeight: '600',
     color: colors.ink,
-    backgroundColor: colors.paper,
+    backgroundColor: colors.bg,
     borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
     paddingHorizontal: 12,
     paddingVertical: 6,
     overflow: 'hidden',
   },
-  doneTitle: { fontFamily: fonts.title, fontSize: 26, color: colors.ink },
 });

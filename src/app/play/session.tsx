@@ -5,7 +5,7 @@ import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { Avatar } from '@/components/Avatar';
 import { displayName, resolveTarget, TargetStage } from '@/components/games/Target';
 import { Floating, Maru } from '@/components/Mascot';
-import { BigButton, Confetti, SkyBackground } from '@/components/ui';
+import { BigButton, Confetti, ProgressBar, SkyBackground } from '@/components/ui';
 import { WeatherIcon } from '@/components/WeatherIcon';
 import { FACES, SCENES, STICKERS, TOPICS, WEATHERS, type Reaction } from '@/games/content';
 import { planSession, type Step } from '@/games/planner';
@@ -17,7 +17,7 @@ import { withoutHeadwear } from '@/lib/avatar';
 import { josa } from '@/lib/josa';
 import { uuid } from '@/lib/util';
 import { useApp } from '@/state/AppContext';
-import { colors, fonts, radius, shadow } from '@/theme';
+import { colors, fonts, radius } from '@/theme';
 import type { Person, PlayResponse, Profile, TopicId } from '@/types';
 
 const CHEERS = ['고마워!', '알려줘서 고마워~', '좋아, 다음 날씨로 슝!', '우와, 그랬구나!', '멋지게 골랐어!'];
@@ -120,14 +120,15 @@ export default function Session() {
     return <Reward phase={phase} sticker={sticker} count={answers.length} onRetry={() => finish(answers)} />;
   }
 
+  // 놀이마다 바탕색만 살짝 다르게 (장식 없음)
   const bg =
     step.game === 'story'
-      ? { top: SCENES.find((s) => s.id === step.sceneId)!.bg, bottom: '#FFFFFF' }
+      ? { top: SCENES.find((s) => s.id === step.sceneId)!.bg, bottom: colors.bg }
       : step.game === 'face'
-        ? { top: '#FFD9A8', bottom: '#FFF6EA' }
+        ? { top: '#FFF1E0', bottom: colors.bg }
         : step.game === 'portrait'
-          ? { top: '#E4D9FF', bottom: '#FAF7FF' }
-          : { top: colors.skyTop, bottom: colors.skyBottom };
+          ? { top: '#F1ECFF', bottom: colors.bg }
+          : { top: colors.skySoft, bottom: colors.bg };
 
   return (
     <SkyBackground top={bg.top} bottom={bg.bottom} hills={step.game === 'weather'}>
@@ -135,12 +136,8 @@ export default function Session() {
         <Pressable accessibilityLabel="그만하기" onPress={() => router.back()} style={styles.close}>
           <Text style={styles.closeText}>✕</Text>
         </Pressable>
-        <View style={styles.progress}>
-          {steps.map((_, i) => (
-            <Text key={i} style={styles.progressIcon}>
-              {i < idx || (i === idx && picked) ? '☀️' : i === idx ? '⛅' : '☁️'}
-            </Text>
-          ))}
+        <View style={{ flex: 1 }}>
+          <ProgressBar step={idx + (picked ? 1 : 0)} total={steps.length} />
         </View>
         <View style={styles.close} />
       </View>
@@ -165,9 +162,7 @@ export default function Session() {
 
       {cheer && (
         <View style={styles.cheer} pointerEvents="none">
-          <Floating distance={6} duration={500}>
-            <Maru size={70} mood="wink" />
-          </Floating>
+          <Maru size={36} mood="wink" />
           <Text style={styles.cheerText}>{cheer}</Text>
         </View>
       )}
@@ -261,9 +256,9 @@ function PortraitGame({ step, profile, picked, onPick }: GameProps) {
   };
   return (
     <View style={{ gap: 14, alignItems: 'center' }}>
-      <Floating distance={5}>
-        <PersonCard person={preview} size={150} showTraits />
-      </Floating>
+      <View>
+        <PersonCard person={preview} size={140} showTraits />
+      </View>
       <PersonaPicker
         facet={facet}
         value={chosenId}
@@ -338,18 +333,18 @@ function Reward({ phase, sticker, count, onRetry }: { phase: 'saving' | 'reward'
     Animated.spring(pop, { toValue: 1, useNativeDriver: true, friction: 3, tension: 90 }).start();
   };
   return (
-    <SkyBackground top="#FFE8A3" bottom="#FFF9E8">
+    <SkyBackground top="#FFF3D6">
       <View style={styles.rewardWrap}>
         {phase === 'saving' && <Text style={styles.rewardTitle}>하늘에 날씨를 저장하는 중… ☁️</Text>}
         {phase === 'error' && (
           <>
             <Text style={styles.rewardTitle}>앗, 저장이 안 됐어요 😢</Text>
-            <BigButton label="다시 저장하기" icon="🔄" onPress={onRetry} />
+            <BigButton label="다시 저장하기" onPress={onRetry} />
           </>
         )}
         {phase === 'reward' && (
           <>
-            <Text style={styles.rewardTitle}>날씨 모험 끝! 🎉</Text>
+            <Text style={styles.rewardTitle}>다 했어요!</Text>
             <Text style={styles.rewardSub}>⭐ 별 {count}개를 모았어요</Text>
             <Pressable onPress={open} disabled={opened} style={styles.gift} accessibilityLabel="선물 열기">
               {opened ? (
@@ -363,8 +358,8 @@ function Reward({ phase, sticker, count, onRetry }: { phase: 'saving' | 'reward'
             <Text style={styles.rewardSub}>{opened ? '새 스티커를 받았어!' : '선물 상자를 눌러봐!'}</Text>
             {opened && (
               <View style={{ gap: 10, alignSelf: 'stretch' }}>
-                <BigButton label="스티커북 보기" icon="📒" color={colors.lilac} onPress={() => router.replace('/play/stickers')} />
-                <BigButton label="마을로 돌아가기" icon="🏡" onPress={() => router.replace('/play')} />
+                <BigButton label="처음으로" onPress={() => router.replace('/play')} />
+                <BigButton variant="ghost" label="스티커북 보기" onPress={() => router.replace('/play/stickers')} />
               </View>
             )}
           </>
@@ -375,89 +370,53 @@ function Reward({ phase, sticker, count, onRetry }: { phase: 'saving' | 'reward'
   );
 }
 
+const tileBase = {
+  alignItems: 'center' as const,
+  backgroundColor: colors.paper,
+  borderRadius: radius.md,
+  borderWidth: 2,
+  borderColor: colors.line,
+};
+
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 6 },
   close: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontSize: 22, color: colors.inkSoft },
-  progress: { flexDirection: 'row', gap: 4 },
-  progressIcon: { fontSize: 22 },
-  body: { padding: 16, gap: 14, paddingBottom: 40 },
-  prompt: {
-    backgroundColor: colors.paper,
-    borderRadius: radius.lg,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    ...shadow,
-  },
-  promptText: { flex: 1, fontFamily: fonts.title, fontSize: 22, lineHeight: 31, color: colors.ink },
-  speaker: { fontSize: 26 },
+  closeText: { fontSize: 20, color: colors.inkSoft },
+  body: { padding: 16, gap: 16, paddingBottom: 40 },
+  prompt: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 },
+  promptText: { flex: 1, fontFamily: fonts.title, fontSize: 24, lineHeight: 32, color: colors.ink },
+  speaker: { fontSize: 20, opacity: 0.6 },
   stickerRow: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 8 },
-  stickerBtn: {
-    width: 68,
-    alignItems: 'center',
-    backgroundColor: colors.paper,
-    borderRadius: radius.md,
-    paddingVertical: 8,
-    borderWidth: 3,
-    borderColor: 'transparent',
-    ...shadow,
-  },
-  stickerLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.inkSoft, marginTop: 2, textAlign: 'center' },
-  pickedBtn: { borderColor: colors.primary, transform: [{ scale: 1.08 }] },
+  stickerBtn: { ...tileBase, width: 66, paddingVertical: 8 },
+  stickerLabel: { fontFamily: fonts.body, fontSize: 11, fontWeight: '600', color: colors.inkSoft, marginTop: 2, textAlign: 'center' },
+  pickedBtn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   dim: { opacity: 0.35 },
-  faceGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 },
-  faceBtn: {
-    width: 100,
-    alignItems: 'center',
-    backgroundColor: colors.paper,
-    borderRadius: radius.md,
-    paddingBottom: 8,
-    borderWidth: 3,
-    borderColor: 'transparent',
-    ...shadow,
-  },
+  faceGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
+  faceBtn: { ...tileBase, width: 104, paddingBottom: 8 },
   faceCrop: { height: 78, overflow: 'hidden', alignItems: 'center' },
-  sceneCard: {
-    alignSelf: 'center',
-    backgroundColor: colors.paper,
-    borderRadius: radius.lg,
-    paddingVertical: 12,
-    paddingHorizontal: 28,
-    alignItems: 'center',
-    ...shadow,
-  },
-  sceneTitle: { fontFamily: fonts.title, fontSize: 20, color: colors.ink },
-  reactionGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 },
-  reactionBtn: {
-    width: 150,
-    alignItems: 'center',
-    backgroundColor: colors.paper,
-    borderRadius: radius.md,
-    padding: 8,
-    borderWidth: 3,
-    borderColor: 'transparent',
-    ...shadow,
-  },
-  reactionLabel: { fontFamily: fonts.body, fontSize: 14, color: colors.ink, textAlign: 'center', lineHeight: 19 },
-  unknown: { alignSelf: 'center', paddingHorizontal: 18, paddingVertical: 10, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.75)' },
-  unknownText: { fontFamily: fonts.body, fontSize: 16, color: colors.inkSoft },
+  sceneCard: { ...tileBase, alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 24, borderWidth: 1 },
+  sceneTitle: { fontFamily: fonts.title, fontSize: 18, color: colors.ink },
+  reactionGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
+  reactionBtn: { ...tileBase, width: 156, padding: 8 },
+  reactionLabel: { fontFamily: fonts.body, fontSize: 14, fontWeight: '600', color: colors.ink, textAlign: 'center', lineHeight: 19 },
+  unknown: { alignSelf: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper },
+  unknownText: { fontFamily: fonts.body, fontSize: 15, color: colors.inkSoft },
   cheer: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 28,
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.paper,
+    gap: 4,
+    backgroundColor: colors.ink,
     borderRadius: radius.pill,
-    paddingRight: 22,
-    paddingLeft: 8,
-    ...shadow,
+    paddingVertical: 4,
+    paddingRight: 18,
+    paddingLeft: 6,
   },
-  cheerText: { fontFamily: fonts.title, fontSize: 22, color: colors.primaryDark },
-  rewardWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 },
-  rewardTitle: { fontFamily: fonts.title, fontSize: 32, color: colors.ink, textAlign: 'center' },
-  rewardSub: { fontFamily: fonts.body, fontSize: 19, color: colors.inkSoft },
+  cheerText: { fontFamily: fonts.title, fontSize: 18, color: '#FFFFFF' },
+  rewardWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 },
+  rewardTitle: { fontFamily: fonts.title, fontSize: 30, color: colors.ink, textAlign: 'center' },
+  rewardSub: { fontFamily: fonts.body, fontSize: 16, color: colors.inkSoft },
   gift: { height: 170, justifyContent: 'center' },
 });

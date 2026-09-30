@@ -4,7 +4,6 @@ import { animalOf, colorOf, FACET_LABEL, shapeOf, traitOf, type PersonaFacet } f
 import { portraitHistory, type PortraitEntry } from '@/report/analyze';
 import { colors, fonts, radius } from '@/theme';
 import type { Person, PlayResponse } from '@/types';
-import { PersonCard } from '../studio/PersonCard';
 import { Panel, Section } from './ParentShell';
 
 const FACET_ICON: Record<PersonaFacet, string> = { color: '🎨', animal: '🐾', shape: '🔷', trait: '💬' };
@@ -55,22 +54,19 @@ export function PortraitSection({ person, responses }: { person: Person; respons
   return (
     <Section title="아이가 그린 이미지" sub="선생님 공방과 날씨 모험에서 아이가 직접 고른 색·동물·모양·성격이에요">
       <Panel>
-        <View style={styles.top}>
-          <PersonCard person={person} size={96} showTraits={false} />
-          <View style={{ flex: 1, gap: 6 }}>
-            {rows.map((r) => (
-              <View key={r.facet} style={styles.row}>
-                <Text style={styles.rowLabel}>
-                  {FACET_ICON[r.facet]} {FACET_LABEL[r.facet]}
-                </Text>
-                <Text style={styles.rowValue}>{r.value}</Text>
-              </View>
-            ))}
-          </View>
+        <View style={styles.grid}>
+          {rows.map((r) => (
+            <View key={r.facet} style={styles.cell}>
+              <Text style={styles.rowLabel}>
+                {FACET_ICON[r.facet]} {FACET_LABEL[r.facet]}
+              </Text>
+              <Text style={styles.rowValue}>{r.value}</Text>
+            </View>
+          ))}
         </View>
         {days.length > 0 && (
           <View style={{ gap: 8, marginTop: 6 }}>
-            <Text style={styles.histTitle}>🕰️ 고른 기록 (최근 순)</Text>
+            <Text style={styles.histTitle}>고른 기록 (최근 순)</Text>
             {days.map(([day, entries]) => (
               <View key={day} style={styles.dayRow}>
                 <Text style={styles.day}>{day}</Text>
@@ -91,11 +87,11 @@ export function PortraitSection({ person, responses }: { person: Person; respons
 
 const styles = StyleSheet.create({
   body: { fontFamily: fonts.body, fontSize: 15, color: colors.ink, lineHeight: 22 },
-  top: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  row: { gap: 1 },
-  rowLabel: { fontFamily: fonts.title, fontSize: 13, color: colors.inkSoft },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 12 },
+  cell: { width: '50%', gap: 2, paddingRight: 8 },
+  rowLabel: { fontFamily: fonts.body, fontWeight: '700', fontSize: 13, color: colors.inkSoft },
   rowValue: { fontFamily: fonts.body, fontSize: 14, color: colors.ink },
-  histTitle: { fontFamily: fonts.title, fontSize: 15, color: colors.ink },
+  histTitle: { fontFamily: fonts.body, fontWeight: '700', fontSize: 15, color: colors.ink },
   dayRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   day: { fontFamily: fonts.body, fontSize: 12, color: colors.inkMuted, width: 40, marginTop: 6 },
   chips: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },

@@ -10,7 +10,7 @@ import {
   type PersonaFacet,
 } from '@/games/persona';
 import { say, tap } from '@/lib/feedback';
-import { colors, fonts, radius, shadow } from '@/theme';
+import { colors, fonts, radius } from '@/theme';
 
 /** 고르기 타일: 선택되면 주황 테두리 + 살짝 커짐 */
 export function OptionTile({
@@ -50,7 +50,7 @@ export function OptionTile({
 }
 
 export function Swatch({ color, size = 44 }: { color: string; size?: number }) {
-  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color, borderWidth: 3, borderColor: '#fff', ...shadow, shadowOpacity: 0.08 }} />;
+  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' }} />;
 }
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -62,16 +62,11 @@ export function Section({ title, children }: { title: string; children: ReactNod
   );
 }
 
-/** 물감 방울 모양 색 고르기 */
+/** 색 고르기: 동그란 물감 */
 function PaintDrop({ c, selected, onPress, dim }: { c: ColorChoice; selected: boolean; onPress: () => void; dim?: boolean }) {
   return (
-    <OptionTile selected={selected} onPress={onPress} label={c.label} width={96} dim={dim}>
-      <View style={[styles.drop, { backgroundColor: c.color }]}>
-        <View style={styles.dropShine} />
-      </View>
-      <Text style={styles.hint} numberOfLines={1}>
-        {c.hint}
-      </Text>
+    <OptionTile selected={selected} onPress={onPress} label={c.label} width={84} dim={dim}>
+      <View style={[styles.drop, { backgroundColor: c.color }]} />
     </OptionTile>
   );
 }
@@ -120,15 +115,10 @@ export function PersonaPicker({
               selected={selected(c.id)}
               onPress={() => pick(c.id)}
               label={c.label}
-              width={facet === 'trait' ? 96 : 84}
+              width={facet === 'trait' ? 96 : 78}
               dim={dimOthers && anySelected && !selected(c.id)}
             >
-              <Text style={{ fontSize: facet === 'trait' ? 34 : 44 }}>{c.emoji}</Text>
-              {facet !== 'trait' && c.hint ? (
-                <Text style={styles.hint} numberOfLines={1}>
-                  {c.hint}
-                </Text>
-              ) : null}
+              <Text style={{ fontSize: facet === 'trait' ? 30 : 38 }}>{c.emoji}</Text>
             </OptionTile>
           ))}
       </View>
@@ -153,36 +143,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 8,
     paddingHorizontal: 4,
-    borderWidth: 3,
-    borderColor: 'transparent',
-    ...shadow,
-    shadowOpacity: 0.08,
+    borderWidth: 2,
+    borderColor: colors.line,
   },
-  tileOn: { borderColor: colors.primary, backgroundColor: '#FFF4EE', transform: [{ scale: 1.05 }] },
-  tileLabel: { fontFamily: fonts.body, fontSize: 13, color: colors.ink, marginTop: 4 },
-  hint: { fontFamily: fonts.body, fontSize: 10, color: colors.inkMuted, marginTop: 1 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  sectionTitle: { fontFamily: fonts.title, fontSize: 17, color: colors.inkSoft, marginLeft: 4 },
-  drop: {
-    width: 54,
-    height: 54,
-    borderTopLeftRadius: 27,
-    borderTopRightRadius: 6,
-    borderBottomLeftRadius: 27,
-    borderBottomRightRadius: 27,
-    transform: [{ rotate: '-45deg' }],
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  dropShine: { position: 'absolute', left: 10, top: 14, width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.6)' },
+  tileOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  tileLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.inkSoft, marginTop: 4, fontWeight: '600' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
+  sectionTitle: { fontFamily: fonts.body, fontSize: 13, fontWeight: '700', color: colors.inkMuted, marginLeft: 4 },
+  drop: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' },
   unknown: {
     alignSelf: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    borderWidth: 3,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
   },
-  unknownText: { fontFamily: fonts.body, fontSize: 16, color: colors.inkSoft },
+  unknownText: { fontFamily: fonts.body, fontSize: 15, color: colors.inkSoft },
 });

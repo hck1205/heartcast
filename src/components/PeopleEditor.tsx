@@ -2,7 +2,7 @@ import { router, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { tap } from '@/lib/feedback';
-import { colors, fonts, radius, shadow } from '@/theme';
+import { colors, fonts, radius } from '@/theme';
 import type { Person, PersonKind } from '@/types';
 import { PersonCard } from './studio/PersonCard';
 
@@ -25,12 +25,12 @@ export function PeopleEditor({ kind, people, studioPath }: { kind: PersonKind; p
       {mine.map((p) => (
         <Pressable key={p.id} accessibilityLabel={`${p.name} 꾸미기`} onPress={() => open({ id: p.id, kind })} style={styles.card}>
           <PersonCard person={p} size={88} showTraits={false} />
-          <Text style={styles.edit}>✏️ 다시 꾸미기</Text>
+          <Text style={styles.edit}>다시 꾸미기</Text>
         </Pressable>
       ))}
       {mine.length < MAX_PEOPLE[kind] && (
         <Pressable accessibilityRole="button" accessibilityLabel={`${label} 추가`} onPress={() => open({ kind })} style={[styles.card, styles.addCard]}>
-          <Text style={{ fontSize: 44 }}>➕</Text>
+          <Text style={{ fontSize: 34, color: colors.inkMuted }}>＋</Text>
           <Text style={styles.name}>{label} 만들기</Text>
         </Pressable>
       )}
@@ -39,18 +39,19 @@ export function PeopleEditor({ kind, people, studioPath }: { kind: PersonKind; p
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
   card: {
-    width: 136,
-    minHeight: 160,
+    width: 140,
+    minHeight: 150,
     backgroundColor: colors.paper,
     borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 8,
-    ...shadow,
   },
-  addCard: { backgroundColor: 'rgba(255,255,255,0.65)', borderWidth: 3, borderStyle: 'dashed', borderColor: '#fff' },
-  name: { fontFamily: fonts.title, fontSize: 16, color: colors.ink, marginTop: 4 },
+  addCard: { backgroundColor: 'transparent', borderWidth: 2, borderStyle: 'dashed', borderColor: '#D9D1C4' },
+  name: { fontFamily: fonts.title, fontSize: 16, color: colors.inkSoft, marginTop: 4 },
   edit: { fontFamily: fonts.body, fontSize: 12, color: colors.inkMuted, marginTop: 2 },
 });

@@ -1,13 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { MaruSays } from '@/components/Mascot';
 import { PinPad } from '@/components/PinPad';
 import { BigButton, SkyBackground } from '@/components/ui';
 import { hashPin } from '@/lib/util';
 import { useApp } from '@/state/AppContext';
-import { colors } from '@/theme';
+import { colors, fonts } from '@/theme';
 
 export default function Gate() {
   const { profile, setParentUnlocked } = useApp();
@@ -25,11 +24,14 @@ export default function Gate() {
   };
 
   return (
-    <SkyBackground top="#C9D6FF" bottom="#F3F5FF" hills={false}>
+    <SkyBackground>
       <View style={{ flex: 1, padding: 20, gap: 24, justifyContent: 'center' }}>
-        <MaruSays text="여기는 부모님 방이에요. 비밀번호 4자리를 눌러 주세요." size={80} />
+        <View style={{ alignItems: 'center', gap: 6 }}>
+          <Text style={{ fontFamily: fonts.title, fontSize: 24, color: colors.ink }}>부모님 비밀번호</Text>
+          <Text style={{ fontFamily: fonts.body, fontSize: 14, color: colors.inkSoft }}>리포트를 보려면 4자리를 눌러 주세요</Text>
+        </View>
         <PinPad key={tries} onComplete={check} error={error} />
-        <BigButton label="놀이로 돌아가기" icon="🌈" color={colors.paper} textColor={colors.ink} onPress={() => router.replace('/play')} />
+        <BigButton variant="ghost" label="놀이로 돌아가기" onPress={() => router.replace('/play')} />
       </View>
     </SkyBackground>
   );

@@ -15,27 +15,58 @@ const daysAgo = (n: number) => {
   d.setDate(d.getDate() - n);
   return d;
 };
-const teacher: Person = { id: 't-1', kind: 'teacher', name: '단비', avatar: { skin: 'peach', hair: 'bob', hairColor: '#000', shirt: '#fff' } };
+const teacher: Person = { id: 't-1', kind: 'teacher', name: '단비', avatar: { skin: 'light', hair: 'bobBangs', hairColor: '#000000', shirt: '#ffffff' } };
 
 describe('normalizeAvatar', () => {
-  it('migrates the old single accessory field', () => {
-    const glasses = normalizeAvatar({ skin: 'tan', hair: 'bob', hairColor: '#000', shirt: '#fff', accessory: 'glasses' });
-    expect(glasses.glasses).toBe('round');
-    expect(glasses.headwear).toBe('none');
-    const crown = normalizeAvatar({ skin: 'tan', hair: 'bob', hairColor: '#000', shirt: '#fff', accessory: 'crown' });
-    expect(crown.headwear).toBe('crown');
+  it('migrates the very first version (single accessory field)', () => {
+    const glasses = normalizeAvatar({ skin: 'tan', hair: 'bob', hairColor: '#000000', shirt: '#ffffff', accessory: 'glasses' } as any);
+    expect(glasses).toMatchObject({ glasses: 'round', headwear: 'none', hair: 'bobBangs', skin: 'tan', top: 'sweatshirt' });
+    const crown = normalizeAvatar({ skin: 'peach', hair: 'spiky', hairColor: '#000000', shirt: '#ffffff', accessory: 'crown' } as any);
+    expect(crown).toMatchObject({ headwear: 'ribbon', hair: 'twoblock', skin: 'light' });
   });
 
-  it('fills defaults for new parts and fixes unknown skins', () => {
-    const a = normalizeAvatar({ skin: 'purple' as any, hair: 'afro', hairColor: '#123', shirt: '#fff' });
-    expect(a).toMatchObject({ skin: 'peach', faceShape: 'round', eyes: 'dot', top: 'tshirt', pattern: 'none', earrings: false, hair: 'afro' });
+  it('migrates the first studio version (western cartoon parts)', () => {
+    const a = normalizeAvatar({
+      skin: 'fair',
+      eyes: 'sparkle',
+      brows: 'none',
+      cheeks: 'freckles',
+      hair: 'afro',
+      hairColor: '#5B8DEF',
+      top: 'tshirt',
+      pattern: 'stars',
+      shirt: '#FF8A5B',
+      glasses: 'sun',
+      headwear: 'beanie',
+      earrings: true,
+    } as any);
+    expect(a).toMatchObject({
+      skin: 'porcelain',
+      eyes: 'big',
+      brows: 'straight',
+      cheeks: 'blush',
+      hair: 'shortPerm',
+      top: 'sweatshirt',
+      pattern: 'dots',
+      glasses: 'horn',
+      headwear: 'cap',
+      nameTag: false,
+    });
+    expect('earrings' in a).toBe(false);
   });
 
-  it('random avatars are always complete', () => {
-    for (let i = 0; i < 20; i++) {
+  it('falls back safely on garbage', () => {
+    const a = normalizeAvatar({ skin: 'purple', hair: 42, hairColor: 'red', shirt: null } as any);
+    expect(a.skin).toBe('light');
+    expect(a.hair).toBe('bobBangs');
+    expect(a.hairColor).toMatch(/^#/);
+    expect(a.shirt).toMatch(/^#/);
+  });
+
+  it('random avatars are always complete and valid', () => {
+    for (let i = 0; i < 30; i++) {
       const a = randomAvatar();
       expect(normalizeAvatar(a)).toEqual(a);
-      for (const v of Object.values(a)) expect(v).not.toBeUndefined();
     }
   });
 });

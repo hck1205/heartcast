@@ -1,32 +1,34 @@
 // 마음날씨 공용 타입
 
-export type SkinTone = 'fair' | 'light' | 'peach' | 'tan' | 'olive' | 'brown' | 'deep';
+export type SkinTone = 'porcelain' | 'light' | 'medium' | 'tan' | 'deep';
 export type FaceShape = 'round' | 'oval' | 'square' | 'heart' | 'long';
-export type EyeStyle = 'dot' | 'round' | 'sparkle' | 'lashes' | 'sleepy';
-export type BrowStyle = 'thin' | 'thick' | 'arched' | 'none';
-export type CheekStyle = 'blush' | 'freckles' | 'none';
+export type EyeStyle = 'basic' | 'double' | 'smile' | 'narrow' | 'big';
+export type BrowStyle = 'straight' | 'arched' | 'thick';
+export type CheekStyle = 'blush' | 'none';
+/** 한국에서 흔한 머리 모양 (일상툰 스타일) */
 export type HairStyle =
-  | 'short'
-  | 'bob'
-  | 'long'
-  | 'bun'
-  | 'curly'
-  | 'pigtails'
-  | 'spiky'
+  | 'dandy'
+  | 'twoblock'
+  | 'shortPerm'
+  | 'bobBangs'
+  | 'bobPart'
+  | 'longBangs'
+  | 'longPart'
+  | 'halfUp'
   | 'ponytail'
-  | 'braids'
-  | 'wavy'
-  | 'buzz'
-  | 'afro';
-export type TopStyle = 'tshirt' | 'apron' | 'cardigan' | 'hoodie' | 'collar';
-export type Pattern = 'none' | 'stripe' | 'dots' | 'stars' | 'hearts';
-export type GlassesStyle = 'none' | 'round' | 'square' | 'sun';
-export type Headwear = 'none' | 'ribbon' | 'cap' | 'flower' | 'crown' | 'headband' | 'beanie';
-/** @deprecated 예전 버전 데이터 — normalizeAvatar 가 glasses/headwear 로 옮긴다 */
-export type Accessory = 'none' | 'glasses' | 'ribbon' | 'cap' | 'flower' | 'crown';
+  | 'bun'
+  | 'pigtails'
+  | 'wave';
+export type TopStyle = 'apron' | 'cardigan' | 'sweatshirt' | 'shirt' | 'hoodie';
+export type Pattern = 'none' | 'stripe' | 'dots';
+export type GlassesStyle = 'none' | 'round' | 'horn';
+export type Headwear = 'none' | 'headband' | 'pin' | 'scrunchie' | 'ribbon' | 'cap';
 export type Expression = 'happy' | 'calm' | 'neutral' | 'sad' | 'angry' | 'scared';
 
-/** 아바타 파츠. 예전 데이터와 호환되도록 새 항목은 선택값이며 normalizeAvatar 로 채운다. */
+/**
+ * 아바타 파츠. 예전 버전 데이터(accessory 하나짜리, 1차 공방 형식)는
+ * normalizeAvatar 가 새 형식으로 바꿔 준다.
+ */
 export interface AvatarConfig {
   skin: SkinTone;
   faceShape?: FaceShape;
@@ -40,11 +42,11 @@ export interface AvatarConfig {
   shirt: string;
   glasses?: GlassesStyle;
   headwear?: Headwear;
-  earrings?: boolean;
-  accessory?: Accessory;
+  /** 가슴에 다는 이름표 */
+  nameTag?: boolean;
 }
 
-export type FullAvatar = Required<Omit<AvatarConfig, 'accessory'>>;
+export type FullAvatar = Required<AvatarConfig>;
 
 /** 아이가 느끼는 선생님(친구)의 이미지: 색·동물·모양·성격 스티커 */
 export interface Persona {

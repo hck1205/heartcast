@@ -3,7 +3,7 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AvatarBuilder } from '@/components/AvatarBuilder';
 import { OnboardingFrame } from '@/components/OnboardingFrame';
-import { BigButton, Card } from '@/components/ui';
+import { BigButton } from '@/components/ui';
 import { useOnboarding } from '@/state/OnboardingContext';
 import { colors, fonts, radius } from '@/theme';
 
@@ -15,11 +15,12 @@ export default function ChildStep() {
   return (
     <OnboardingFrame
       step={2}
-      maru="우리 아이를 그려볼까요? 아이와 함께 머리랑 옷을 골라 보세요!"
-      footer={<BigButton label="다음" icon="👉" disabled={!valid} onPress={() => router.push('/onboarding/teachers')} />}
+      maru="우리 아이 소개"
+      sub="이름과 반을 적고, 아이와 함께 모습을 꾸며 주세요."
+      footer={<BigButton label="다음" disabled={!valid} onPress={() => router.push('/onboarding/teachers')} />}
     >
-      <Card style={{ gap: 12 }}>
-        <Text style={styles.label}>아이 이름(애칭)</Text>
+      <View style={{ gap: 10 }}>
+        <Text style={styles.label}>이름(애칭)</Text>
         <TextInput
           value={draft.childName}
           onChangeText={(childName) => update({ childName })}
@@ -44,21 +45,23 @@ export default function ChildStep() {
             </Text>
           ))}
         </View>
-      </Card>
+      </View>
       <AvatarBuilder value={draft.childAvatar} onChange={(childAvatar) => update({ childAvatar })} />
     </OnboardingFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  label: { fontFamily: fonts.title, fontSize: 16, color: colors.inkSoft },
+  label: { fontFamily: fonts.body, fontSize: 13, fontWeight: '700', color: colors.inkMuted },
   input: {
-    backgroundColor: '#F5F7FB',
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
     borderRadius: radius.md,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontFamily: fonts.body,
-    fontSize: 20,
+    fontSize: 18,
     color: colors.ink,
   },
   ideas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -66,11 +69,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 14,
     color: colors.inkSoft,
-    backgroundColor: '#F5F7FB',
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
     borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
     overflow: 'hidden',
   },
-  ideaOn: { backgroundColor: '#FFE7DC', color: colors.primaryDark },
+  ideaOn: { backgroundColor: colors.primarySoft, borderColor: colors.primary, color: colors.primaryDark },
 });

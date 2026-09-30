@@ -34,16 +34,16 @@ export default function PersonDetail() {
 
   return (
     <ParentShell title={s.name}>
-      <Panel style={{ alignItems: 'center', backgroundColor: '#EAF6FF' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-          <PersonCard person={person} size={110} expression="calm" showName={false} showTraits={false} />
-          {s.weather && <WeatherIcon code={s.weather} size={80} />}
+      <Panel style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <PersonCard person={person} size={80} expression="calm" showName={false} showTraits={false} />
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={styles.big}>최근 2주 {s.weather ? weatherLabel(s.weather) : '기록 없음'}</Text>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <TrendBadge trend={s.trend} />
+            <Text style={styles.meta}>답 {s.answered}개</Text>
+          </View>
         </View>
-        <Text style={styles.big}>최근 2주: {s.weather ? `'${weatherLabel(s.weather)}'` : '기록 없음'}</Text>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          <TrendBadge trend={s.trend} />
-          <Text style={styles.meta}>답 {s.answered}개</Text>
-        </View>
+        {s.weather && <WeatherIcon code={s.weather} size={56} />}
       </Panel>
 
       {signals.map((sig) => (
@@ -114,7 +114,6 @@ export default function PersonDetail() {
 
       <BigButton
         label="그랬구나 대화 카드"
-        icon="💛"
         onPress={() => router.push({ pathname: '/parent/talk', params: signals[0] ? { signal: signals[0].id } : {} })}
       />
       <NoteBox targetId={person.id} />
@@ -123,13 +122,13 @@ export default function PersonDetail() {
 }
 
 const styles = StyleSheet.create({
-  big: { fontFamily: fonts.title, fontSize: 22, color: colors.ink, marginTop: 6 },
+  big: { fontFamily: fonts.body, fontWeight: '700', fontSize: 19, color: colors.ink },
   meta: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft },
   faceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
   faceItem: { alignItems: 'center' },
   storyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: radius.sm },
   storyFear: { backgroundColor: '#FFF1EC' },
-  storyTitle: { fontFamily: fonts.title, fontSize: 15, color: colors.ink },
+  storyTitle: { fontFamily: fonts.body, fontWeight: '700', fontSize: 15, color: colors.ink },
   date: { fontFamily: fonts.body, fontSize: 12, color: colors.inkMuted },
   line: { fontFamily: fonts.body, fontSize: 14, color: colors.ink, lineHeight: 21 },
 });

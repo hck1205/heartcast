@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { animalOf, callName, colorOf, shapeOf, traitOf } from '@/games/persona';
-import { colors, fonts, radius, shadow } from '@/theme';
+import { colors, fonts, radius } from '@/theme';
 import type { Expression, Person } from '@/types';
 import { Avatar } from '../Avatar';
 
@@ -23,7 +23,7 @@ export function PersonCard({
   showName?: boolean;
 }) {
   const p = person.persona;
-  const bg = colorOf(p?.color)?.color ?? '#EAF6FF';
+  const bg = colorOf(p?.color)?.color ?? colors.skySoft;
   const animal = animalOf(p?.animal);
   const shape = shapeOf(p?.shape);
   const badge = Math.max(26, size * 0.28);
@@ -68,14 +68,14 @@ export function PersonCard({
 }
 
 const styles = StyleSheet.create({
-  frame: { alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', borderWidth: 4, borderColor: '#FFFFFF' },
+  frame: { alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', borderWidth: 3, borderColor: '#FFFFFF' },
   badge: {
     position: 'absolute',
     backgroundColor: colors.paper,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow,
-    shadowOpacity: 0.15,
+    borderWidth: 1,
+    borderColor: colors.line,
   },
   name: { fontFamily: fonts.title, color: colors.ink, marginTop: 6 },
   traits: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, justifyContent: 'center', marginTop: 4 },
@@ -83,8 +83,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 11,
     color: colors.inkSoft,
-    backgroundColor: colors.paper,
+    backgroundColor: colors.bg,
     borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.line,
     paddingHorizontal: 6,
     paddingVertical: 2,
     overflow: 'hidden',

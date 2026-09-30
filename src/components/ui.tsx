@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Animated,
   Easing,
@@ -12,83 +12,45 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { tap } from '@/lib/feedback';
-import { colors, fonts, radius, shadow } from '@/theme';
-import { Cloud } from './WeatherIcon';
+import { colors, fonts, radius } from '@/theme';
 
-/** 하늘 그라디언트 + 흘러가는 구름 + 언덕 배경 */
+/**
+ * 화면 바탕: 단색 한 가지 (기본은 따뜻한 흰색, top 을 주면 그 색).
+ * (예전의 흘러가는 구름·언덕 장식은 없앴다)
+ */
 export function SkyBackground({
   children,
-  top = colors.skyTop,
-  bottom = colors.skyBottom,
-  hills = true,
+  top,
+  bottom,
   style,
 }: {
   children: ReactNode;
   top?: string;
   bottom?: string;
+  /** @deprecated 장식을 없애 더는 쓰지 않는다 */
   hills?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { width, height } = useWindowDimensions();
   return (
-    <View style={[{ flex: 1, backgroundColor: bottom }, style]}>
-      <Svg style={StyleSheet.absoluteFill} width={width} height={height}>
-        <Defs>
-          <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={top} />
-            <Stop offset="1" stopColor={bottom} />
-          </LinearGradient>
-        </Defs>
-        <Rect x={0} y={0} width={width} height={height} fill="url(#sky)" />
-        {hills && (
-          <>
-            <Path
-              d={`M0 ${height - 90} Q${width * 0.3} ${height - 150} ${width * 0.6} ${height - 95} T${width} ${height - 110} L${width} ${height} L0 ${height} Z`}
-              fill="#BDEBC4"
-            />
-            <Path
-              d={`M0 ${height - 55} Q${width * 0.4} ${height - 100} ${width * 0.75} ${height - 60} T${width} ${height - 70} L${width} ${height} L0 ${height} Z`}
-              fill="#9EDFAA"
-            />
-          </>
-        )}
-      </Svg>
-      <DriftingCloud y={70} delay={0} scale={0.9} />
-      <DriftingCloud y={170} delay={6000} scale={0.6} />
+    <View style={[{ flex: 1, backgroundColor: top ?? bottom ?? colors.bg }, style]}>
       <SafeAreaView style={{ flex: 1 }}>{children}</SafeAreaView>
     </View>
   );
 }
 
-function DriftingCloud({ y, delay, scale }: { y: number; delay: number; scale: number }) {
-  const { width } = useWindowDimensions();
-  const x = useState(() => new Animated.Value(0))[0];
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.timing(x, { toValue: 1, duration: 26000, delay, easing: Easing.linear, useNativeDriver: true }),
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [x, delay]);
-  const translateX = x.interpolate({ inputRange: [0, 1], outputRange: [-120, width + 20] });
-  return (
-    <Animated.View pointerEvents="none" style={{ position: 'absolute', top: y, opacity: 0.85, transform: [{ translateX }, { scale }] }}>
-      <Svg width={100} height={80} viewBox="0 20 100 60">
-        <Cloud stroke="rgba(255,255,255,0)" />
-      </Svg>
-    </Animated.View>
-  );
-}
+export const Screen = SkyBackground;
 
-/** 통통 튀는 큰 버튼 */
+type Variant = 'primary' | 'secondary' | 'ghost';
+
+/** 평평한 버튼. 한 화면에 primary 는 하나만 쓰는 것을 원칙으로 한다. */
 export function BigButton({
   label,
   onPress,
-  color = colors.primary,
-  textColor = '#fff',
+  variant,
+  color,
+  textColor,
   icon,
   disabled,
   style,
@@ -96,6 +58,8 @@ export function BigButton({
 }: {
   label: string;
   onPress: () => void;
+  variant?: Variant;
+  /** 직접 색을 줄 때 (없으면 variant 색) */
   color?: string;
   textColor?: string;
   icon?: string;
@@ -103,32 +67,34 @@ export function BigButton({
   style?: StyleProp<ViewStyle>;
   small?: boolean;
 }) {
-  const s = useState(() => new Animated.Value(1))[0];
-  const to = (v: number) => Animated.spring(s, { toValue: v, useNativeDriver: true, speed: 40, bounciness: 12 }).start();
+  // 예전 호출(color=흰색)은 secondary 로 본다
+  const v: Variant = variant ?? (color === colors.paper || color === '#EEF1F6' ? 'secondary' : 'primary');
+  const bg = v === 'primary' ? (color ?? colors.primary) : v === 'secondary' ? colors.paper : 'transparent';
+  const fg = textColor && v === 'primary' ? textColor : v === 'primary' ? '#FFFFFF' : v === 'secondary' ? colors.ink : colors.inkSoft;
   return (
-    <Animated.View style={[{ transform: [{ scale: s }], opacity: disabled ? 0.45 : 1 }, style]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        disabled={disabled}
-        onPressIn={() => to(0.94)}
-        onPressOut={() => to(1)}
-        onPress={() => {
-          tap();
-          onPress();
-        }}
-        style={[
-          styles.btn,
-          small && styles.btnSmall,
-          { backgroundColor: color, borderBottomColor: 'rgba(0,0,0,0.15)' },
-        ]}
-      >
-        {icon ? <Text style={[styles.btnIcon, small && { fontSize: 20 }]}>{icon}</Text> : null}
-        <Text style={[styles.btnText, small && { fontSize: 17 }, { color: textColor }]}>{label}</Text>
-      </Pressable>
-    </Animated.View>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      disabled={disabled}
+      onPress={() => {
+        tap();
+        onPress();
+      }}
+      style={({ pressed }) => [
+        styles.btn,
+        small && styles.btnSmall,
+        { backgroundColor: bg, opacity: disabled ? 0.4 : pressed ? 0.85 : 1 },
+        v === 'secondary' && styles.btnSecondary,
+        style,
+      ]}
+    >
+      {icon ? <Text style={[styles.btnIcon, small && { fontSize: 17 }]}>{icon}</Text> : null}
+      <Text style={[styles.btnText, small && { fontSize: 16 }, { color: fg }]}>{label}</Text>
+    </Pressable>
   );
 }
+
+export const Button = BigButton;
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, style]}>{children}</View>;
@@ -144,24 +110,35 @@ export function Body({ children, style, muted }: { children: ReactNode; style?: 
   return <Text style={[styles.body, muted && { color: colors.inkSoft }, style]}>{children}</Text>;
 }
 
-/** 온보딩 진행: 해님이 하늘을 건너간다 */
+/** 얇은 진행 막대 */
 export function SkyProgress({ step, total }: { step: number; total: number }) {
   const pct = Math.min(1, step / total);
   return (
     <View style={styles.progressTrack} accessibilityLabel={`${total}단계 중 ${step}단계`}>
       <View style={[styles.progressFill, { width: `${pct * 100}%` }]} />
-      <Text style={[styles.progressSun, { left: `${pct * 100}%` }]}>☀️</Text>
+    </View>
+  );
+}
+export const ProgressBar = SkyProgress;
+
+/** 점 진행 표시 ●●○○ */
+export function Dots({ index, total }: { index: number; total: number }) {
+  return (
+    <View style={styles.dots} accessibilityLabel={`${total}단계 중 ${index + 1}단계`}>
+      {Array.from({ length: total }).map((_, i) => (
+        <View key={i} style={[styles.dot, i < index && styles.dotDone, i === index && styles.dotNow]} />
+      ))}
     </View>
   );
 }
 
-/** 색종이 축하 효과 */
-export function Confetti({ count = 28 }: { count?: number }) {
+/** 색종이 축하 효과 (완성·보상 화면에서만) */
+export function Confetti({ count = 24 }: { count?: number }) {
   const { width, height } = useWindowDimensions();
   const [pieces] = useState(() =>
     Array.from({ length: count }).map((_, i) => ({
       x: Math.random() * width,
-      delay: Math.random() * 600,
+      delay: Math.random() * 500,
       rot: Math.random() * 360,
       color: [colors.primary, colors.mint, colors.lemon, colors.lilac, colors.pink, colors.sky][i % 6],
       v: new Animated.Value(0),
@@ -170,7 +147,7 @@ export function Confetti({ count = 28 }: { count?: number }) {
   useEffect(() => {
     Animated.parallel(
       pieces.map((p) =>
-        Animated.timing(p.v, { toValue: 1, duration: 2200, delay: p.delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(p.v, { toValue: 1, duration: 2000, delay: p.delay, easing: Easing.out(Easing.quad), useNativeDriver: true }),
       ),
     ).start();
   }, [pieces]);
@@ -183,13 +160,13 @@ export function Confetti({ count = 28 }: { count?: number }) {
             position: 'absolute',
             left: p.x,
             top: -20,
-            width: 10,
-            height: 16,
+            width: 8,
+            height: 14,
             borderRadius: 3,
             backgroundColor: p.color,
             opacity: p.v.interpolate({ inputRange: [0, 0.8, 1], outputRange: [1, 1, 0] }),
             transform: [
-              { translateY: p.v.interpolate({ inputRange: [0, 1], outputRange: [0, height * 0.8] }) },
+              { translateY: p.v.interpolate({ inputRange: [0, 1], outputRange: [0, height * 0.7] }) },
               { rotate: p.v.interpolate({ inputRange: [0, 1], outputRange: [`${p.rot}deg`, `${p.rot + 540}deg`] }) },
             ],
           }}
@@ -199,7 +176,7 @@ export function Confetti({ count = 28 }: { count?: number }) {
   );
 }
 
-/** 선택 칩 (색·스타일 고르기) */
+/** 선택 칩 */
 export function Chip({
   selected,
   onPress,
@@ -229,44 +206,65 @@ export function Chip({
   );
 }
 
+/** 작은 탭(세그먼트) */
+export function Tabs<T extends string>({ items, value, onChange }: { items: { id: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  return (
+    <View style={styles.tabs}>
+      {items.map((t) => (
+        <Pressable
+          key={t.id}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: value === t.id }}
+          onPress={() => {
+            tap();
+            onChange(t.id);
+          }}
+          style={[styles.tab, value === t.id && styles.tabOn]}
+        >
+          <Text style={[styles.tabText, value === t.id && styles.tabTextOn]}>{t.label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 export const styles = StyleSheet.create({
   btn: {
-    minHeight: 64,
-    borderRadius: radius.pill,
-    paddingHorizontal: 28,
+    minHeight: 56,
+    borderRadius: radius.md,
+    paddingHorizontal: 22,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    borderBottomWidth: 5,
-    ...shadow,
+    gap: 8,
   },
-  btnSmall: { minHeight: 48, paddingHorizontal: 18, borderBottomWidth: 3 },
-  btnIcon: { fontSize: 26 },
-  btnText: { fontFamily: fonts.title, fontSize: 22 },
-  card: { backgroundColor: colors.paper, borderRadius: radius.lg, padding: 18, ...shadow },
-  h1: { fontFamily: fonts.title, fontSize: 30, color: colors.ink, lineHeight: 40 },
-  h2: { fontFamily: fonts.title, fontSize: 21, color: colors.ink, lineHeight: 29 },
-  body: { fontFamily: fonts.body, fontSize: 16, color: colors.ink, lineHeight: 24 },
-  progressTrack: {
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    marginHorizontal: 24,
-    marginTop: 8,
-    marginBottom: 6,
-    overflow: 'visible',
-  },
-  progressFill: { height: 14, borderRadius: 7, backgroundColor: colors.lemon },
-  progressSun: { position: 'absolute', top: -12, marginLeft: -16, fontSize: 28 },
+  btnSmall: { minHeight: 46, paddingHorizontal: 16, borderRadius: 14 },
+  btnSecondary: { borderWidth: 1, borderColor: colors.line },
+  btnIcon: { fontSize: 20 },
+  btnText: { fontFamily: fonts.title, fontSize: 19 },
+  card: { backgroundColor: colors.paper, borderRadius: radius.lg, padding: 16, borderWidth: 1, borderColor: colors.line },
+  h1: { fontFamily: fonts.title, fontSize: 26, color: colors.ink, lineHeight: 34 },
+  h2: { fontFamily: fonts.title, fontSize: 20, color: colors.ink, lineHeight: 27 },
+  body: { fontFamily: fonts.body, fontSize: 15, color: colors.ink, lineHeight: 22 },
+  progressTrack: { height: 6, borderRadius: 3, backgroundColor: colors.line, marginHorizontal: 12, overflow: 'hidden' },
+  progressFill: { height: 6, borderRadius: 3, backgroundColor: colors.primary },
+  dots: { flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.line },
+  dotDone: { backgroundColor: '#FFC3B2' },
+  dotNow: { width: 20, backgroundColor: colors.primary },
   chip: {
     borderRadius: radius.md,
-    borderWidth: 3,
-    borderColor: 'transparent',
+    borderWidth: 2,
+    borderColor: colors.line,
     backgroundColor: colors.paper,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 6,
   },
-  chipOn: { borderColor: colors.primary, backgroundColor: '#FFF1EA' },
+  chipOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  tabs: { flexDirection: 'row', backgroundColor: '#F1ECE4', borderRadius: 12, padding: 3, gap: 3 },
+  tab: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
+  tabOn: { backgroundColor: colors.paper },
+  tabText: { fontFamily: fonts.body, fontSize: 14, color: colors.inkSoft, fontWeight: '600' },
+  tabTextOn: { color: colors.ink },
 });

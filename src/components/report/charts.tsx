@@ -64,7 +64,7 @@ export function TrendBadge({ trend }: { trend: Trend | null }) {
     down: { t: '↘ 흐려지는 중', c: colors.signal.talk },
     flat: { t: '→ 비슷해요', c: colors.inkMuted },
   } as const;
-  return <Text style={[styles.trend, { color: map[trend].c, borderColor: map[trend].c }]}>{map[trend].t}</Text>;
+  return <Text style={[styles.trend, { color: map[trend].c }]}>{map[trend].t}</Text>;
 }
 
 /** -2~+2 점수 추이 선 그래프 (하나의 축, 0 기준선, 호버 대신 탭 툴팁) */
@@ -139,6 +139,6 @@ const styles = StyleSheet.create({
   stripLabel: { fontFamily: fonts.body, fontSize: 11, color: colors.inkMuted },
   noDot: { alignItems: 'center', justifyContent: 'center' },
   noDotInner: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.line },
-  trend: { fontFamily: fonts.body, fontSize: 12, borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
+  trend: { fontFamily: fonts.body, fontSize: 12, fontWeight: '600' },
   tooltip: { fontFamily: fonts.body, fontSize: 12, color: colors.inkSoft, textAlign: 'center', marginTop: 2 },
 });

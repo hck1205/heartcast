@@ -8,7 +8,7 @@ import { DAILY_CARD, talkCardFor } from '@/report/talkCards';
 import type { Person, PlayResponse } from '@/types';
 
 const NOW = new Date('2026-09-30T20:00:00');
-const avatar = { skin: 'peach', hair: 'bob', hairColor: '#000', shirt: '#fff', accessory: 'none' } as const;
+const avatar = { skin: 'light', hair: 'bobBangs', hairColor: '#000000', shirt: '#ffffff' } as const;
 const teacherA: Person = { id: 't-a', kind: 'teacher', name: '미소', avatar };
 const teacherB: Person = { id: 't-b', kind: 'teacher', name: '단비', avatar };
 const friend: Person = { id: 'f-1', kind: 'friend', name: '하준', avatar };
