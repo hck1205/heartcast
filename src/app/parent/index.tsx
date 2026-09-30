@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { RelationMap } from '@/components/relations/RelationMap';
 import { TrendBadge } from '@/components/report/charts';
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
 import { SignalCard } from '@/components/report/SignalCard';
@@ -9,6 +10,8 @@ import { PersonCard as MiniCard } from '@/components/studio/PersonCard';
 import { Tabs } from '@/components/ui';
 import { WeatherIcon } from '@/components/WeatherIcon';
 import { TOPICS } from '@/games/content';
+import { callName } from '@/games/persona';
+import { currentEdges, SELF } from '@/games/relations';
 import { buildReport, describeResponse, weatherLabel, type TargetSummary } from '@/report/analyze';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
@@ -19,12 +22,13 @@ export default function ParentReport() {
   const { profile, responses } = useApp();
   const [range, setRange] = useState<'7' | '30'>('7');
   const days = Number(range);
-  const report = useMemo(() => buildReport(responses, profile?.people ?? [], new Date(), days), [responses, profile, days]);
+  const report = useMemo(() => buildReport(responses, profile?.people ?? [], new Date(), days, profile?.child.name), [responses, profile, days]);
   if (!profile) return null;
   const name = profile.child.name;
   const recent = [...responses].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
   const signals = report.signals.slice(0, 3);
   const people = [...report.teachers, ...report.friends];
+  const edges = currentEdges(responses, profile.people);
 
   return (
     <ParentShell
@@ -78,6 +82,24 @@ export default function ParentReport() {
         </View>
       </Section>
 
+      <Section title="관계도" sub="아이가 이은 선생님 · 친구 · 어른 사이의 관계예요">
+        <Pressable onPress={() => router.push('/parent/relations')} style={({ pressed }) => [styles.mapCard, pressed && { opacity: 0.8 }]}>
+          {edges.length ? (
+            <RelationMap
+              nodes={[
+                { id: SELF, name: name, kind: 'self', avatar: profile.child.avatar },
+                ...profile.people.map((p) => ({ id: p.id, name: callName(p.name, p.kind), kind: p.kind, avatar: p.avatar })),
+              ]}
+              edges={edges}
+              height={260}
+            />
+          ) : (
+            <Text style={[styles.body, { padding: 8 }]}>아직 관계도 놀이 기록이 없어요.</Text>
+          )}
+          <Text style={[styles.link, { textAlign: 'right' }]}>관계도 자세히 보기 ›</Text>
+        </Pressable>
+      </Section>
+
       <Section title="하루 속 순간들">
         <View style={styles.topics}>
           {[report.self, ...report.topics].filter(Boolean).map((t) => {
@@ -96,7 +118,7 @@ export default function ParentReport() {
         <View style={styles.list}>
           {recent.length === 0 && <Text style={[styles.body, { padding: 16 }]}>아직 놀이 기록이 없어요.</Text>}
           {recent.map((r, i) => {
-            const d = describeResponse(r, profile.people);
+            const d = describeResponse(r, profile.people, profile.child.name);
             return (
               <View key={r.id} style={[styles.row, i === recent.length - 1 && { borderBottomWidth: 0 }]}>
                 <Text style={{ fontSize: 20 }}>{d.emoji}</Text>
@@ -173,5 +195,6 @@ const styles = StyleSheet.create({
   topicName: { fontFamily: fonts.body, fontSize: 12, color: colors.inkSoft },
   none: { fontSize: 20, color: colors.inkMuted, height: 32, lineHeight: 32 },
   time: { fontFamily: fonts.body, fontSize: 12, color: colors.inkMuted },
+  mapCard: { backgroundColor: colors.paper, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: 10, gap: 4 },
   backToKid: { alignSelf: 'center', padding: 8 },
 });

@@ -79,6 +79,8 @@ export type Headwear =
   | 'bigBow';
 export type Neckwear = 'none' | 'necklace' | 'scarf' | 'tie' | 'bowtie' | 'whistle' | 'lanyard';
 export type Earrings = 'none' | 'stud' | 'hoop' | 'drop';
+/** 나이대: 아이는 머리가 크고 몸이 작게, 할머니·할아버지는 주름을 그린다 */
+export type AgeGroup = 'kid' | 'adult' | 'senior';
 export type Expression = 'happy' | 'calm' | 'neutral' | 'sad' | 'angry' | 'scared';
 
 /**
@@ -87,6 +89,7 @@ export type Expression = 'happy' | 'calm' | 'neutral' | 'sad' | 'angry' | 'scare
  */
 export interface AvatarConfig {
   skin: SkinTone;
+  age?: AgeGroup;
   faceShape?: FaceShape;
   eyes?: EyeStyle;
   eyeColor?: EyeColor;
@@ -118,7 +121,8 @@ export interface Persona {
   traits: string[];
 }
 
-export type PersonKind = 'teacher' | 'friend';
+/** 선생님 · 반 친구 · 어른(엄마·아빠·친구 부모님·할머니 등) */
+export type PersonKind = 'teacher' | 'friend' | 'parent';
 
 export interface Person {
   id: string;
@@ -141,7 +145,7 @@ export type TopicId = 'class' | 'meal' | 'nap' | 'play' | 'self';
 
 export type TargetType = 'person' | 'topic';
 
-export type GameType = 'weather' | 'face' | 'story' | 'portrait';
+export type GameType = 'weather' | 'face' | 'story' | 'portrait' | 'relation';
 
 export type WeatherCode = 'sunny' | 'partly' | 'cloudy' | 'rainy' | 'stormy';
 
@@ -160,7 +164,7 @@ export interface PlayResponse {
   targetType: TargetType;
   targetId: string;
   game: GameType;
-  /** weather: WeatherCode, face: Expression, story: `${sceneId}:${reactionCode}`, portrait: `${facet}:${id}`, 'unknown' = 잘 모르겠어 */
+  /** weather: WeatherCode, face: Expression, story: `${sceneId}:${reactionCode}`, portrait: `${facet}:${id}`, relation: `${rel}>${to}` (지우기는 `-${rel}>${to}`), 'unknown' = 잘 모르겠어 */
   value: string;
   /** -2(매우 부정) ~ +2(매우 긍정). 모르겠어는 null */
   score: number | null;

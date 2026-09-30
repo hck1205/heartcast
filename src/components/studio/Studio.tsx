@@ -25,10 +25,10 @@ const LOOK_KEYS: Partial<Record<StepId, (keyof FullAvatar)[]>> = {
 };
 
 function question(step: StepId, name: string, kind: Person['kind']): string {
-  const who = callName(name || (kind === 'teacher' ? '우리' : '친구'), kind);
+  const who = callName(name || { teacher: '우리', friend: '친구', parent: '어른' }[kind], kind);
   switch (step) {
     case 'name':
-      return kind === 'teacher' ? '누구 선생님을 만들어 볼까?' : '어떤 친구를 만들어 볼까?';
+      return { teacher: '누구 선생님을 만들어 볼까?', friend: '어떤 친구를 만들어 볼까?', parent: '어떤 어른을 만들어 볼까?' }[kind];
     case 'face':
       return `${who} 얼굴은 어떻게 생겼어?`;
     case 'hair':
@@ -199,13 +199,13 @@ export function Studio({
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder={kind === 'teacher' ? '예: 미소' : '예: 하준'}
+                placeholder={{ teacher: '예: 미소', friend: '예: 하준', parent: '예: 우리 엄마' }[kind]}
                 placeholderTextColor={colors.inkMuted}
                 style={styles.nameInput}
                 maxLength={10}
                 autoFocus
               />
-              <Text style={styles.helper}>{kind === 'teacher' ? `“${callName(name || '○○', 'teacher')}”으로 불러요 · ` : ''}글씨는 엄마·아빠가 도와줘도 좋아요</Text>
+              <Text style={styles.helper}>{kind === 'teacher' ? `“${callName(name || '○○', 'teacher')}”으로 불러요 · ` : kind === 'parent' ? '우리 엄마, 하준이 아빠, 할머니처럼 불러요 · ' : ''}글씨는 엄마·아빠가 도와줘도 좋아요</Text>
             </View>
           )}
 

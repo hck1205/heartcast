@@ -63,8 +63,11 @@ export default function Settings() {
       <Section title="선생님" sub="카드를 누르면 공방에서 다시 꾸미거나 🗑️ 로 지울 수 있어요. 선생님이 바뀌면 새로 만들어 주세요.">
         <PeopleEditor kind="teacher" people={profile.people} studioPath="/parent/studio" />
       </Section>
-      <Section title="친구">
+      <Section title="우리 반 친구">
         <PeopleEditor kind="friend" people={profile.people} studioPath="/parent/studio" />
+      </Section>
+      <Section title="엄마·아빠·어른" sub="우리 가족, 친구 부모님처럼 아이가 아는 어른이에요.">
+        <PeopleEditor kind="parent" people={profile.people} studioPath="/parent/studio" />
       </Section>
 
       <Section title="부모 PIN">

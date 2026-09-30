@@ -18,7 +18,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState<OnboardingDraft>(() => ({
     childName: '',
     className: '',
-    childAvatar: randomAvatar(),
+    childAvatar: randomAvatar('kid'),
     people: [],
     pendingResponses: [],
   }));

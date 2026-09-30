@@ -1064,3 +1064,18 @@ export function EarringsLayer({ kind, halfW }: { kind: Earrings; halfW: number }
     </G>
   );
 }
+
+/** 할머니·할아버지: 눈가 주름과 팔자 주름 (피부보다 조금 진한 선) */
+export function Wrinkles({ skin }: { skin: string }) {
+  const line = shade(skin, 0.3);
+  return (
+    <G stroke={line} strokeWidth={1.3} strokeLinecap="round" fill="none">
+      <Path d={`M${L - 12} ${EY - 3} L${L - 15.5} ${EY - 5}`} />
+      <Path d={`M${L - 12} ${EY + 1} L${L - 15.5} ${EY + 2}`} />
+      <Path d={`M${R + 12} ${EY - 3} L${R + 15.5} ${EY - 5}`} />
+      <Path d={`M${R + 12} ${EY + 1} L${R + 15.5} ${EY + 2}`} />
+      <Path d="M50 70 Q47 75 50.5 80" />
+      <Path d="M70 70 Q73 75 69.5 80" />
+    </G>
+  );
+}

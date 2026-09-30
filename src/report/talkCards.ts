@@ -69,6 +69,58 @@ export function talkCardFor(signal: Signal): TalkCard {
         avoid: ['"선생님이 사자처럼 무섭게 했어?"처럼 아이의 그림을 어른이 먼저 해석하기', ...COMMON_AVOID.slice(1)],
         tip: '아이는 말보다 그림·동물·색으로 먼저 마음을 보여줘요. 해석은 아이에게 맡기고, 아이 말 그대로를 대화 기록에 남겨 두면 흐름을 보는 데 도움이 돼요.',
       };
+    case 'relation-fear':
+      return {
+        id: signal.id,
+        title: '관계도 속 무서운 선, 천천히 들어주기',
+        when: signal.title,
+        openQuestions: [
+          `"관계도 놀이에서 ${josa(who, '을/를')} 이렇게 이었네. 어떤 때 그런 것 같아?"`,
+          '"그때 너는 어디에 있었어? 어떤 마음이 들었어?"',
+          '"그럴 때 누가 옆에 있어 주면 좋겠어?"',
+        ],
+        empathy: ['"그랬구나, 무서웠겠다. 말해줘서 정말 고마워."', ...COMMON_EMPATHY],
+        avoid: ['선을 이은 이유를 캐묻거나 "정말이야?" 하고 되묻기', ...COMMON_AVOID],
+        tip: '관계도는 아이가 느끼는 마음의 지도예요. 한 번의 선보다 여러 날 같은 선이 이어지는지 함께 보세요. 걱정이 계속되면 담임·원장님과 차분히 상담하고, 필요하면 CCTV 열람을 요청할 수 있어요.',
+      };
+    case 'relation-conflict':
+      return {
+        id: signal.id,
+        title: '친구 사이 마음 들어주기',
+        when: signal.title,
+        openQuestions: [
+          `"${josa(who, '이랑/랑')} 놀 때 어떤 게 재밌어? 어떤 게 속상해?"`,
+          '"다툴 때는 보통 어떻게 시작돼?"',
+          '"다음에 그런 일이 생기면 어떻게 하고 싶어?"',
+        ],
+        empathy: ['"그랬구나, 속상했겠다."', ...COMMON_EMPATHY],
+        avoid: ['"네가 먼저 그랬지?"처럼 잘잘못부터 따지기', '친구를 나쁜 아이로 부르기'],
+        tip: '또래 갈등은 자라면서 자주 생겨요. 아이가 마음을 말로 표현하고, 스스로 해결 방법을 떠올리도록 도와주세요. 같은 친구와의 갈등이 계속되면 선생님과 이야기해 보세요.',
+      };
+    case 'relation-alone':
+      return {
+        id: signal.id,
+        title: '기댈 사람 함께 찾기',
+        when: signal.title,
+        openQuestions: [
+          '"어린이집에서 무섭거나 슬플 때는 어떻게 해?"',
+          '"선생님 중에 말하기 편한 선생님이 있어?"',
+          '"엄마(아빠)한테 말하고 싶을 때는 언제든 말해도 돼. 알지?"',
+        ],
+        empathy: ['"그랬구나. 혼자 참느라 힘들었겠다."', ...COMMON_EMPATHY],
+        avoid: ['"선생님한테 말하면 되잖아"처럼 쉽게 답을 정해 주기', ...COMMON_AVOID.slice(1)],
+        tip: '힘들 때 도움을 청하는 연습은 아이를 지키는 힘이 돼요. 선생님께 아이가 편하게 기댈 수 있도록 도와 달라고 부탁해 보세요.',
+      };
+    case 'relation-safe':
+      return {
+        id: signal.id,
+        title: '든든한 어른 함께 기뻐하기',
+        when: signal.title,
+        openQuestions: [`"${josa(who, '이/가')} 어떻게 도와줘?"`, `"${josa(who, '이랑/랑')} 있으면 어떤 마음이 들어?"`],
+        empathy: ['"와~ 든든한 선생님이 있구나! 엄마(아빠)도 마음이 놓인다."'],
+        avoid: ['좋은 이야기 끝에 바로 다른 걱정거리 꺼내기'],
+        tip: '아이가 기댈 수 있는 선생님께 고마운 마음을 전해 보세요. 아이도 그 관계를 더 소중히 느껴요.',
+      };
     case 'self-low':
       return {
         id: signal.id,

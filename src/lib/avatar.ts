@@ -1,5 +1,8 @@
 import { palettes } from '@/theme';
 import type {
+  AgeGroup,
+  PersonKind,
+  Profile,
   AvatarConfig,
   BrowStyle,
   CheekStyle,
@@ -26,6 +29,12 @@ export interface Option<T> {
 }
 
 export const SKINS = Object.keys(palettes.skins) as SkinTone[];
+
+export const AGES: Option<AgeGroup>[] = [
+  { id: 'kid', label: '어린이' },
+  { id: 'adult', label: '어른' },
+  { id: 'senior', label: '할머니·할아버지' },
+];
 
 export const FACE_SHAPES: Option<FaceShape>[] = [
   { id: 'round', label: '동글' },
@@ -199,6 +208,7 @@ export const EARRINGS: Option<Earrings>[] = [
 
 const DEFAULTS: FullAvatar = {
   skin: 'light',
+  age: 'adult',
   faceShape: 'round',
   eyes: 'basic',
   eyeColor: 'black',
@@ -257,6 +267,7 @@ export function normalizeAvatar(a: Partial<AvatarConfig> | Record<string, unknow
   const earrings = src.earrings === true ? 'stud' : src.earrings;
   return {
     skin: pickValid(src.skin, SKINS, LEGACY_SKIN, DEFAULTS.skin),
+    age: pickValid(src.age, AGES, {}, DEFAULTS.age),
     faceShape: pickValid(src.faceShape, FACE_SHAPES, {}, DEFAULTS.faceShape),
     eyes: pickValid(src.eyes, EYES, LEGACY_EYES, DEFAULTS.eyes),
     eyeColor: pickValid(src.eyeColor, EYE_COLORS, {}, DEFAULTS.eyeColor),
@@ -286,9 +297,11 @@ export function withoutHeadwear(a: AvatarConfig): FullAvatar {
 const pick = <T,>(xs: readonly T[]) => xs[Math.floor(Math.random() * xs.length)];
 const maybe = <T,>(p: number, xs: readonly Option<T>[], none: T) => (Math.random() < p ? pick(xs.slice(1)).id : none);
 
-export function randomAvatar(): FullAvatar {
+export function randomAvatar(age: AgeGroup = 'adult'): FullAvatar {
+  const grown = age !== 'kid';
   return {
     skin: pick(SKINS.slice(0, 6)),
+    age,
     faceShape: pick(FACE_SHAPES).id,
     eyes: pick(EYES).id,
     eyeColor: pick(EYE_COLORS.slice(0, 3)).id,
@@ -296,7 +309,7 @@ export function randomAvatar(): FullAvatar {
     nose: pick(NOSES).id,
     mouth: pick(MOUTHS).id,
     cheeks: pick(CHEEKS).id,
-    facialHair: maybe(0.12, FACIAL_HAIR, 'none'),
+    facialHair: grown ? maybe(0.12, FACIAL_HAIR, 'none') : 'none',
     hair: pick(HAIRS).id,
     hairColor: pick(palettes.hairColors.slice(0, 8)),
     top: pick(TOPS).id,
@@ -305,15 +318,15 @@ export function randomAvatar(): FullAvatar {
     glasses: maybe(0.3, GLASSES, 'none'),
     headwear: maybe(0.45, HEADWEAR, 'none'),
     neckwear: maybe(0.3, NECKWEAR, 'none'),
-    earrings: maybe(0.25, EARRINGS, 'none'),
+    earrings: grown ? maybe(0.25, EARRINGS, 'none') : 'none',
     nameTag: false,
   };
 }
 
 /** 부분만 랜덤: 공방의 각 단계에서 🎲 를 누르면 그 단계 항목만 섞는다 */
 export function randomize(a: AvatarConfig, keys: (keyof FullAvatar)[]): FullAvatar {
-  const r = randomAvatar();
   const out = normalizeAvatar(a);
+  const r = randomAvatar(out.age);
   for (const k of keys) (out as any)[k] = r[k];
   return out;
 }
@@ -321,6 +334,7 @@ export function randomize(a: AvatarConfig, keys: (keyof FullAvatar)[]): FullAvat
 /** 모든 옵션 목록 (테스트·미리보기용) */
 export const ALL_OPTIONS = {
   skin: SKINS,
+  age: ids(AGES),
   faceShape: ids(FACE_SHAPES),
   eyes: ids(EYES),
   eyeColor: ids(EYE_COLORS),
@@ -337,3 +351,18 @@ export const ALL_OPTIONS = {
   neckwear: ids(NECKWEAR),
   earrings: ids(EARRINGS),
 } as const;
+
+/** 사람 종류에 맞는 기본 나이대 (나이를 고르기 전의 예전 데이터용) */
+export function defaultAge(kind: PersonKind | 'child'): AgeGroup {
+  return kind === 'child' || kind === 'friend' ? 'kid' : 'adult';
+}
+
+/** 나이가 없는 예전 아바타에 종류별 기본 나이를 채운다 (아이·친구는 어린이) */
+export function withAge<T extends { avatar: AvatarConfig }>(x: T, kind: PersonKind | 'child'): T {
+  return x.avatar.age ? x : { ...x, avatar: { ...x.avatar, age: defaultAge(kind) } };
+}
+
+/** 불러온 프로필의 예전 아바타에 나이를 채운다 (아이·친구 → 어린이, 선생님·어른 → 어른) */
+export function withAgeDefaults(p: Profile): Profile {
+  return { ...p, child: withAge(p.child, 'child'), people: p.people.map((x) => withAge(x, x.kind)) };
+}

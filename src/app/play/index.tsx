@@ -67,11 +67,15 @@ export default function PlayHome() {
         <View style={styles.row}>
           <Pressable onPress={() => router.push('/play/workshop')} style={styles.tile}>
             <Text style={styles.tileIcon}>🎨</Text>
-            <Text style={styles.tileText}>선생님 공방</Text>
+            <Text style={styles.tileText}>공방</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/play/relations')} style={styles.tile}>
+            <Text style={styles.tileIcon}>🕸️</Text>
+            <Text style={styles.tileText}>관계도</Text>
           </Pressable>
           <Pressable onPress={() => router.push('/play/stickers')} style={styles.tile}>
             <Text style={styles.tileIcon}>📒</Text>
-            <Text style={styles.tileText}>스티커북 {profile.stickers.length}</Text>
+            <Text style={styles.tileText}>스티커 {profile.stickers.length}</Text>
           </Pressable>
         </View>
       </View>
@@ -97,7 +101,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     paddingVertical: 14,
     backgroundColor: colors.paper,
     borderRadius: radius.md,

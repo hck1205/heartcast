@@ -101,7 +101,7 @@ export default function PersonDetail() {
       <Section title="전체 기록">
         <Panel style={{ gap: 8 }}>
           {mine.slice(0, 12).map((r) => {
-            const d = describeResponse(r, profile.people);
+            const d = describeResponse(r, profile.people, profile.child.name);
             return (
               <Text key={r.id} style={styles.line}>
                 {d.emoji} {new Date(r.createdAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} · {d.text}

@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import {
+  AGES,
   BROWS,
   CHEEKS,
   EARRINGS,
@@ -27,6 +28,7 @@ import { OptionTile, Section, Swatch } from './pickers';
 
 /** 공방 생김새 단계(얼굴·머리·옷)의 탭 목록과 탭별 선택지. 아이 아바타 꾸미기에서도 같이 쓴다. */
 export type LookTab =
+  | 'age'
   | 'shape'
   | 'skin'
   | 'eyes'
@@ -49,6 +51,7 @@ export type LookTab =
 export function lookTabs(step: 'face' | 'hair' | 'outfit' | string): { id: LookTab; label: string }[] {
   if (step === 'face')
     return [
+      { id: 'age', label: '나이' },
       { id: 'shape', label: '얼굴형' },
       { id: 'skin', label: '피부' },
       { id: 'eyes', label: '눈' },
@@ -141,6 +144,8 @@ function ColorChoices<K extends 'hairColor' | 'shirt'>({
 export function LookOptions({ tab, avatar, setLook, kind }: { tab: LookTab; avatar: FullAvatar; setLook: SetLook; kind: Person['kind'] }) {
   const plain = { ...avatar, headwear: 'none' as const, glasses: 'none' as const };
   switch (tab) {
+    case 'age':
+      return <Choices title="나이" field="age" options={AGES} avatar={avatar} setLook={setLook} view="full" width={116} />;
     case 'shape':
       return <Choices title="얼굴형" field="faceShape" options={FACE_SHAPES} avatar={{ ...plain, hair: 'buzz' }} setLook={setLook} />;
     case 'skin':

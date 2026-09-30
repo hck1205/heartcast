@@ -15,9 +15,10 @@ type Group = 'face' | 'hair' | 'outfit';
 export function AvatarBuilder({ value, onChange, previewSize = 130 }: { value: AvatarConfig; onChange: (v: AvatarConfig) => void; previewSize?: number }) {
   const [group, setGroup] = useState<Group>('face');
   const [tab, setTab] = useState<LookTab>('shape');
+  const pick = (g: Group) => (g === 'face' ? 'shape' : lookTabs(g)[0].id);
   const a = normalizeAvatar(value);
   const set = <K extends keyof FullAvatar>(k: K, v: FullAvatar[K]) => onChange({ ...a, [k]: v });
-  const tabs = lookTabs(group).filter((t) => t.id !== 'nameTag' && t.id !== 'beard');
+  const tabs = lookTabs(group).filter((t) => t.id !== 'nameTag' && t.id !== 'beard' && t.id !== 'age');
 
   return (
     <View style={{ gap: 12 }}>
@@ -28,7 +29,7 @@ export function AvatarBuilder({ value, onChange, previewSize = 130 }: { value: A
           accessibilityLabel="랜덤으로 꾸미기"
           onPress={() => {
             tap();
-            onChange({ ...randomAvatar(), facialHair: 'none' });
+            onChange(randomAvatar('kid'));
           }}
           style={styles.dice}
         >
@@ -45,7 +46,7 @@ export function AvatarBuilder({ value, onChange, previewSize = 130 }: { value: A
         value={group}
         onChange={(g) => {
           setGroup(g);
-          setTab(lookTabs(g)[0].id);
+          setTab(pick(g));
         }}
       />
       <Tabs items={tabs} value={tab} onChange={setTab} />

@@ -118,7 +118,10 @@ export function choiceEmoji(facet: PersonaFacet, id: string): string {
 
 export const EMPTY_PERSONA: Persona = { color: null, animal: null, shape: null, traits: [] };
 
-/** 부르는 이름: "미소 선생님" / "하준" */
+/** 종류 이름 (선생님 · 친구 · 어른) */
+export const KIND_LABEL: Record<PersonKind, string> = { teacher: '선생님', friend: '친구', parent: '어른' };
+
+/** 부르는 이름: "미소 선생님" / "하준" / "하준이 엄마" */
 export function callName(name: string, kind: PersonKind) {
   return kind === 'teacher' ? `${name} 선생님` : name;
 }

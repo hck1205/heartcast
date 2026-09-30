@@ -2,8 +2,9 @@ import { FACES, SCENES, WEATHERS } from '@/games/content';
 import { FACET_CHOICES } from '@/games/persona';
 import { planSession, seededRandom } from '@/games/planner';
 import { portraitDiff } from '@/games/portrait';
+import { relationResponse, SELF, type RelationId } from '@/games/relations';
 import { hashPin, uuid } from '@/lib/util';
-import type { Persona, Person, PlayResponse, PlaySession, Profile } from '@/types';
+import type { AvatarConfig, Persona, Person, PlayResponse, PlaySession, Profile } from '@/types';
 
 /**
  * "먼저 둘러보기"용 예시 데이터: 2주치 놀이 기록.
@@ -17,43 +18,64 @@ const DEMO_PERSONA: Record<'miso' | 'danbiBefore' | 'danbiNow', Persona> = {
   danbiNow: { color: 'red', animal: 'lion', shape: 'bolt', traits: ['yells', 'busy'] },
 };
 
+const friend = (name: string, avatar: Partial<AvatarConfig>): Person => ({
+  id: uuid(),
+  kind: 'friend',
+  name,
+  avatar: { skin: 'light', hair: 'bobBangs', hairColor: '#2F2320', shirt: '#A8CFF2', ...avatar, age: 'kid' },
+});
+const grownup = (name: string, avatar: Partial<AvatarConfig>): Person => ({
+  id: uuid(),
+  kind: 'parent',
+  name,
+  avatar: { skin: 'light', hair: 'dandy', hairColor: '#2F2320', shirt: '#EBCDB0', age: 'adult', ...avatar },
+});
+
 export function demoProfile(): Profile {
   const people: Person[] = [
     {
       id: uuid(),
       kind: 'teacher',
       name: '미소',
-      avatar: { skin: 'light', faceShape: 'oval', eyes: 'smile', brows: 'arched', cheeks: 'blush', hair: 'ponytail', hairColor: '#4A3226', top: 'apron', pattern: 'dots', shirt: '#F4A6A0', glasses: 'none', headwear: 'scrunchie', nameTag: true, mouth: 'lips', earrings: 'stud', neckwear: 'whistle' },
+      avatar: { skin: 'light', age: 'adult', faceShape: 'oval', eyes: 'smile', brows: 'arched', cheeks: 'blush', hair: 'ponytail', hairColor: '#4A3226', top: 'apron', pattern: 'dots', shirt: '#F4A6A0', glasses: 'none', headwear: 'scrunchie', nameTag: true, mouth: 'lips', earrings: 'stud', neckwear: 'whistle' },
       persona: DEMO_PERSONA.miso,
     },
     {
       id: uuid(),
       kind: 'teacher',
       name: '단비',
-      avatar: { skin: 'porcelain', faceShape: 'long', eyes: 'narrow', brows: 'thick', cheeks: 'none', hair: 'blunt', hairColor: '#1E1B1A', top: 'turtleneck', pattern: 'none', shirt: '#8FA7C9', glasses: 'horn', headwear: 'none', nameTag: true, nose: 'tall', mouth: 'flat', neckwear: 'lanyard' },
+      avatar: { skin: 'porcelain', age: 'adult', faceShape: 'long', eyes: 'narrow', brows: 'thick', cheeks: 'none', hair: 'blunt', hairColor: '#1E1B1A', top: 'turtleneck', pattern: 'none', shirt: '#8FA7C9', glasses: 'horn', headwear: 'none', nameTag: true, nose: 'tall', mouth: 'flat', neckwear: 'lanyard' },
       persona: DEMO_PERSONA.danbiNow,
     },
     {
       id: uuid(),
       kind: 'friend',
       name: '하준',
-      avatar: { skin: 'medium', faceShape: 'round', eyes: 'big', hair: 'gail', hairColor: '#2F2320', top: 'track', pattern: 'none', shirt: '#AEDCC0', headwear: 'none', mouth: 'teeth' },
+      avatar: { skin: 'medium', age: 'kid', faceShape: 'round', eyes: 'big', hair: 'gail', hairColor: '#2F2320', top: 'track', pattern: 'none', shirt: '#AEDCC0', headwear: 'none', mouth: 'teeth' },
       persona: { color: 'grass', animal: 'puppy', shape: 'star', traits: ['fun', 'plays'] },
     },
     {
       id: uuid(),
       kind: 'friend',
       name: '서아',
-      avatar: { skin: 'porcelain', faceShape: 'heart', eyes: 'double', hair: 'braids', hairColor: '#7A5236', top: 'dress', pattern: 'flower', shirt: '#FFD58A', headwear: 'bigBow', cheeks: 'freckles' },
+      avatar: { skin: 'porcelain', age: 'kid', faceShape: 'heart', eyes: 'double', hair: 'braids', hairColor: '#7A5236', top: 'dress', pattern: 'flower', shirt: '#FFD58A', headwear: 'bigBow', cheeks: 'freckles' },
       persona: { color: 'pink', animal: 'rabbit', shape: 'heart', traits: ['kind', 'smiles'] },
     },
+    friend('도윤', { skin: 'warm', faceShape: 'square', eyes: 'narrow', brows: 'thick', hair: 'buzz', hairColor: '#1E1B1A', top: 'hoodie', shirt: '#5E6B7D', mouth: 'flat' }),
+    friend('지우', { skin: 'snow', faceShape: 'oval', eyes: 'lashes', hair: 'pigtails', hairColor: '#4A3226', top: 'overalls', shirt: '#F7C3D8', headwear: 'pin', cheeks: 'blush' }),
+    friend('민준', { skin: 'light', faceShape: 'chubby', eyes: 'round', hair: 'comma', hairColor: '#2F2320', top: 'shirt', pattern: 'check', shirt: '#A8CFF2', glasses: 'round' }),
+    friend('하윤', { skin: 'tan', faceShape: 'baby', eyes: 'sparkle', hair: 'doubleBun', hairColor: '#7A5236', top: 'cardigan', shirt: '#F4EDA0', mouth: 'cat' }),
+    grownup('우리 엄마', { skin: 'light', faceShape: 'oval', eyes: 'double', hair: 'wave', hairColor: '#4A3226', top: 'shirt', shirt: '#EBCDB0', earrings: 'hoop', mouth: 'lips' }),
+    grownup('우리 아빠', { skin: 'warm', faceShape: 'square', eyes: 'basic', brows: 'thick', hair: 'dandy', hairColor: '#1E1B1A', top: 'sweatshirt', shirt: '#34466B', glasses: 'square', facialHair: 'stubble' }),
+    grownup('하준이 엄마', { skin: 'medium', faceShape: 'heart', eyes: 'smile', hair: 'lowPony', hairColor: '#2F2320', top: 'cardigan', shirt: '#AEDCC0' }),
+    grownup('할머니', { skin: 'light', age: 'senior', faceShape: 'round', eyes: 'smile', hair: 'bun', hairColor: '#EDEBE6', top: 'cardigan', pattern: 'flower', shirt: '#C9B8F0', glasses: 'gold' }),
   ];
   return {
     child: {
       id: uuid(),
       name: '콩이',
       className: '햇님반',
-      avatar: { skin: 'light', faceShape: 'round', eyes: 'big', hair: 'bobBangs', hairColor: '#2F2320', top: 'sweatshirt', pattern: 'none', shirt: '#C9B8F0' },
+      avatar: { skin: 'light', age: 'kid', faceShape: 'round', eyes: 'big', hair: 'bobBangs', hairColor: '#2F2320', top: 'sweatshirt', pattern: 'none', shirt: '#C9B8F0' },
     },
     people,
     pinHash: hashPin('0000'),
@@ -82,6 +104,35 @@ export function demoHistory(profile: Profile, now = new Date()): { sessions: Pla
   studio(13, miso, undefined, DEMO_PERSONA.miso);
   studio(13, danbi, undefined, DEMO_PERSONA.danbiBefore);
   studio(3, danbi, DEMO_PERSONA.danbiBefore, DEMO_PERSONA.danbiNow);
+
+  // 관계도 놀이 기록: 처음엔 편안한 관계, 최근엔 단비 선생님 쪽으로 걱정되는 선이 생긴다
+  const byName = (n: string) => profile.people.find((p) => p.name === n)?.id;
+  const link = (daysAgo: number, from: string | undefined, rel: RelationId, to: string | undefined) => {
+    if (!from || !to) return;
+    const at = new Date(now);
+    at.setDate(at.getDate() - daysAgo);
+    at.setHours(18, 40, 0, 0);
+    if (at > now) at.setTime(now.getTime() - 30000);
+    const r = relationResponse(from, rel, to, uuid(), { at });
+    responses.push(r);
+    sessions.push({ id: r.sessionId, startedAt: r.createdAt, finishedAt: r.createdAt });
+  };
+  link(12, SELF, 'close', byName('하준'));
+  link(12, byName('하준'), 'close', byName('서아'));
+  link(12, SELF, 'runto', miso?.id);
+  link(12, miso?.id, 'praise', SELF);
+  link(12, byName('우리 엄마'), 'family', SELF);
+  link(12, byName('우리 아빠'), 'family', SELF);
+  link(12, byName('할머니'), 'family', SELF);
+  link(12, byName('하준이 엄마'), 'family', byName('하준'));
+  link(11, danbi?.id, 'help', byName('지우'));
+  link(10, byName('지우'), 'play', byName('하윤'));
+  link(9, byName('민준'), 'play', byName('도윤'));
+  link(3, danbi?.id, 'yell', SELF);
+  link(3, danbi?.id, 'yell', byName('도윤'));
+  link(2, SELF, 'scare', danbi?.id);
+  link(2, SELF, 'fight', byName('도윤'));
+  link(1, SELF, 'close', byName('서아'));
 
   for (let daysAgo = 13; daysAgo >= 0; daysAgo--) {
     const d = new Date(now);

@@ -5,6 +5,7 @@ import { demoHistory, demoProfile, withDemoPersonas } from '@/data/demoSeed';
 import { localRepository } from '@/data/localRepository';
 import type { AccountMode, Repository } from '@/data/repository';
 import { supabaseRepository } from '@/data/supabaseRepository';
+import { withAgeDefaults } from '@/lib/avatar';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import { uuid } from '@/lib/util';
 import type { ParentNote, Person, PlayResponse, PlaySession, Profile } from '@/types';
@@ -33,6 +34,8 @@ interface AppState {
   /** 공방에서 만든/고친 사람을 저장하고, 아이가 고른 이미지 응답을 기록한다 */
   savePerson(person: Person, responses: PlayResponse[]): Promise<void>;
   removePerson(id: string): Promise<void>;
+  /** 관계도 놀이에서 이은 선(응답)을 기록하고 별을 준다 */
+  saveRelations(responses: PlayResponse[], stars?: number): Promise<void>;
   /** 프로필 저장 직후 온보딩 중 모아둔 응답을 한꺼번에 기록 */
   saveResponses(responses: PlayResponse[]): Promise<void>;
   addNote(note: ParentNote): Promise<void>;
@@ -66,7 +69,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     const since = new Date(Date.now() - HISTORY_DAYS * 86400000).toISOString();
     const [p, rs, ns] = await Promise.all([repo.loadProfile(), repo.listResponses(since), repo.listNotes()]);
-    setProfile(p);
+    setProfile(p ? withAgeDefaults(p) : null);
     setResponses(rs);
     setNotes(ns);
   }, []);
@@ -196,6 +199,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const next: Profile = { ...profile, people: profile.people.filter((p) => p.id !== id) };
           await need().saveProfile(next);
           setProfile(next);
+        }),
+      saveRelations: (rs, stars = 0) =>
+        run(async () => {
+          const r = need();
+          if (!rs.length) return;
+          const now = new Date().toISOString();
+          await r.saveSession({ id: rs[0].sessionId, startedAt: rs[0].createdAt, finishedAt: now }, rs);
+          setResponses((prev) => [...prev, ...rs]);
+          if (stars && profile) {
+            const next: Profile = { ...profile, stars: profile.stars + stars };
+            await r.saveProfile(next);
+            setProfile(next);
+          }
         }),
       saveResponses: (rs) =>
         run(async () => {
