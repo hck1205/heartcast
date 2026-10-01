@@ -1,24 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
-import { TOPICS } from '@/games/content';
+import { resolveTarget } from '@/games/target';
 import { nameOf } from '@/games/persona';
 import { colors, fonts, radius } from '@/theme';
-import type { Expression, Person, Profile, TopicId } from '@/types';
+import type { Expression, Profile } from '@/types';
 import { Avatar } from '../Avatar';
 import { Floating } from '../Mascot';
 
-export function resolveTarget(profile: Profile, targetType: 'person' | 'topic', targetId: string) {
-  if (targetType === 'person') {
-    const p = profile.people.find((x) => x.id === targetId);
-    return p ? { kind: 'person' as const, person: p } : null;
-  }
-  return { kind: 'topic' as const, topic: TOPICS[targetId as TopicId], child: profile.child };
-}
-
-export function displayName(p: Person) {
-  return nameOf(p);
-}
+export { resolveTarget };
 
 /** 질문 대상(사람 아바타 또는 주제 그림)을 크게 보여준다. 머리 위에는 스티커 자리가 있다. */
 export function TargetStage({
@@ -74,7 +64,7 @@ export function TargetStage({
         )}
       </Floating>
       <Text style={styles.name}>
-        {t.kind === 'person' ? displayName(t.person) : targetId === 'self' ? `나 (${t.child.name})` : t.topic.name}
+        {t.kind === 'person' ? nameOf(t.person) : targetId === 'self' ? `나 (${t.child.name})` : t.topic.name}
       </Text>
     </View>
   );

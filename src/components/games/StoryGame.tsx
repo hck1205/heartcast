@@ -1,0 +1,69 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Animated, Pressable, Text, View } from 'react-native';
+
+import { SCENES, type Reaction } from '@/games/content';
+import { resolveTarget } from '@/games/target';
+import { withoutHeadwear } from '@/lib/avatar';
+import { Avatar } from '../Avatar';
+import { gameStyles, type GameProps } from './shared';
+
+/** 이야기 장면 놀이: 상황 그림을 보고 선생님이 어떻게 할지 고른다 (보기 순서는 섞는다) */
+function shuffleOnce<T>(xs: T[]): T[] {
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function StoryGame({ step, profile, picked, onPick }: GameProps) {
+  const scene = SCENES.find((s) => s.id === step.sceneId)!;
+  const t = resolveTarget(profile, step.targetType, step.targetId);
+  // 위치에 따른 선택 편향을 줄이려고 보기 순서를 섞는다
+  const options = useMemo(() => shuffleOnce(scene.reactions), [scene]);
+  const shake = useShake(scene.id);
+  if (!t || t.kind !== 'person') return null;
+  return (
+    <View style={{ gap: 14 }}>
+      <Animated.View style={[gameStyles.sceneCard, { transform: [{ rotate: shake }] }]}>
+        <Text style={{ fontSize: 64 }}>{scene.emoji}</Text>
+        <Text style={gameStyles.sceneTitle}>{scene.title}</Text>
+      </Animated.View>
+      <View style={gameStyles.reactionGrid}>
+        {options.map((r: Reaction) => (
+          <Pressable
+            key={r.code}
+            accessibilityLabel={r.label}
+            onPress={() => onPick({ value: `${scene.id}:${r.code}`, score: r.score, fear: r.fear })}
+            style={[
+              gameStyles.reactionBtn,
+              picked?.value === `${scene.id}:${r.code}` && gameStyles.pickedBtn,
+              picked && picked.value !== `${scene.id}:${r.code}` && gameStyles.dim,
+            ]}
+          >
+            <View style={gameStyles.faceCrop}>
+              <Avatar avatar={withoutHeadwear(t.person.avatar)} expression={r.face} size={84} />
+            </View>
+            <Text style={{ fontSize: 26 }}>{r.emoji}</Text>
+            <Text style={gameStyles.reactionLabel}>{r.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function useShake(key: string) {
+  const v = useState(() => new Animated.Value(0))[0];
+  useEffect(() => {
+    v.setValue(0);
+    Animated.sequence([
+      Animated.timing(v, { toValue: 1, duration: 120, useNativeDriver: true }),
+      Animated.timing(v, { toValue: -1, duration: 120, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 0.5, duration: 100, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 0, duration: 100, useNativeDriver: true }),
+    ]).start();
+  }, [key, v]);
+  return v.interpolate({ inputRange: [-1, 1], outputRange: ['-4deg', '4deg'] });
+}
