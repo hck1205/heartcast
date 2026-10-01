@@ -1,33 +1,33 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { ArtCanvas } from '@/components/art/ArtCanvas';
-import { Avatar } from '@/components/Avatar';
+import { ArtPick } from '@/components/art/ArtPick';
+import {
+  BubblePicker,
+  Chip,
+  CrayonPicker,
+  FacePicker,
+  PeopleTray,
+  PORTRAIT_TOOLS,
+  SCENE_TOOLS,
+  SizeButtons,
+  SkyPicker,
+  StampPicker,
+  Toolbar,
+  type Tool,
+} from '@/components/art/ArtTools';
 import { AskBar, KidHeader } from '@/components/kid/KidTop';
 import { BigButton, Confetti, Screen } from '@/components/ui';
-import { BUBBLES, CRAYONS, emptyDrawing, EXPRESSIONS, SELF, SKIES, STAMPS } from '@/games/art';
-import { FACES } from '@/games/content';
-import { nameOf } from '@/games/persona';
+import { CRAYONS, emptyDrawing, SELF } from '@/games/art';
+import { avatarFor, makeWho } from '@/games/people';
 import { celebrate, say, tap, useSayOnChange } from '@/lib/feedback';
 import { josa } from '@/lib/josa';
-import { avatarFor, makeWho } from '@/games/people';
 import { useApp } from '@/state/AppContext';
-import { colors, fonts, radius } from '@/theme';
-import type { Drawing, Expression } from '@/types';
+import { colors, fonts } from '@/theme';
+import type { Drawing } from '@/types';
 
-type Tool = 'people' | 'face' | 'bubble' | 'stamp' | 'crayon' | 'sky';
-
-const TOOLS: Record<Tool, { emoji: string; label: string }> = {
-  people: { emoji: '🧑', label: '사람' },
-  face: { emoji: '😀', label: '표정' },
-  bubble: { emoji: '💬', label: '말' },
-  stamp: { emoji: '⭐', label: '스탬프' },
-  crayon: { emoji: '🖍️', label: '크레용' },
-  sky: { emoji: '🌈', label: '하늘' },
-};
-
-const FACE_EMOJI: Record<Expression, string> = { happy: '😄', calm: '😊', neutral: '😐', sad: '😢', angry: '😠', scared: '😨' };
 
 /**
  * 그림 놀이: 한 사람 그리기(인물화) 또는 우리 반 그리기(장면화).
@@ -127,36 +127,17 @@ export default function ArtGame() {
 
   // ── 무엇을 그릴까 ──
   if (!drawing) {
-    const choices = people.filter((p) => p.kind !== 'friend');
     return (
       <Screen>
         <KidHeader onClose={() => router.back()} center="그림 놀이" />
         <AskBar text={prompt} size="sm" />
-        <ScrollView contentContainerStyle={styles.pickWrap}>
-          <Pressable accessibilityLabel="우리 반 그리기" onPress={() => start('scene', null)} style={styles.sceneCard}>
-            <Text style={{ fontSize: 40 }}>🏫</Text>
-            <Text style={styles.sceneText}>우리 반 그리기</Text>
-          </Pressable>
-          <View style={styles.pickGrid}>
-            {choices.map((p) => (
-              <Pressable key={p.id} accessibilityLabel={`${nameOf(p)} 그리기`} onPress={() => start('portrait', p.id)} style={styles.pickCard}>
-                <Avatar avatar={p.avatar} size={78} />
-                <Text style={styles.pickName} numberOfLines={1}>
-                  {nameOf(p)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+        <ArtPick people={people} onPick={start} />
       </Screen>
     );
   }
 
-  const tools: Tool[] = scene ? ['people', 'face', 'bubble', 'stamp', 'crayon'] : ['face', 'bubble', 'stamp', 'crayon', 'sky'];
   const canvasW = Math.min(sw - 32, (sh - 330) / 1.25, 520);
   const mode = done ? 'none' : tool === 'crayon' ? 'draw' : tool === 'stamp' || (tool === 'people' && tray) ? 'tap' : 'none';
-  const placed = new Set(drawing.figures.map((f) => f.personId));
-  const trayPeople = [SELF, ...people.map((p) => p.id)];
 
   return (
     <Screen>
@@ -185,27 +166,7 @@ export default function ArtGame() {
               : undefined
           }
         />
-        {!scene && !done && (
-          <View style={styles.sizeBtns}>
-            {[
-              ['＋', 0.15, '크게'],
-              ['－', -0.15, '작게'],
-            ].map(([t, step, label]) => (
-              <Pressable
-                key={label as string}
-                accessibilityLabel={label as string}
-                onPress={() => {
-                  tap();
-                  const s = Math.max(0.6, Math.min(1.6, (fig?.scale ?? 1) + (step as number)));
-                  setFigure({ scale: Math.round(s * 100) / 100 });
-                }}
-                style={styles.sizeBtn}
-              >
-                <Text style={styles.sizeText}>{t as string}</Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
+        {!scene && !done && fig && <SizeButtons scale={fig.scale} onChange={(scale) => setFigure({ scale })} />}
       </View>
 
       {done ? (
@@ -235,86 +196,34 @@ export default function ArtGame() {
                   <Chip label="다른 사람 놓기" emoji="➕" onPress={() => setPickedFigure(false)} />
                 </>
               ) : (
-                trayPeople.map((id) => (
-                  <Pressable
-                    key={id}
-                    accessibilityLabel={`${nameFor(id)} 놓기`}
-                    onPress={() => {
-                      tap();
-                      setTray(tray === id ? null : id);
-                      setPickedFigure(false);
-                    }}
-                    style={[styles.trayItem, tray === id && styles.on, placed.has(id) && tray !== id && { opacity: 0.4 }]}
-                  >
-                    <Avatar avatar={avatarOf(id)!} size={44} />
-                    <Text style={styles.trayName} numberOfLines={1}>
-                      {nameFor(id)}
-                    </Text>
-                  </Pressable>
-                ))
+                <PeopleTray
+                  ids={[SELF, ...people.map((p) => p.id)]}
+                  picked={tray}
+                  placed={new Set(drawing.figures.map((f) => f.personId))}
+                  nameOf={nameFor}
+                  avatarOf={avatarOf}
+                  onPick={(id) => {
+                    setTray(id);
+                    setPickedFigure(false);
+                  }}
+                />
               ))}
-            {tool === 'face' &&
-              fig &&
-              EXPRESSIONS.map((e) => (
-                <Chip key={e} emoji={FACE_EMOJI[e]} label={FACES.find((f) => f.code === e)!.label} on={fig.expression === e} onPress={() => setFigure({ expression: e })} />
-              ))}
-            {tool === 'bubble' &&
-              fig &&
-              [
-                <Chip key="none" emoji="⬜" label="없음" on={!fig.bubble} onPress={() => setFigure({ bubble: null })} />,
-                ...BUBBLES.map((b) => (
-                  <Chip
-                    key={b.id}
-                    emoji={b.emoji}
-                    label={b.label}
-                    on={fig.bubble === b.id}
-                    onPress={() => {
-                      say(b.text);
-                      setFigure({ bubble: b.id });
-                    }}
-                  />
-                )),
-              ]}
-            {tool === 'stamp' && STAMPS.map((s) => <Chip key={s.id} emoji={s.emoji} label={s.label} on={stamp === s.id} onPress={() => setStamp(s.id)} />)}
-            {tool === 'crayon' && (
-              <>
-                {CRAYONS.map((c) => (
-                  <Pressable
-                    key={c.color}
-                    accessibilityLabel={`${c.label} 크레용`}
-                    onPress={() => {
-                      tap();
-                      setPen(c.color);
-                    }}
-                    style={[styles.crayon, { backgroundColor: c.color }, pen === c.color && styles.crayonOn]}
-                  />
-                ))}
-                <Chip emoji="↩️" label="지우기" onPress={() => update((d) => ({ ...d, strokes: d.strokes.slice(0, -1) }))} />
-              </>
-            )}
-            {tool === 'sky' && SKIES.map((s) => <Chip key={s.id} emoji={s.emoji} label={s.label} on={drawing.sky === s.id} onPress={() => update((d) => ({ ...d, sky: s.id as Drawing['sky'] }))} />)}
+            {tool === 'face' && fig && <FacePicker figure={fig} onChange={(expression) => setFigure({ expression })} />}
+            {tool === 'bubble' && fig && <BubblePicker figure={fig} onChange={(bubble) => setFigure({ bubble })} />}
+            {tool === 'stamp' && <StampPicker value={stamp} onChange={setStamp} />}
+            {tool === 'crayon' && <CrayonPicker value={pen} onChange={setPen} onUndo={() => update((d) => ({ ...d, strokes: d.strokes.slice(0, -1) }))} />}
+            {tool === 'sky' && <SkyPicker value={drawing.sky} onChange={(sky) => update((d) => ({ ...d, sky }))} />}
           </ScrollView>
 
           {/* 도구 막대 */}
-          <View style={styles.toolbar}>
-            {tools.map((t) => (
-              <Pressable
-                key={t}
-                accessibilityRole="tab"
-                accessibilityLabel={TOOLS[t].label}
-                accessibilityState={{ selected: tool === t }}
-                onPress={() => {
-                  tap();
-                  setTool(t);
-                  setTray(null);
-                }}
-                style={[styles.tool, tool === t && styles.toolOn]}
-              >
-                <Text style={{ fontSize: 24 }}>{TOOLS[t].emoji}</Text>
-                <Text style={styles.toolLabel}>{TOOLS[t].label}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <Toolbar
+            tools={scene ? SCENE_TOOLS : PORTRAIT_TOOLS}
+            tool={tool}
+            onChange={(t) => {
+              setTool(t);
+              setTray(null);
+            }}
+          />
           <BigButton small label={saving ? '저장 중…' : '다 그렸어'} disabled={saving || (scene && drawing.figures.length === 0)} onPress={finish} />
         </View>
       )}
@@ -323,58 +232,10 @@ export default function ArtGame() {
   );
 }
 
-function Chip({ emoji, label, on, onPress }: { emoji: string; label: string; on?: boolean; onPress: () => void }) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      onPress={() => {
-        tap();
-        onPress();
-      }}
-      style={[styles.chip, on && styles.on]}
-    >
-      <Text style={{ fontSize: 24 }}>{emoji}</Text>
-      <Text style={styles.chipText} numberOfLines={1}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  pickWrap: { padding: 16, gap: 14 },
-  sceneCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 18,
-    borderRadius: radius.lg,
-    backgroundColor: colors.skySoft,
-    borderWidth: 2,
-    borderColor: colors.sky,
-  },
-  sceneText: { fontFamily: fonts.title, fontSize: 22, color: colors.ink },
-  pickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  pickCard: { width: 108, paddingVertical: 10, alignItems: 'center', borderRadius: radius.lg, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
-  pickName: { fontFamily: fonts.title, fontSize: 14, color: colors.ink, marginTop: 4 },
   canvasWrap: { alignItems: 'center', marginTop: 4 },
-  sizeBtns: { position: 'absolute', left: 24, top: 8, gap: 6 },
-  sizeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFFEE', borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-  sizeText: { fontSize: 22, color: colors.ink },
   sheet: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 12, paddingBottom: 10, gap: 8 },
   options: { gap: 8, paddingHorizontal: 4, alignItems: 'center', minHeight: 70 },
-  chip: { width: 70, paddingVertical: 6, alignItems: 'center', borderRadius: radius.md, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
-  chipText: { fontFamily: fonts.body, fontSize: 11, fontWeight: '600', color: colors.ink, marginTop: 2 },
-  on: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  trayItem: { width: 64, alignItems: 'center', paddingVertical: 4, borderRadius: radius.md, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
-  trayName: { fontFamily: fonts.body, fontSize: 10, fontWeight: '600', color: colors.ink },
-  crayon: { width: 40, height: 40, borderRadius: 20, borderWidth: 3, borderColor: '#FFFFFF' },
-  crayonOn: { borderColor: colors.ink, transform: [{ scale: 1.15 }] },
-  toolbar: { flexDirection: 'row', gap: 6 },
-  tool: { flex: 1, alignItems: 'center', paddingVertical: 6, borderRadius: radius.md, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
-  toolOn: { backgroundColor: colors.primarySoft, borderColor: colors.primary },
-  toolLabel: { fontFamily: fonts.title, fontSize: 12, color: colors.ink },
   doneBox: { flex: 1, justifyContent: 'center', paddingHorizontal: 20, gap: 12 },
   stars: { fontFamily: fonts.title, fontSize: 24, textAlign: 'center', color: colors.ink },
   row: { flexDirection: 'row', gap: 8 },

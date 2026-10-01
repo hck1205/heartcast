@@ -323,14 +323,6 @@ export function randomAvatar(age: AgeGroup = 'adult'): FullAvatar {
   };
 }
 
-/** 부분만 랜덤: 공방의 각 단계에서 🎲 를 누르면 그 단계 항목만 섞는다 */
-export function randomize(a: AvatarConfig, keys: (keyof FullAvatar)[]): FullAvatar {
-  const out = normalizeAvatar(a);
-  const r = randomAvatar(out.age);
-  for (const k of keys) (out as any)[k] = r[k];
-  return out;
-}
-
 /** 모든 옵션 목록 (테스트·미리보기용) */
 export const ALL_OPTIONS = {
   skin: SKINS,

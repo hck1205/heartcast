@@ -151,10 +151,12 @@ src/
   components/          # 아바타(avatar/parts.tsx)·날씨·마스코트·UI, 게임, 리포트 차트
     studio/            #   공방(Studio), 사람 카드, 고르기 판
     relations/         #   관계도 지도(RelationMap)
-    art/               #   그림 도화지(ArtCanvas)·그림 썸네일
+    art/               #   그림 도화지(ArtCanvas)·도구(ArtTools)·고르기(ArtPick)·썸네일
+    kid/               #   아이 화면 상단 공용(KidHeader·AskBar)
+    avatar/            #   아바타 파츠 (head·hair·clothes·face·accessories)
   games/               # 문항(content.ts), 선생님 이미지 선택지(persona.ts), 코스 구성(planner.ts), 관계도(relations.ts), 그림 놀이(art.ts)
-  lib/avatar.ts        # 아바타 파츠 목록, 예전 데이터 변환, 랜덤
-  report/              # 리포트 분석(analyze.ts), 대화 카드(talkCards.ts) + 테스트
+  lib/                 # avatar(파츠 목록·예전 데이터 변환), format(날짜), feedback(소리·진동·useSayOnChange)
+  report/              # 리포트: analyze(buildReport)·summary·signals·relationSignals·describe, 대화 카드 + 테스트
   data/                # 저장소: Supabase / 기기(체험 모드) / 예시 데이터
   state/               # 앱 상태(Context)
 supabase/migrations/   # DB 스키마 + RLS

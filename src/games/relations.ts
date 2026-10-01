@@ -102,11 +102,6 @@ export function currentEdges(responses: PlayResponse[], people: Person[]): Edge[
   return [...map.values()].filter((e) => alive.has(e.from) && alive.has(e.to));
 }
 
-/** 두 사람 사이에 이어진 선들 (방향 상관없이) */
-export function edgesBetween(edges: Edge[], a: string, b: string): Edge[] {
-  return edges.filter((e) => (e.from === a && e.to === b) || (e.from === b && e.to === a));
-}
-
 // ── 마루가 이끄는 질문 ──
 
 export type QuestTemplate =

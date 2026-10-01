@@ -45,15 +45,6 @@ export const fonts = {
   body: Platform.select({ android: 'sans-serif', ios: 'System', default: 'system-ui' }) as string,
 };
 
-/** 아주 옅은 그림자 (대부분은 테두리로 구분) */
-export const shadow = {
-  shadowColor: '#222831',
-  shadowOpacity: 0.05,
-  shadowRadius: 6,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 1,
-};
-
 export const palettes = {
   // 흑발 · 흑갈 · 짙은 갈색 · 밝은 갈색 · 애쉬 · 와인 · 회색 · 오렌지브라운 · 금발 · 핑크브라운 · 블루블랙 · 흰머리
   hairColors: ['#1E1B1A', '#2F2320', '#4A3226', '#7A5236', '#8C7B6B', '#6B2E3A', '#A9A9AD', '#A8582C', '#D9B26A', '#B0706E', '#1F2A3D', '#EDEBE6'],

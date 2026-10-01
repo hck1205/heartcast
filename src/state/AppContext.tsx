@@ -130,6 +130,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!repo) throw new Error('계정을 먼저 선택해 주세요');
       return repo;
     };
+    /** 응답 묶음을 한 세션으로 저장하고 화면 state 에 더한다 (session 이 없으면 첫 응답의 세션 id·시각으로) */
+    const persist = async (rs: PlayResponse[], session?: PlaySession) => {
+      if (!rs.length && !session) return;
+      const s = session ?? { id: rs[0].sessionId, startedAt: rs[0].createdAt, finishedAt: new Date().toISOString() };
+      await need().saveSession(s, rs);
+      setResponses((prev) => [...prev, ...rs]);
+    };
+    /** 프로필 고치기 (별·스티커·사람) — 저장소와 화면 state 를 함께 바꾼다 */
+    const updateProfile = async (change: (p: Profile) => Profile) => {
+      if (!profile) return;
+      const next = change(profile);
+      await need().saveProfile(next);
+      setProfile(next);
+    };
     return {
       ready,
       mode,
@@ -172,77 +186,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }),
       recordSession: (session, rs, sticker) =>
         run(async () => {
-          const r = need();
-          await r.saveSession(session, rs);
-          setResponses((prev) => [...prev, ...rs]);
-          if (profile) {
-            const answered = rs.length;
-            const next: Profile = {
-              ...profile,
-              stars: profile.stars + answered,
-              stickers: [...profile.stickers, sticker],
-            };
-            await r.saveProfile(next);
-            setProfile(next);
-          }
+          await persist(rs, session);
+          await updateProfile((p) => ({ ...p, stars: p.stars + rs.length, stickers: [...p.stickers, sticker] }));
         }),
       savePerson: (person, rs) =>
         run(async () => {
-          const r = need();
           if (!profile) throw new Error('프로필이 없어요');
-          const exists = profile.people.some((p) => p.id === person.id);
-          const people = exists ? profile.people.map((p) => (p.id === person.id ? person : p)) : [...profile.people, person];
-          const next: Profile = { ...profile, people, stars: profile.stars + (rs.length ? 3 : 0) };
-          await r.saveProfile(next);
-          setProfile(next);
-          if (rs.length) {
-            const now = new Date().toISOString();
-            await r.saveSession({ id: rs[0].sessionId, startedAt: now, finishedAt: now }, rs);
-            setResponses((prev) => [...prev, ...rs]);
-          }
+          await updateProfile((p) => {
+            const exists = p.people.some((x) => x.id === person.id);
+            const people = exists ? p.people.map((x) => (x.id === person.id ? person : x)) : [...p.people, person];
+            return { ...p, people, stars: p.stars + (rs.length ? 3 : 0) };
+          });
+          await persist(rs);
         }),
-      removePerson: (id) =>
-        run(async () => {
-          if (!profile) return;
-          const next: Profile = { ...profile, people: profile.people.filter((p) => p.id !== id) };
-          await need().saveProfile(next);
-          setProfile(next);
-        }),
+      removePerson: (id) => run(() => updateProfile((p) => ({ ...p, people: p.people.filter((x) => x.id !== id) }))),
       saveRelations: (rs, stars = 0) =>
         run(async () => {
-          const r = need();
-          if (!rs.length) return;
-          const now = new Date().toISOString();
-          await r.saveSession({ id: rs[0].sessionId, startedAt: rs[0].createdAt, finishedAt: now }, rs);
-          setResponses((prev) => [...prev, ...rs]);
-          if (stars && profile) {
-            const next: Profile = { ...profile, stars: profile.stars + stars };
-            await r.saveProfile(next);
-            setProfile(next);
-          }
+          await persist(rs);
+          if (stars) await updateProfile((p) => ({ ...p, stars: p.stars + stars }));
         }),
       saveDrawing: (d) =>
         run(async () => {
-          const r = need();
           if (!profile) throw new Error('프로필이 없어요');
-          await r.saveDrawing(d);
+          await need().saveDrawing(d);
           setDrawings((prev) => [...prev.filter((x) => x.id !== d.id), d]);
-          const sessionId = uuid();
-          const rs = artResponses(d, profile.people, sessionId);
-          await r.saveSession({ id: sessionId, startedAt: d.createdAt, finishedAt: new Date().toISOString() }, rs);
-          setResponses((prev) => [...prev, ...rs]);
-          const next: Profile = { ...profile, stars: profile.stars + 3 };
-          await r.saveProfile(next);
-          setProfile(next);
+          await persist(artResponses(d, profile.people, uuid()));
+          await updateProfile((p) => ({ ...p, stars: p.stars + 3 }));
         }),
       saveResponses: (rs) =>
         run(async () => {
-          if (!rs.length) return;
-          const now = new Date().toISOString();
+          // 온보딩 중 모아둔 응답은 한 세션으로 묶는다
           const sessionId = uuid();
-          const withSession = rs.map((x) => ({ ...x, sessionId }));
-          await need().saveSession({ id: sessionId, startedAt: now, finishedAt: now }, withSession);
-          setResponses((prev) => [...prev, ...withSession]);
+          await persist(rs.map((x) => ({ ...x, sessionId })));
         }),
       addNote: (n) =>
         run(async () => {

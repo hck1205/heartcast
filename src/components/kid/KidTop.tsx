@@ -34,9 +34,9 @@ export function HeaderTextButton({ label, onPress }: { label: string; onPress: (
 }
 
 const SIZES = {
-  sm: { maru: 32, font: 19, line: 26, minHeight: 44, marginTop: 0 },
-  md: { maru: 36, font: 21, line: 28, minHeight: 0, marginTop: 4 },
-  lg: { maru: 36, font: 22, line: 30, minHeight: 56, marginTop: 4 },
+  sm: { maru: 32, font: 19, line: 26, minHeight: 44, marginTop: 0, speaker: 16 },
+  md: { maru: 36, font: 21, line: 28, minHeight: 0, marginTop: 4, speaker: 18 },
+  lg: { maru: 36, font: 22, line: 30, minHeight: 56, marginTop: 4, speaker: 18 },
 } as const;
 
 /** 마루의 질문 한 줄. 누르면 다시 읽어준다 */
@@ -46,7 +46,7 @@ export function AskBar({ text, mood = 'happy', size = 'md' }: { text: string; mo
     <Pressable onPress={() => say(text)} style={[styles.ask, { minHeight: z.minHeight, marginTop: z.marginTop }]} accessibilityHint="다시 듣기">
       <Maru size={z.maru} mood={mood} />
       <Text style={[styles.askText, { fontSize: z.font, lineHeight: z.line }]}>{text}</Text>
-      <Text style={styles.speaker}>🔊</Text>
+      <Text style={[styles.speaker, { fontSize: z.speaker }]}>🔊</Text>
     </Pressable>
   );
 }
@@ -58,5 +58,5 @@ const styles = StyleSheet.create({
   title: { flex: 1, textAlign: 'center', fontFamily: fonts.title, fontSize: 18, color: colors.ink },
   ask: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16 },
   askText: { flex: 1, fontFamily: fonts.title, color: colors.ink },
-  speaker: { fontSize: 18, opacity: 0.6 },
+  speaker: { opacity: 0.6 },
 });

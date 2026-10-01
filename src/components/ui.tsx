@@ -95,8 +95,6 @@ export function BigButton({
   );
 }
 
-export const Button = BigButton;
-
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   return <View style={[styles.card, style]}>{children}</View>;
 }

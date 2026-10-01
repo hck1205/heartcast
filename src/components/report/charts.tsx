@@ -37,26 +37,6 @@ export function WeatherBar({ distribution, showLegend = true }: { distribution: 
   );
 }
 
-const WEEKDAY = '일월화수목금토';
-
-/** 최근 N일 날씨 아이콘 줄 */
-export function DayStrip({ daily, size = 26 }: { daily: DailyPoint[]; size?: number }) {
-  return (
-    <View style={styles.strip}>
-      {daily.map((d) => {
-        const w = avgToWeather(d.avg);
-        const wd = WEEKDAY[new Date(`${d.date}T12:00:00`).getDay()];
-        return (
-          <View key={d.date} style={styles.stripCell} accessibilityLabel={`${d.date} ${w ?? '기록 없음'}`}>
-            {w ? <WeatherIcon code={w} size={size} /> : <View style={[styles.noDot, { width: size, height: size }]}><View style={styles.noDotInner} /></View>}
-            <Text style={styles.stripLabel}>{wd}</Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
 export function TrendBadge({ trend }: { trend: Trend | null }) {
   if (!trend) return null;
   const map = {
@@ -134,11 +114,6 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   legendText: { fontFamily: fonts.body, fontSize: 12, color: colors.inkSoft },
   empty: { fontFamily: fonts.body, fontSize: 13, color: colors.inkMuted },
-  strip: { flexDirection: 'row', justifyContent: 'space-between' },
-  stripCell: { alignItems: 'center', gap: 2 },
-  stripLabel: { fontFamily: fonts.body, fontSize: 11, color: colors.inkMuted },
-  noDot: { alignItems: 'center', justifyContent: 'center' },
-  noDotInner: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.line },
   trend: { fontFamily: fonts.body, fontSize: 12, fontWeight: '600' },
   tooltip: { fontFamily: fonts.body, fontSize: 12, color: colors.inkSoft, textAlign: 'center', marginTop: 2 },
 });

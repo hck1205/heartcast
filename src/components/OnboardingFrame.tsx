@@ -20,8 +20,6 @@ export function OnboardingFrame({
   maru: string;
   /** 제목 아래 한 줄 설명 */
   sub?: string;
-  /** @deprecated 마스코트 표정 (더는 쓰지 않음) */
-  mood?: 'happy' | 'wink' | 'wow';
   children: ReactNode;
   footer: ReactNode;
   back?: boolean;
