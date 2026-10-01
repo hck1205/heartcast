@@ -3,12 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
-import { Maru } from '@/components/Mascot';
+import { AskBar, KidHeader } from '@/components/kid/KidTop';
 import { BigButton, Confetti, Dots, Screen } from '@/components/ui';
 import { edgeSentence, makeWho, NOBODY, PAIR_CHOICES, planQuests, questPrompt, relationOf, relationResponse, SELF, UNKNOWN, type RelationId } from '@/games/relations';
 import { josa } from '@/lib/josa';
-import { celebrate, say, stopSpeaking, tap } from '@/lib/feedback';
+import { celebrate, say, tap, useSayOnChange } from '@/lib/feedback';
 import { uuid } from '@/lib/util';
+import { avatarFor } from '@/games/people';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
 import type { AvatarConfig } from '@/types';
@@ -35,16 +36,13 @@ export default function RelationsGame() {
   const quest = quests[qi];
   const prompt = done ? (quests.length ? '다 했어! 고마워!' : '공방에서 선생님과 친구를 먼저 만들어 봐!') : quest ? questPrompt(quest, who) : '';
 
+  // 질문이 바뀔 때만 읽어준다
+  useSayOnChange(prompt, `${qi}-${done}`, 350);
   useEffect(() => {
-    const t = setTimeout(() => say(prompt), 350);
     if (done && quests.length) celebrate();
-    return () => clearTimeout(t);
-    // 질문이 바뀔 때만 읽어준다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qi, done]);
+  }, [done, quests.length]);
   useEffect(
     () => () => {
-      stopSpeaking();
       if (timer.current) clearTimeout(timer.current);
     },
     [],
@@ -52,7 +50,7 @@ export default function RelationsGame() {
 
   if (!profile) return null;
 
-  const avatarOf = (id: string): AvatarConfig | null => (id === SELF ? profile.child.avatar : (people.find((p) => p.id === id)?.avatar ?? null));
+  const avatarOf = avatarFor(profile);
 
   const next = () => {
     timer.current = setTimeout(() => {
@@ -99,19 +97,8 @@ export default function RelationsGame() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Pressable accessibilityLabel="그만하기" onPress={() => router.back()} style={styles.iconBtn}>
-          <Text style={styles.iconText}>✕</Text>
-        </Pressable>
-        {!done && <Dots index={qi} total={quests.length} />}
-        <View style={styles.iconBtn} />
-      </View>
-
-      <Pressable onPress={() => say(prompt)} style={styles.ask} accessibilityHint="다시 듣기">
-        <Maru size={36} mood={done ? 'wow' : 'happy'} />
-        <Text style={styles.askText}>{prompt}</Text>
-        <Text style={styles.speaker}>🔊</Text>
-      </Pressable>
+      <KidHeader onClose={() => router.back()} center={!done ? <Dots index={qi} total={quests.length} /> : undefined} />
+      <AskBar text={prompt} mood={done ? 'wow' : 'happy'} size="lg" />
 
       {done ? (
         <View style={styles.end}>
@@ -201,12 +188,6 @@ function Face({ avatar, name, size }: { avatar: AvatarConfig | null; name: strin
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 4 },
-  iconBtn: { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  iconText: { fontSize: 20, color: colors.inkSoft, fontFamily: fonts.body },
-  ask: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 4, minHeight: 56 },
-  askText: { flex: 1, fontFamily: fonts.title, fontSize: 22, lineHeight: 30, color: colors.ink },
-  speaker: { fontSize: 18, opacity: 0.6 },
   stage: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 150, paddingVertical: 8 },
   link: { alignItems: 'center', width: 56 },
   linkEmoji: { fontSize: 30 },

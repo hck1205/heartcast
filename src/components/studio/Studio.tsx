@@ -4,12 +4,12 @@ import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } fr
 import { animalOf, callName, EMPTY_PERSONA, facetQuestion, traitOf, type PersonaFacet } from '@/games/persona';
 import { portraitDiff, portraitResponse } from '@/games/portrait';
 import { normalizeAvatar, randomAvatar } from '@/lib/avatar';
-import { celebrate, say, stopSpeaking, tap } from '@/lib/feedback';
+import { celebrate, tap, useSayOnChange } from '@/lib/feedback';
 import { josa } from '@/lib/josa';
 import { uuid } from '@/lib/util';
 import { colors, fonts, radius } from '@/theme';
 import type { FullAvatar, Persona, Person, PlayResponse } from '@/types';
-import { Maru } from '../Mascot';
+import { AskBar, HeaderTextButton, KidHeader } from '../kid/KidTop';
 import { Avatar } from '../Avatar';
 import { BigButton, Confetti, Dots, Screen, Tabs } from '../ui';
 import { PersonCard } from './PersonCard';
@@ -92,14 +92,11 @@ export function Studio({
   const kind = initial.kind;
   const q = question(step, name, kind, role);
 
+  // 단계가 바뀔 때만 읽어준다 (이름을 칠 때마다 읽지 않게)
+  useSayOnChange(q, step);
   useEffect(() => {
-    const t = setTimeout(() => say(q), 300);
     if (step === 'done') celebrate();
-    return () => clearTimeout(t);
-    // 단계가 바뀔 때만 읽어준다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
-  useEffect(() => () => stopSpeaking(), []);
 
   const pop = () => {
     bounce.setValue(0.94);
@@ -152,26 +149,15 @@ export function Studio({
   return (
     <Screen>
       {/* 상단: 닫기 · 진행 점 · 지우기 */}
-      <View style={styles.header}>
-        <Pressable accessibilityLabel="그만 만들기" onPress={onCancel} style={styles.iconBtn}>
-          <Text style={styles.iconText}>✕</Text>
-        </Pressable>
-        <Dots index={idx} total={steps.length} />
-        {onDelete ? (
-          <Pressable accessibilityLabel="지우기" onPress={onDelete} style={styles.iconBtn}>
-            <Text style={[styles.iconText, { fontSize: 14 }]}>지우기</Text>
-          </Pressable>
-        ) : (
-          <View style={styles.iconBtn} />
-        )}
-      </View>
+      <KidHeader
+        onClose={onCancel}
+        closeLabel="그만 만들기"
+        center={<Dots index={idx} total={steps.length} />}
+        right={onDelete ? <HeaderTextButton label="지우기" onPress={onDelete} /> : undefined}
+      />
 
       {/* 질문 한 줄 */}
-      <Pressable onPress={() => say(q)} style={styles.ask} accessibilityHint="다시 듣기">
-        <Maru size={36} mood={step === 'done' ? 'wow' : 'happy'} />
-        <Text style={styles.askText}>{q}</Text>
-        <Text style={styles.speaker}>🔊</Text>
-      </Pressable>
+      <AskBar text={q} mood={step === 'done' ? 'wow' : 'happy'} />
 
       {/* 미리보기 */}
       <View style={styles.preview}>
@@ -307,12 +293,6 @@ export function Studio({
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 4 },
-  iconBtn: { minWidth: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  iconText: { fontSize: 20, color: colors.inkSoft, fontFamily: fonts.body },
-  ask: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginTop: 4 },
-  askText: { flex: 1, fontFamily: fonts.title, fontSize: 21, lineHeight: 28, color: colors.ink },
-  speaker: { fontSize: 18, opacity: 0.6 },
   preview: { alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
   faces: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
   faceCard: {

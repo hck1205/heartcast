@@ -1,19 +1,20 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { ArtCanvas } from '@/components/art/ArtCanvas';
 import { Avatar } from '@/components/Avatar';
-import { Maru } from '@/components/Mascot';
+import { AskBar, KidHeader } from '@/components/kid/KidTop';
 import { BigButton, Confetti, Screen } from '@/components/ui';
 import { BUBBLES, CRAYONS, emptyDrawing, EXPRESSIONS, SELF, SKIES, STAMPS } from '@/games/art';
 import { FACES } from '@/games/content';
 import { nameOf } from '@/games/persona';
-import { celebrate, say, stopSpeaking, tap } from '@/lib/feedback';
+import { celebrate, say, tap, useSayOnChange } from '@/lib/feedback';
 import { josa } from '@/lib/josa';
+import { avatarFor, makeWho } from '@/games/people';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
-import type { AvatarConfig, Drawing, Expression } from '@/types';
+import type { Drawing, Expression } from '@/types';
 
 type Tool = 'people' | 'face' | 'bubble' | 'stamp' | 'crayon' | 'sky';
 
@@ -46,10 +47,7 @@ export default function ArtGame() {
   const [saving, setSaving] = useState(false);
 
   const people = profile?.people ?? [];
-  const nameFor = (id: string) => (id === SELF ? '나' : (() => {
-    const p = people.find((x) => x.id === id);
-    return p ? nameOf(p) : '';
-  })());
+  const nameFor = makeWho(people, '나');
   const scene = drawing?.kind === 'scene';
   const fig = drawing && selected !== null ? drawing.figures[selected] : undefined;
   /** 사람 도구에서 그림 속 사람을 직접 눌렀는지 (그때만 '빼기'를 보여준다) */
@@ -74,15 +72,11 @@ export default function ArtGame() {
                   ? `${who}의 얼굴은 어때?`
                   : `${josa(who, '은/는')} 자주 뭐라고 말해?`;
 
-  useEffect(() => {
-    const t = setTimeout(() => say(prompt), 300);
-    return () => clearTimeout(t);
-  }, [prompt]);
-  useEffect(() => () => stopSpeaking(), []);
+  useSayOnChange(prompt);
 
   if (!profile) return null;
 
-  const avatarOf = (id: string): AvatarConfig | null => (id === SELF ? profile.child.avatar : (people.find((p) => p.id === id)?.avatar ?? null));
+  const avatarOf = avatarFor(profile);
   const update = (fn: (d: Drawing) => Drawing) => setDrawing((d) => (d ? fn(d) : d));
 
   const start = (kind: Drawing['kind'], subjectId: string | null) => {
@@ -136,8 +130,8 @@ export default function ArtGame() {
     const choices = people.filter((p) => p.kind !== 'friend');
     return (
       <Screen>
-        <Header onClose={() => router.back()} title="그림 놀이" />
-        <Ask text={prompt} />
+        <KidHeader onClose={() => router.back()} center="그림 놀이" />
+        <AskBar text={prompt} size="sm" />
         <ScrollView contentContainerStyle={styles.pickWrap}>
           <Pressable accessibilityLabel="우리 반 그리기" onPress={() => start('scene', null)} style={styles.sceneCard}>
             <Text style={{ fontSize: 40 }}>🏫</Text>
@@ -166,8 +160,8 @@ export default function ArtGame() {
 
   return (
     <Screen>
-      <Header onClose={() => router.back()} title={scene ? '우리 반 그리기' : nameFor(drawing.subjectId ?? '')} />
-      <Ask text={prompt} />
+      <KidHeader onClose={() => router.back()} center={scene ? '우리 반 그리기' : nameFor(drawing.subjectId ?? '')} />
+      <AskBar text={prompt} size="sm" />
 
       <View style={styles.canvasWrap}>
         <ArtCanvas
@@ -329,30 +323,6 @@ export default function ArtGame() {
   );
 }
 
-function Header({ onClose, title }: { onClose: () => void; title: string }) {
-  return (
-    <View style={styles.header}>
-      <Pressable accessibilityLabel="그만하기" onPress={onClose} style={styles.iconBtn}>
-        <Text style={styles.iconText}>✕</Text>
-      </Pressable>
-      <Text style={styles.title} numberOfLines={1}>
-        {title}
-      </Text>
-      <View style={styles.iconBtn} />
-    </View>
-  );
-}
-
-function Ask({ text }: { text: string }) {
-  return (
-    <Pressable onPress={() => say(text)} style={styles.ask} accessibilityHint="다시 듣기">
-      <Maru size={32} mood="happy" />
-      <Text style={styles.askText}>{text}</Text>
-      <Text style={{ fontSize: 16, opacity: 0.6 }}>🔊</Text>
-    </Pressable>
-  );
-}
-
 function Chip({ emoji, label, on, onPress }: { emoji: string; label: string; on?: boolean; onPress: () => void }) {
   return (
     <Pressable
@@ -372,12 +342,6 @@ function Chip({ emoji, label, on, onPress }: { emoji: string; label: string; on?
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingTop: 4 },
-  iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  iconText: { fontSize: 20, color: colors.inkSoft, fontFamily: fonts.body },
-  title: { flex: 1, textAlign: 'center', fontFamily: fonts.title, fontSize: 18, color: colors.ink },
-  ask: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, minHeight: 44 },
-  askText: { flex: 1, fontFamily: fonts.title, fontSize: 19, lineHeight: 26, color: colors.ink },
   pickWrap: { padding: 16, gap: 14 },
   sceneCard: {
     flexDirection: 'row',

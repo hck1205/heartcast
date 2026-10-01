@@ -83,11 +83,9 @@ const styles = StyleSheet.create({
   title: { flex: 1, textAlign: 'center', fontFamily: fonts.title, fontSize: 20, color: colors.ink },
   wrap: { padding: 16, gap: 22, paddingBottom: 40 },
   shelf: { gap: 10 },
-  shelfTitle: { fontFamily: fonts.body, fontSize: 13, fontWeight: '700', color: colors.inkMuted },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
   card: { width: 150, backgroundColor: colors.paper, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, paddingVertical: 12, alignItems: 'center' },
   small: { width: 108, paddingVertical: 10 },
-  remake: { fontFamily: fonts.body, fontSize: 12, color: colors.inkMuted, marginTop: 4 },
   add: { justifyContent: 'center', minHeight: 130, backgroundColor: 'transparent', borderWidth: 2, borderStyle: 'dashed', borderColor: '#D9D1C4' },
   addText: { fontFamily: fonts.title, fontSize: 16, color: colors.inkSoft, marginTop: 4 },
 });

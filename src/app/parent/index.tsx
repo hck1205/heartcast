@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DrawingStrip } from '@/components/art/DrawingStrip';
-import { RelationMap } from '@/components/relations/RelationMap';
+import { nodesFor, RelationMap } from '@/components/relations/RelationMap';
 import { TrendBadge } from '@/components/report/charts';
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
 import { SignalCard } from '@/components/report/SignalCard';
@@ -11,8 +11,7 @@ import { PersonCard as MiniCard } from '@/components/studio/PersonCard';
 import { Tabs } from '@/components/ui';
 import { WeatherIcon } from '@/components/WeatherIcon';
 import { TOPICS } from '@/games/content';
-import { callName } from '@/games/persona';
-import { currentEdges, SELF } from '@/games/relations';
+import { currentEdges } from '@/games/relations';
 import { buildReport, describeResponse, weatherLabel, type TargetSummary } from '@/report/analyze';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
@@ -91,10 +90,7 @@ export default function ParentReport() {
         <Pressable onPress={() => router.push('/parent/relations')} style={({ pressed }) => [styles.mapCard, pressed && { opacity: 0.8 }]}>
           {edges.length ? (
             <RelationMap
-              nodes={[
-                { id: SELF, name: name, kind: 'self', avatar: profile.child.avatar },
-                ...profile.people.map((p) => ({ id: p.id, name: callName(p.name, p.kind, p.role), kind: p.kind, avatar: p.avatar })),
-              ]}
+              nodes={nodesFor(profile, name)}
               edges={edges}
               height={260}
             />

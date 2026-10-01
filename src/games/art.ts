@@ -2,7 +2,9 @@ import { josa } from '@/lib/josa';
 import { uuid } from '@/lib/util';
 import type { ArtFigure, ArtSky, ArtStroke, Drawing, Expression, Person, PlayResponse } from '@/types';
 import { faceByCode } from './content';
-import { nameOf } from './persona';
+import { makeWho, SELF } from './people';
+
+export { SELF } from './people';
 
 /**
  * 그림 놀이: 아이가 사람을 그리며 표정·말풍선·스탬프·크레용·하늘로 마음껏 표현한다.
@@ -12,7 +14,6 @@ import { nameOf } from './persona';
 
 export const CANVAS_W = 1000;
 export const CANVAS_H = 1250;
-export const SELF = 'self';
 
 export interface ArtChoice {
   id: string;
@@ -234,10 +235,7 @@ export function describeArtValue(value: string, who: string): { emoji: string; t
 
 /** 그림 한 장을 부모가 읽을 수 있게 요약 */
 export function describeDrawing(d: Drawing, people: Person[], childName: string): string[] {
-  const who = (id: string) => (id === SELF ? childName : (() => {
-    const p = people.find((x) => x.id === id);
-    return p ? nameOf(p) : '(지워진 사람)';
-  })());
+  const who = makeWho(people, childName);
   const lines: string[] = [];
   for (const f of d.figures) {
     const face = faceByCode(f.expression);

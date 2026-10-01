@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Circle, G, Line, Polygon } from 'react-native-svg';
 
-import { relationOf, SELF, type Edge } from '@/games/relations';
+import { SELF } from '@/games/people';
+import { nameOf } from '@/games/persona';
+import { relationOf, type Edge } from '@/games/relations';
 import { colors, fonts } from '@/theme';
-import type { AvatarConfig, PersonKind } from '@/types';
+import type { AvatarConfig, PersonKind, Profile } from '@/types';
 import { Avatar } from '../Avatar';
 
 export interface MapNode {
@@ -60,37 +62,29 @@ export function layoutNodes(nodes: MapNode[], w: number, h: number): { pos: Reco
   return { pos, size, selfSize };
 }
 
+/** 관계도에 놓을 사람들: 가운데 아이(이름은 selfName) + 만든 사람 모두 */
+export function nodesFor(profile: Pick<Profile, 'child' | 'people'>, selfName: string): MapNode[] {
+  return [
+    { id: SELF, name: selfName, kind: 'self', avatar: profile.child.avatar },
+    ...profile.people.map((p) => ({ id: p.id, name: nameOf(p), kind: p.kind, avatar: p.avatar })),
+  ];
+}
+
+/** 화살촉: 받는 쪽 동그라미 가장자리에 */
+function arrowPoints(a: Pos, b: Pos, r: number) {
+  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const ux = (b.x - a.x) / len;
+  const uy = (b.y - a.y) / len;
+  const tip = { x: b.x - ux * r, y: b.y - uy * r };
+  const s = 7;
+  return `${tip.x},${tip.y} ${tip.x - ux * s * 1.6 - uy * s},${tip.y - uy * s * 1.6 + ux * s} ${tip.x - ux * s * 1.6 + uy * s},${tip.y - uy * s * 1.6 - ux * s}`;
+}
+
 /**
- * 관계도: 사람 카드(아바타)를 원형으로 놓고, 관계를 색 선 + 스티커로 잇는다.
- * 방향이 있는 관계(칭찬해요, 소리 질러요…)는 받는 쪽에 작은 화살촉을 그린다.
+ * 관계도 (부모 화면, 보기 전용): 사람 카드(아바타)를 원형으로 놓고, 관계를 색 선 + 스티커로 잇는다.
+ * 조심스러운 관계는 점선, 방향이 있는 관계(칭찬해요, 소리 질러요…)는 받는 쪽에 화살촉.
  */
-export function RelationMap({
-  nodes,
-  edges,
-  height,
-  focus,
-  selectable,
-  selected = [],
-  dimOthers = false,
-  onPressNode,
-  onPressEdge,
-  fresh,
-}: {
-  nodes: MapNode[];
-  edges: Edge[];
-  /** 지정하지 않으면 부모 높이에 맞춘다 */
-  height?: number;
-  /** 질문 주인공 (노란 테두리) */
-  focus?: string;
-  /** 누를 수 있는 사람들 (없으면 모두) */
-  selectable?: string[];
-  selected?: string[];
-  dimOthers?: boolean;
-  onPressNode?: (id: string) => void;
-  onPressEdge?: (edge: Edge) => void;
-  /** 방금 이은 선 (굵게) */
-  fresh?: string | null;
-}) {
+export function RelationMap({ nodes, edges, height }: { nodes: MapNode[]; edges: Edge[]; /** 지정하지 않으면 부모 높이에 맞춘다 */ height?: number }) {
   const [box, setBox] = useState({ w: 0, h: 0 });
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height: hh } = e.nativeEvent.layout;
@@ -99,10 +93,8 @@ export function RelationMap({
   const w = box.w;
   const h = height ?? box.h;
   const ready = w > 0 && h > 0;
-  const { pos, size, selfSize } = ready ? layoutNodes(nodes, w, h) : { pos: {}, size: 0, selfSize: 0 };
+  const { pos, size, selfSize } = ready ? layoutNodes(nodes, w, h) : { pos: {} as Record<string, Pos>, size: 0, selfSize: 0 };
   const drawn = edges.filter((e) => pos[e.from] && pos[e.to]);
-  // 질문 중에는 주인공과 이어진 선만 또렷하게
-  const quiet = (e: Edge) => dimOthers && ((fresh && fresh !== e.key) || (!fresh && !!focus && e.from !== focus && e.to !== focus));
 
   // 같은 두 사람 사이 스티커가 겹치지 않게 조금씩 밀기
   const pairCount = new Map<string, number>();
@@ -116,7 +108,7 @@ export function RelationMap({
     return { e, x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
   });
   const radiusOf = (id: string) => (id === SELF ? selfSize : size) / 2 + 3;
-  const canPress = (id: string) => !selectable || selectable.includes(id);
+  const S = Math.max(24, Math.min(32, size * 0.55));
 
   return (
     <View style={[styles.box, height ? { height } : { flex: 1 }]} onLayout={onLayout}>
@@ -128,18 +120,6 @@ export function RelationMap({
               const def = relationOf(e.rel)!;
               const a = pos[e.from];
               const b = pos[e.to];
-              const neg = def.score < 0;
-              const bold = fresh === e.key;
-              // 받는 쪽 동그라미 가장자리에 화살촉
-              const dx = b.x - a.x;
-              const dy = b.y - a.y;
-              const len = Math.hypot(dx, dy) || 1;
-              const ux = dx / len;
-              const uy = dy / len;
-              const r = radiusOf(e.to);
-              const tip = { x: b.x - ux * r, y: b.y - uy * r };
-              const s = 7;
-              const arrow = `${tip.x},${tip.y} ${tip.x - ux * s * 1.6 - uy * s},${tip.y - uy * s * 1.6 + ux * s} ${tip.x - ux * s * 1.6 + uy * s},${tip.y - uy * s * 1.6 - ux * s}`;
               return (
                 <G key={e.key}>
                   <Line
@@ -148,31 +128,27 @@ export function RelationMap({
                     x2={b.x}
                     y2={b.y}
                     stroke={def.color}
-                    strokeWidth={bold ? 6 : 3.5}
+                    strokeWidth={3.5}
                     strokeLinecap="round"
-                    strokeDasharray={neg ? '8 6' : undefined}
-                    opacity={quiet(e) ? 0.18 : 0.9}
+                    strokeDasharray={def.score < 0 ? '8 6' : undefined}
+                    opacity={0.9}
                   />
-                  {def.directed && <Polygon points={arrow} fill={def.color} opacity={quiet(e) ? 0.18 : 1} />}
+                  {def.directed && <Polygon points={arrowPoints(a, b, radiusOf(e.to))} fill={def.color} />}
                 </G>
               );
             })}
           </Svg>
 
           {stickers.map(({ e, x, y }) => {
-            if (quiet(e)) return null;
             const def = relationOf(e.rel)!;
-            const S = Math.max(24, Math.min(32, size * 0.55));
             return (
-              <Pressable
+              <View
                 key={`s-${e.key}`}
-                disabled={!onPressEdge}
-                onPress={() => onPressEdge?.(e)}
                 accessibilityLabel={def.label}
                 style={[styles.sticker, { left: x - S / 2, top: y - S / 2, width: S, height: S, borderRadius: S / 2, borderColor: def.color }]}
               >
                 <Text style={{ fontSize: S * 0.55 }}>{def.emoji}</Text>
-              </Pressable>
+              </View>
             );
           })}
 
@@ -180,29 +156,9 @@ export function RelationMap({
             const p = pos[nd.id];
             if (!p) return null;
             const s = nd.id === SELF ? selfSize : size;
-            const isSel = selected.includes(nd.id);
-            const isFocus = focus === nd.id;
-            const active = canPress(nd.id);
             return (
-              <Pressable
-                key={nd.id}
-                disabled={!onPressNode || !active}
-                onPress={() => onPressNode?.(nd.id)}
-                accessibilityLabel={nd.name}
-                style={[styles.node, { left: p.x - s / 2, top: p.y - s / 2, width: s }, !active && dimOthers && { opacity: 0.35 }]}
-              >
-                <View
-                  style={[
-                    styles.face,
-                    {
-                      width: s,
-                      height: s,
-                      borderRadius: s / 2,
-                      borderColor: isSel ? colors.ink : isFocus ? '#FFC83D' : KIND_RING[nd.kind],
-                      borderWidth: isSel || isFocus ? 4 : 2.5,
-                    },
-                  ]}
-                >
+              <View key={nd.id} accessibilityLabel={nd.name} style={[styles.node, { left: p.x - s / 2, top: p.y - s / 2, width: s }]}>
+                <View style={[styles.face, { width: s, height: s, borderRadius: s / 2, borderColor: KIND_RING[nd.kind] }]}>
                   <View style={{ marginTop: s * 0.02 }}>
                     <Avatar avatar={nd.avatar} size={s * 0.98} expression={nd.id === SELF ? 'happy' : 'calm'} />
                   </View>
@@ -210,7 +166,7 @@ export function RelationMap({
                 <Text numberOfLines={1} style={[styles.name, { fontSize: Math.max(10, Math.min(13, s * 0.22)), maxWidth: s + 26 }]}>
                   {nd.name}
                 </Text>
-              </Pressable>
+              </View>
             );
           })}
         </>
@@ -222,7 +178,7 @@ export function RelationMap({
 const styles = StyleSheet.create({
   box: { width: '100%', position: 'relative' },
   node: { position: 'absolute', alignItems: 'center' },
-  face: { overflow: 'hidden', backgroundColor: colors.paper, alignItems: 'center' },
+  face: { overflow: 'hidden', backgroundColor: colors.paper, alignItems: 'center', borderWidth: 2.5 },
   name: {
     fontFamily: fonts.title,
     color: colors.ink,

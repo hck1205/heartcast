@@ -2,9 +2,8 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
-import { KIND_RING, RelationMap } from '@/components/relations/RelationMap';
-import { callName } from '@/games/persona';
-import { currentEdges, edgeSentence, makeWho, NOBODY, parseRelationValue, relationOf, RELATIONS, SELF, UNKNOWN } from '@/games/relations';
+import { KIND_RING, nodesFor, RelationMap } from '@/components/relations/RelationMap';
+import { currentEdges, edgeSentence, makeWho, NOBODY, parseRelationValue, relationOf, RELATIONS, UNKNOWN } from '@/games/relations';
 import { sceneStats } from '@/games/art';
 import { describeRelation } from '@/report/analyze';
 import { useApp } from '@/state/AppContext';
@@ -31,10 +30,7 @@ export default function ParentRelations() {
   const { edges, who, rel, answers } = data;
   const worry = edges.filter((e) => relationOf(e.rel)!.score < 0);
   const good = edges.filter((e) => relationOf(e.rel)!.score >= 0);
-  const nodes = [
-    { id: SELF, name: profile.child.name, kind: 'self' as const, avatar: profile.child.avatar },
-    ...profile.people.map((p) => ({ id: p.id, name: callName(p.name, p.kind, p.role), kind: p.kind, avatar: p.avatar })),
-  ];
+  const nodes = nodesFor(profile, profile.child.name);
 
   return (
     <ParentShell title="관계도">
