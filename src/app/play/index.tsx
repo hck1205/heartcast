@@ -75,7 +75,7 @@ export default function PlayHome() {
           </Pressable>
           <Pressable onPress={() => router.push('/play/stickers')} style={styles.tile}>
             <Text style={styles.tileIcon}>📒</Text>
-            <Text style={styles.tileText}>스티커 {profile.stickers.length}</Text>
+            <Text style={styles.tileText}>스티커</Text>
           </Pressable>
         </View>
       </View>
@@ -98,16 +98,15 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10 },
   tile: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 14,
+    gap: 2,
+    paddingVertical: 12,
     backgroundColor: colors.paper,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.line,
   },
-  tileIcon: { fontSize: 22 },
+  tileIcon: { fontSize: 34 },
   tileText: { fontFamily: fonts.title, fontSize: 16, color: colors.ink },
 });

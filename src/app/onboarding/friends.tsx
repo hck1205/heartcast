@@ -1,21 +1,32 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 
 import { OnboardingFrame } from '@/components/OnboardingFrame';
 import { PeopleEditor } from '@/components/PeopleEditor';
-import { BigButton } from '@/components/ui';
+import { BigButton, Tabs } from '@/components/ui';
 import { useOnboarding } from '@/state/OnboardingContext';
 
+/** 친구·가족 만들기 (선택): 한 화면에 탭 두 개 */
 export default function FriendsStep() {
   const { draft } = useOnboarding();
-  const count = draft.people.filter((p) => p.kind === 'friend').length;
+  const [kind, setKind] = useState<'friend' | 'parent'>('friend');
+  const count = draft.people.filter((p) => p.kind !== 'teacher').length;
   return (
     <OnboardingFrame
       step={4}
-      maru="우리 반 친구들도 만들어요"
-      sub="친구가 많을수록 관계도 놀이가 풍성해져요. 친한 친구부터 시작해서 나중에 더 만들어도 돼요. (선택, 30명까지)"
-      footer={<BigButton label={count ? '다음' : '나중에 할게요'} variant={count ? 'primary' : 'secondary'} onPress={() => router.push('/onboarding/grownups')} />}
+      maru="친구·가족도 만들어요"
+      sub="아이가 아는 친구와 어른을 만들어요. 나중에 해도 돼요."
+      footer={<BigButton label={count ? '다음' : '나중에 할게요'} variant={count ? 'primary' : 'secondary'} onPress={() => router.push('/onboarding/pin')} />}
     >
-      <PeopleEditor kind="friend" people={draft.people} studioPath="/onboarding/studio" />
+      <Tabs
+        items={[
+          { id: 'friend', label: '친구' },
+          { id: 'parent', label: '가족·어른' },
+        ]}
+        value={kind}
+        onChange={setKind}
+      />
+      <PeopleEditor kind={kind} people={draft.people} studioPath="/onboarding/studio" />
     </OnboardingFrame>
   );
 }

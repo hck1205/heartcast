@@ -8,6 +8,7 @@ import {
   type ColorChoice,
   type EmojiChoice,
   type PersonaFacet,
+  visibleChoices,
 } from '@/games/persona';
 import { say, tap } from '@/lib/feedback';
 import { colors, fonts, radius } from '@/theme';
@@ -73,7 +74,7 @@ function PaintDrop({ c, selected, onPress, dim }: { c: ColorChoice; selected: bo
 
 /**
  * 성격 이미지 고르기 (색·동물·모양·성격).
- * trait 는 multi 로 최대 3개, 나머지는 하나만.
+ * trait 는 multi 로 최대 2개, 나머지는 하나만.
  * value 가 'unknown' 이면 "잘 모르겠어"를 고른 상태.
  */
 export function PersonaPicker({
@@ -109,16 +110,16 @@ export function PersonaPicker({
             <PaintDrop key={c.id} c={c} selected={selected(c.id)} onPress={() => pick(c.id)} dim={dimOthers && anySelected && !selected(c.id)} />
           ))}
         {facet !== 'color' &&
-          (FACET_CHOICES[facet] as EmojiChoice[]).map((c) => (
+          (visibleChoices(facet) as EmojiChoice[]).map((c) => (
             <OptionTile
               key={c.id}
               selected={selected(c.id)}
               onPress={() => pick(c.id)}
               label={c.label}
-              width={facet === 'trait' ? 96 : 78}
+              width={facet === 'trait' ? 100 : 84}
               dim={dimOthers && anySelected && !selected(c.id)}
             >
-              <Text style={{ fontSize: facet === 'trait' ? 30 : 38 }}>{c.emoji}</Text>
+              <Text style={{ fontSize: facet === 'trait' ? 36 : 40 }}>{c.emoji}</Text>
             </OptionTile>
           ))}
       </View>

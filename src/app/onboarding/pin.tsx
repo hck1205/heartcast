@@ -54,7 +54,7 @@ export default function PinStep() {
 
   return (
     <OnboardingFrame
-      step={6}
+      step={5}
       maru={first ? '한 번 더 눌러 주세요' : '부모 비밀번호 4자리'}
       sub={first ? undefined : '리포트는 이 번호로 잠겨요.'}
       footer={saving ? <Text style={{ textAlign: 'center', fontFamily: fonts.body, color: colors.inkSoft }}>저장하는 중…</Text> : null}

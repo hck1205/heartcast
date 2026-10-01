@@ -64,12 +64,12 @@ describe('currentEdges', () => {
 });
 
 describe('planQuests', () => {
-  it('asks at most two sensitive questions, starts gently and never repeats a subject', () => {
+  it('asks three questions, at most one sensitive, starts gently and never repeats a subject', () => {
     for (let seed = 1; seed < 40; seed++) {
       const qs = planQuests(people, [], seed);
-      expect(qs).toHaveLength(5);
+      expect(qs).toHaveLength(3);
       expect(qs[0].sensitive).toBe(false);
-      expect(qs.filter((q) => q.sensitive).length).toBeLessThanOrEqual(2);
+      expect(qs.filter((q) => q.sensitive).length).toBeLessThanOrEqual(1);
       const subjects = qs.map((q) => q.subject).filter((s) => s !== SELF);
       expect(new Set(subjects).size).toBe(subjects.length);
       for (const q of qs) {

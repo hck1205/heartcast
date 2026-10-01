@@ -12,7 +12,7 @@ import type { AvatarConfig, Persona, Person, PlayResponse, PlaySession, Profile 
  * 무서운 장면 선택이 섞이도록 만들어 리포트의 신호 기능을 보여준다.
  */
 const DEMO_PERSONA: Record<'miso' | 'danbiBefore' | 'danbiNow', Persona> = {
-  miso: { color: 'sun', animal: 'rabbit', shape: 'heart', traits: ['kind', 'smiles', 'praises'] },
+  miso: { color: 'sun', animal: 'rabbit', shape: 'heart', traits: ['kind', 'smiles'] },
   // 처음엔 강아지·하늘색·구름이었는데, 최근 다시 꾸밀 때 사자·빨강·번개로 바뀐 흐름
   danbiBefore: { color: 'sky', animal: 'puppy', shape: 'cloud', traits: ['plays', 'fun'] },
   danbiNow: { color: 'red', animal: 'lion', shape: 'bolt', traits: ['yells', 'busy'] },

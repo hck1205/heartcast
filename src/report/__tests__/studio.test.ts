@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { demoHistory, demoProfile } from '@/data/demoSeed';
-import { FACET_CHOICES, PERSONA_ANIMALS, PERSONA_TRAITS } from '@/games/persona';
+import { FACET_CHOICES, findChoice, MAX_TRAITS, PERSONA_ANIMALS, PERSONA_TRAITS, visibleChoices } from '@/games/persona';
 import { planSession } from '@/games/planner';
 import { parsePortraitValue, portraitDiff, portraitResponse } from '@/games/portrait';
 import { ALL_OPTIONS, normalizeAvatar, randomAvatar } from '@/lib/avatar';
@@ -97,6 +97,12 @@ describe('normalizeAvatar', () => {
 });
 
 describe('persona choices', () => {
+  it('shows children a short sticker list (max 2) but can still read old stickers', () => {
+    expect(visibleChoices('trait').length).toBe(9);
+    expect(MAX_TRAITS).toBe(2);
+    expect(findChoice('trait', 'praises')?.label).toBe('칭찬해줘');
+  });
+
   it('offer both gentle and scary options so children can express fear', () => {
     for (const choices of Object.values(FACET_CHOICES)) {
       expect(choices.some((c) => c.score > 0)).toBe(true);

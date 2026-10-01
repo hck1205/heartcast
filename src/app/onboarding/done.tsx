@@ -30,7 +30,7 @@ export default function Done() {
 
   return (
     <Screen>
-      <SkyProgress step={7} total={7} />
+      <SkyProgress step={6} total={6} />
       <ScrollView contentContainerStyle={styles.wrap}>
         <Text style={styles.title}>준비 완료!</Text>
         <Text style={styles.sub}>이제 휴대폰을 {child.name}에게 건네주세요.{'\n'}하원 후 하루 한 번, 5분이면 충분해요.</Text>

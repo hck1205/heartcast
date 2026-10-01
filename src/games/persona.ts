@@ -13,6 +13,8 @@ export interface PersonaChoice {
   parentLabel: string; // 부모 리포트용
   score: number;
   fear: boolean;
+  /** 아이 화면에는 더 보이지 않는 선택지 (예전 기록을 읽기 위해 남겨 둠) */
+  hidden?: boolean;
 }
 
 export interface ColorChoice extends PersonaChoice {
@@ -73,11 +75,11 @@ export const PERSONA_TRAITS: EmojiChoice[] = [
   { id: 'fun', emoji: '🤪', label: '재밌어', hint: '', parentLabel: '재밌어', score: 2, fear: false },
   { id: 'plays', emoji: '🧸', label: '잘 놀아줘', hint: '', parentLabel: '잘 놀아줘', score: 2, fear: false },
   { id: 'smiles', emoji: '😊', label: '잘 웃어', hint: '', parentLabel: '잘 웃어', score: 2, fear: false },
-  { id: 'praises', emoji: '👍', label: '칭찬해줘', hint: '', parentLabel: '칭찬해줘', score: 2, fear: false },
-  { id: 'listens', emoji: '👂', label: '잘 들어줘', hint: '', parentLabel: '잘 들어줘', score: 2, fear: false },
+  { id: 'praises', emoji: '👍', label: '칭찬해줘', hint: '', parentLabel: '칭찬해줘', score: 2, fear: false, hidden: true },
+  { id: 'listens', emoji: '👂', label: '잘 들어줘', hint: '', parentLabel: '잘 들어줘', score: 2, fear: false, hidden: true },
   { id: 'quiet', emoji: '🤫', label: '조용해', hint: '', parentLabel: '조용해', score: 0, fear: false },
   { id: 'busy', emoji: '🏃', label: '바빠', hint: '', parentLabel: '늘 바빠', score: 0, fear: false },
-  { id: 'cold', emoji: '🥶', label: '차가워', hint: '', parentLabel: '차가워', score: -1, fear: false },
+  { id: 'cold', emoji: '🥶', label: '차가워', hint: '', parentLabel: '차가워', score: -1, fear: false, hidden: true },
   { id: 'scary', emoji: '😨', label: '무서워', hint: '', parentLabel: '무서워', score: -2, fear: true },
   { id: 'angry', emoji: '😠', label: '화를 잘 내', hint: '', parentLabel: '화를 잘 내', score: -2, fear: true },
   { id: 'yells', emoji: '📢', label: '소리 질러', hint: '', parentLabel: '소리 질러', score: -2, fear: true },
@@ -99,7 +101,10 @@ export const FACET_LABEL: Record<PersonaFacet, string> = {
   trait: '성격',
 };
 
-export const MAX_TRAITS = 3;
+export const MAX_TRAITS = 2;
+
+/** 아이 화면에 보여줄 선택지 */
+export const visibleChoices = (facet: PersonaFacet) => FACET_CHOICES[facet].filter((c) => !c.hidden);
 
 export function findChoice(facet: PersonaFacet, id: string | null | undefined): PersonaChoice | undefined {
   if (!id) return undefined;

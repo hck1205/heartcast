@@ -1,44 +1,43 @@
 import { useEffect, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { animalOf, callName, colorOf, EMPTY_PERSONA, facetQuestion, shapeOf, type PersonaFacet } from '@/games/persona';
+import { animalOf, callName, EMPTY_PERSONA, facetQuestion, traitOf, type PersonaFacet } from '@/games/persona';
 import { portraitDiff, portraitResponse } from '@/games/portrait';
-import { normalizeAvatar, randomize } from '@/lib/avatar';
+import { normalizeAvatar, randomAvatar } from '@/lib/avatar';
 import { celebrate, say, stopSpeaking, tap } from '@/lib/feedback';
 import { josa } from '@/lib/josa';
 import { uuid } from '@/lib/util';
 import { colors, fonts, radius } from '@/theme';
 import type { FullAvatar, Persona, Person, PlayResponse } from '@/types';
 import { Maru } from '../Mascot';
+import { Avatar } from '../Avatar';
 import { BigButton, Confetti, Dots, Screen, Tabs } from '../ui';
 import { PersonCard } from './PersonCard';
 import { LookOptions, lookTabs, type LookTab } from './LookOptions';
 import { PersonaPicker } from './pickers';
 
-/** 공방 단계: 이름 → 얼굴 → 머리 → 옷·소품 → 색깔 → 동물 → 모양 → 성격 → 완성 */
-type StepId = 'name' | 'face' | 'hair' | 'outfit' | PersonaFacet | 'done';
+/** 공방 단계: 이름 → 닮은 얼굴 고르기 → 동물 → 성격(선생님만) → 완성 */
+type StepId = 'name' | 'look' | 'animal' | 'trait' | 'done';
+type Group = 'face' | 'hair' | 'outfit';
 
-const LOOK_KEYS: Partial<Record<StepId, (keyof FullAvatar)[]>> = {
-  face: ['faceShape', 'skin', 'eyes', 'eyeColor', 'brows', 'nose', 'mouth', 'cheeks', 'facialHair'],
-  hair: ['hair', 'hairColor'],
-  outfit: ['top', 'pattern', 'shirt', 'glasses', 'headwear', 'neckwear', 'earrings'],
-};
+const CANDIDATES = 6;
+/** 닮은 얼굴 후보: 지금 얼굴 + 같은 나이대의 랜덤 얼굴 */
+const makeCandidates = (current: FullAvatar | null, age: FullAvatar['age']) => [
+  ...(current ? [current] : []),
+  ...Array.from({ length: current ? CANDIDATES - 1 : CANDIDATES }, () => randomAvatar(age)),
+];
 
 function question(step: StepId, name: string, kind: Person['kind']): string {
   const who = callName(name || { teacher: '우리', friend: '친구', parent: '어른' }[kind], kind);
   switch (step) {
     case 'name':
       return { teacher: '누구 선생님을 만들어 볼까?', friend: '어떤 친구를 만들어 볼까?', parent: '어떤 어른을 만들어 볼까?' }[kind];
-    case 'face':
-      return `${who} 얼굴은 어떻게 생겼어?`;
-    case 'hair':
-      return `${who} 머리는 어때?`;
-    case 'outfit':
-      return `${josa(who, '은/는')} 뭘 입고 있어?`;
+    case 'look':
+      return `${josa(who, '이랑/랑')} 제일 닮은 얼굴을 골라 줘!`;
     case 'done':
       return `${who} 완성!`;
     case 'trait':
-      return `${josa(who, '은/는')} 어떤 사람이야? (3개까지)`;
+      return `${josa(who, '은/는')} 어떤 사람이야? (2개까지)`;
     default:
       return facetQuestion(step, name, kind);
   }
@@ -50,9 +49,11 @@ export interface StudioResult {
 }
 
 /**
- * 선생님(친구) 만들기 공방.
- * 생김새(얼굴·머리·옷) → 이미지(색·동물·모양·성격) → 완성.
- * 이미지 단계는 아이의 느낌을 기록하는 곳이라 🎲 랜덤이 없고 "잘 모르겠어"가 있다.
+ * 선생님·친구·어른 만들기 공방 (아이용, 단계는 짧게).
+ * 닮은 얼굴 6개 중 하나 고르기 → 닮은 동물 → (선생님만) 성격 스티커 → 완성.
+ * 세부 꾸미기(눈·코·머리·옷…)는 "✏️ 더 꾸미기" 안에 접어 둔다.
+ * 동물·성격은 아이의 느낌을 기록하는 곳이라 랜덤이 없고 "잘 모르겠어"가 있다.
+ * (색깔·모양은 놀이 중 "오늘의 선생님 이미지" 질문에서 묻는다)
  */
 export function Studio({
   initial,
@@ -71,17 +72,19 @@ export function Studio({
   const [unknown, setUnknown] = useState<Set<PersonaFacet>>(new Set());
   const [steps] = useState<StepId[]>(() => [
     ...(initial.name ? [] : (['name'] as StepId[])),
-    'face',
-    'hair',
-    'outfit',
-    'color',
+    'look',
     'animal',
-    'shape',
-    'trait',
+    ...(initial.kind === 'teacher' ? (['trait'] as StepId[]) : []),
     'done',
   ]);
   const [idx, setIdx] = useState(0);
-  const [tabs, setTabs] = useState<Partial<Record<StepId, LookTab>>>({});
+  const [candidates, setCandidates] = useState<FullAvatar[]>(() => {
+    const a = normalizeAvatar(initial.avatar);
+    return makeCandidates(initial.name ? a : null, a.age).map((x, i) => (i === 0 && !initial.name ? a : x));
+  });
+  const [detail, setDetail] = useState(false);
+  const [group, setGroup] = useState<Group>('face');
+  const [tab, setTab] = useState<LookTab>('age');
   const [saving, setSaving] = useState(false);
   const [bounce] = useState(() => new Animated.Value(1));
   const step = steps[idx];
@@ -123,8 +126,8 @@ export function Studio({
   const canNext =
     step === 'name'
       ? name.trim().length > 0
-      : step === 'color' || step === 'animal' || step === 'shape'
-        ? !!persona[step] || unknown.has(step)
+      : step === 'animal'
+        ? !!persona.animal || unknown.has('animal')
         : step === 'trait'
           ? persona.traits.length > 0 || unknown.has('trait')
           : true;
@@ -143,8 +146,7 @@ export function Studio({
     }
   };
 
-  const look = LOOK_KEYS[step];
-  const currentTab: LookTab = tabs[step] ?? lookTabs(step)[0]?.id ?? 'shape';
+  const groupTabs = lookTabs(group).filter((t) => kind === 'teacher' || t.id !== 'nameTag');
 
   return (
     <Screen>
@@ -175,25 +177,28 @@ export function Studio({
         <Animated.View style={{ transform: [{ scale: bounce }] }}>
           <PersonCard person={personNow} size={step === 'done' ? 148 : 118} showName={step === 'done' || !!name.trim()} showTraits={step === 'trait' || step === 'done'} />
         </Animated.View>
-        {look ? (
-          <Pressable
-            accessibilityLabel="랜덤"
-            onPress={() => {
-              tap();
-              setAvatar((a) => randomize(a, look));
-              pop();
-            }}
-            style={styles.dice}
-          >
-            <Text style={{ fontSize: 22 }}>🎲</Text>
-          </Pressable>
-        ) : null}
       </View>
 
       {/* 고르기 판 */}
       <View style={styles.sheet}>
-        {lookTabs(step).length > 0 && <Tabs items={lookTabs(step)} value={currentTab} onChange={(t) => setTabs((m) => ({ ...m, [step]: t }))} />}
-        <ScrollView key={`${step}-${currentTab}`} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
+        {step === 'look' && detail && (
+          <>
+            <Tabs
+              items={[
+                { id: 'face', label: '얼굴' },
+                { id: 'hair', label: '머리' },
+                { id: 'outfit', label: '옷·소품' },
+              ]}
+              value={group}
+              onChange={(g) => {
+                setGroup(g);
+                setTab(lookTabs(g)[0].id);
+              }}
+            />
+            <Tabs items={groupTabs} value={tab} onChange={setTab} />
+          </>
+        )}
+        <ScrollView key={`${step}-${detail ? tab : 'pick'}`} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
           {step === 'name' && (
             <View style={{ gap: 8 }}>
               <TextInput
@@ -209,11 +214,45 @@ export function Studio({
             </View>
           )}
 
-          {look && <LookOptions tab={currentTab} avatar={avatar} setLook={setLook} kind={kind} />}
-
-          {(step === 'color' || step === 'animal' || step === 'shape') && (
-            <PersonaPicker facet={step} value={unknown.has(step) ? 'unknown' : persona[step]} onChange={(v) => setFacet(step, v)} />
+          {step === 'look' && !detail && (
+            <View style={{ gap: 12 }}>
+              <View style={styles.faces}>
+                {candidates.map((c, i) => {
+                  const on = JSON.stringify(c) === JSON.stringify(avatar);
+                  return (
+                    <Pressable
+                      key={i}
+                      accessibilityLabel={`얼굴 ${i + 1}`}
+                      onPress={() => {
+                        tap();
+                        setAvatar(c);
+                        pop();
+                      }}
+                      style={[styles.faceCard, on && styles.faceOn]}
+                    >
+                      <Avatar avatar={c} size={86} />
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <View style={styles.row}>
+                <BigButton
+                  small
+                  variant="secondary"
+                  label="🔄 다른 얼굴"
+                  onPress={() => {
+                    tap();
+                    setCandidates([avatar, ...makeCandidates(null, avatar.age).slice(1)]);
+                  }}
+                  style={{ flex: 1 }}
+                />
+                <BigButton small variant="ghost" label="✏️ 더 꾸미기" onPress={() => setDetail(true)} style={{ flex: 1 }} />
+              </View>
+            </View>
           )}
+          {step === 'look' && detail && <LookOptions tab={tab} avatar={avatar} setLook={setLook} kind={kind} />}
+
+          {step === 'animal' && <PersonaPicker facet="animal" value={unknown.has('animal') ? 'unknown' : persona.animal} onChange={(v) => setFacet('animal', v)} />}
           {step === 'trait' && (
             <PersonaPicker facet="trait" multi value={unknown.has('trait') ? ['unknown'] : persona.traits} onChange={(v) => setFacet('trait', v)} />
           )}
@@ -221,21 +260,27 @@ export function Studio({
           {step === 'done' && (
             <View style={{ alignItems: 'center', gap: 10 }}>
               <View style={styles.summary}>
-                {persona.color && <Text style={styles.summaryChip}>🎨 {colorOf(persona.color)?.label}</Text>}
                 {persona.animal && <Text style={styles.summaryChip}>{animalOf(persona.animal)?.emoji} {animalOf(persona.animal)?.label}</Text>}
-                {persona.shape && <Text style={styles.summaryChip}>{shapeOf(persona.shape)?.emoji} {shapeOf(persona.shape)?.label}</Text>}
+                {persona.traits.map((t) => (
+                  <Text key={t} style={styles.summaryChip}>
+                    {traitOf(t)?.emoji} {traitOf(t)?.label}
+                  </Text>
+                ))}
               </View>
-              <Text style={styles.helper}>마음이 바뀌면 선생님 공방에서 다시 꾸밀 수 있어요</Text>
+              <Text style={styles.helper}>마음이 바뀌면 공방에서 다시 꾸밀 수 있어요</Text>
             </View>
           )}
         </ScrollView>
 
         {/* 아래 버튼: 이전 / 다음 */}
         <View style={styles.footer}>
-          {idx > 0 && step !== 'done' ? (
+          {step === 'look' && detail ? (
+            <BigButton small label="✓ 다 꾸몄어" onPress={() => setDetail(false)} style={{ flex: 1 }} />
+          ) : null}
+          {step === 'look' && detail ? null : idx > 0 && step !== 'done' ? (
             <BigButton small variant="secondary" label="이전" onPress={() => setIdx(idx - 1)} style={{ minWidth: 88 }} />
           ) : null}
-          {step === 'done' ? (
+          {step === 'look' && detail ? null : step === 'done' ? (
             <BigButton label={saving ? '저장 중…' : '완성'} disabled={saving} onPress={finish} style={{ flex: 1 }} />
           ) : (
             <BigButton small label="다음" disabled={!canNext} onPress={() => setIdx(idx + 1)} style={{ flex: 1 }} />
@@ -255,19 +300,20 @@ const styles = StyleSheet.create({
   askText: { flex: 1, fontFamily: fonts.title, fontSize: 21, lineHeight: 28, color: colors.ink },
   speaker: { fontSize: 18, opacity: 0.6 },
   preview: { alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
-  dice: {
-    position: 'absolute',
-    right: 28,
-    bottom: 14,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.paper,
-    borderWidth: 1,
+  faces: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
+  faceCard: {
+    width: 104,
+    height: 112,
+    borderRadius: radius.lg,
+    borderWidth: 3,
     borderColor: colors.line,
+    backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
+  faceOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  row: { flexDirection: 'row', gap: 8 },
   sheet: {
     flex: 1,
     backgroundColor: colors.paper,

@@ -163,11 +163,11 @@ export function questPrompt(q: Quest, who: Who): string {
 }
 
 /**
- * 한 판(기본 5문항)의 질문을 고른다.
+ * 한 판(기본 3문항)의 질문을 고른다.
  * - 최근에 덜 물어본 질문부터
- * - 조심스러운 질문은 최대 2개, 첫 질문은 늘 편안한 질문
+ * - 조심스러운 질문은 최대 1개, 첫 질문은 늘 편안한 질문
  */
-export function planQuests(people: Person[], history: PlayResponse[], seed = Date.now(), count = 5): Quest[] {
+export function planQuests(people: Person[], history: PlayResponse[], seed = Date.now(), count = 3, maxSensitive = 1): Quest[] {
   const rand = seededRandom(seed);
   const ids = (k: Person['kind']) => people.filter((p) => p.kind === k).map((p) => p.id);
   const teachers = ids('teacher');
@@ -213,7 +213,7 @@ export function planQuests(people: Person[], history: PlayResponse[], seed = Dat
   let sensitive = 0;
   for (const q of ranked) {
     if (picked.length >= count) break;
-    if (q.sensitive && sensitive >= 2) continue;
+    if (q.sensitive && sensitive >= maxSensitive) continue;
     // 같은 사람을 주인공으로 두 번 묻지 않는다
     if (picked.some((x) => x.subject === q.subject && x.subject !== SELF)) continue;
     if (q.sensitive) sensitive++;

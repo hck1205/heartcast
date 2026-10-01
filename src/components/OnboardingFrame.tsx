@@ -5,7 +5,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { colors, fonts } from '@/theme';
 import { SkyBackground, SkyProgress } from './ui';
 
-export const ONBOARDING_STEPS = 7;
+export const ONBOARDING_STEPS = 6;
 
 export function OnboardingFrame({
   step,
