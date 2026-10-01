@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { shortDate } from '@/lib/format';
 import { DrawingStrip } from '@/components/art/DrawingStrip';
 import { nodesFor, RelationMap } from '@/components/relations/RelationMap';
 import { TrendBadge } from '@/components/report/charts';
@@ -124,7 +125,7 @@ export default function ParentReport() {
               <View key={r.id} style={[styles.row, i === recent.length - 1 && { borderBottomWidth: 0 }]}>
                 <Text style={{ fontSize: 20 }}>{d.emoji}</Text>
                 <Text style={[styles.body, { flex: 1 }]}>{d.text}</Text>
-                <Text style={styles.time}>{new Date(r.createdAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</Text>
+                <Text style={styles.time}>{shortDate(r.createdAt)}</Text>
               </View>
             );
           })}

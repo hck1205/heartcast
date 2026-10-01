@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { shortDate } from '@/lib/format';
 import { avatarFor, makeWho } from '@/games/people';
 import { colors, fonts } from '@/theme';
 import type { Drawing, Profile } from '@/types';
@@ -31,7 +32,7 @@ export function DrawingStrip({ drawings, profile, size = 116 }: { drawings: Draw
           <Text style={styles.title} numberOfLines={1}>
             {drawingTitle(d, profile)}
           </Text>
-          <Text style={styles.date}>{new Date(d.createdAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</Text>
+          <Text style={styles.date}>{shortDate(d.createdAt)}</Text>
         </Pressable>
       ))}
     </ScrollView>

@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { shortDate } from '@/lib/format';
 import { animalOf, colorOf, FACET_LABEL, shapeOf, traitOf, type PersonaFacet } from '@/games/persona';
 import { portraitHistory, type PortraitEntry } from '@/report/analyze';
 import { colors, fonts, radius } from '@/theme';
@@ -36,7 +37,7 @@ export function PortraitSection({ person, responses }: { person: Person; respons
   // 날짜별로 묶어서 변화가 보이게
   const byDay = new Map<string, PortraitEntry[]>();
   for (const e of history) {
-    const key = new Date(e.createdAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+    const key = shortDate(e.createdAt);
     byDay.set(key, [...(byDay.get(key) ?? []), e]);
   }
   const days = [...byDay.entries()].reverse().slice(0, 8);

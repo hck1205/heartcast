@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { noteDateTime } from '@/lib/format';
 import { BigButton } from '@/components/ui';
 import { uuid } from '@/lib/util';
 import { useApp } from '@/state/AppContext';
@@ -38,7 +39,7 @@ export function NoteBox({ targetId }: { targetId: string | null }) {
       <BigButton small label={saving ? '저장 중…' : '기록하기'} disabled={!text.trim() || saving} onPress={save} />
       {mine.map((n) => (
         <View key={n.id} style={styles.note}>
-          <Text style={styles.date}>{new Date(n.createdAt).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</Text>
+          <Text style={styles.date}>{noteDateTime(n.createdAt)}</Text>
           <Text style={styles.body}>{n.body}</Text>
         </View>
       ))}

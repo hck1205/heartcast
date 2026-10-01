@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { shortDate } from '@/lib/format';
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
 import { KIND_RING, nodesFor, RelationMap } from '@/components/relations/RelationMap';
 import { currentEdges, edgeSentence, makeWho, NOBODY, parseRelationValue, relationOf, RELATIONS, UNKNOWN } from '@/games/relations';
@@ -9,7 +10,6 @@ import { describeRelation } from '@/report/analyze';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
 
-const dateOf = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
 
 /** 부모용 관계도: 아이가 이은 지금의 관계 지도 + 걱정되는 선 / 좋은 선 / 대답 기록 */
 export default function ParentRelations() {
@@ -63,7 +63,7 @@ export default function ParentRelations() {
         <View style={styles.list}>
           {worry.length === 0 && <Text style={[styles.body, { padding: 14 }]}>걱정되는 선은 없어요.</Text>}
           {worry.map((e, i) => (
-            <Row key={e.key} emoji={relationOf(e.rel)!.emoji} text={edgeSentence(e, who)} date={dateOf(e.createdAt)} last={i === worry.length - 1} color={relationOf(e.rel)!.color} />
+            <Row key={e.key} emoji={relationOf(e.rel)!.emoji} text={edgeSentence(e, who)} date={shortDate(e.createdAt)} last={i === worry.length - 1} color={relationOf(e.rel)!.color} />
           ))}
         </View>
       </Section>
@@ -72,7 +72,7 @@ export default function ParentRelations() {
         <View style={styles.list}>
           {good.length === 0 && <Text style={[styles.body, { padding: 14 }]}>아직 없어요.</Text>}
           {good.map((e, i) => (
-            <Row key={e.key} emoji={relationOf(e.rel)!.emoji} text={edgeSentence(e, who)} date={dateOf(e.createdAt)} last={i === good.length - 1} />
+            <Row key={e.key} emoji={relationOf(e.rel)!.emoji} text={edgeSentence(e, who)} date={shortDate(e.createdAt)} last={i === good.length - 1} />
           ))}
         </View>
       </Section>
@@ -82,7 +82,7 @@ export default function ParentRelations() {
           <View style={styles.list}>
             {answers.slice(0, 6).map((r, i, xs) => {
               const d = describeRelation(r, profile.people, profile.child.name);
-              return <Row key={r.id} emoji={d.emoji} text={d.text} date={dateOf(r.createdAt)} last={i === xs.length - 1} />;
+              return <Row key={r.id} emoji={d.emoji} text={d.text} date={shortDate(r.createdAt)} last={i === xs.length - 1} />;
             })}
           </View>
         </Section>
@@ -94,7 +94,7 @@ export default function ParentRelations() {
         const st = sceneStats(scene, profile.people);
         const pairs = st.neighbors.map(([a, b]) => `${who(a)} – ${who(b)}`);
         return (
-          <Section title="우리 반 그림에서" sub={`${dateOf(scene.createdAt)}에 그린 그림 기준이에요`}>
+          <Section title="우리 반 그림에서" sub={`${shortDate(scene.createdAt)}에 그린 그림 기준이에요`}>
             <View style={styles.list}>
               <Row emoji="🤝" text={`서로 옆에 그린 사람: ${pairs.length ? pairs.join(', ') : '없음'}`} date="" last={!st.missingTeachers.length} />
               {st.missingTeachers.length > 0 && <Row emoji="❔" text={`그리지 않은 선생님: ${st.missingTeachers.map(who).join(', ')}`} date="" last />}
@@ -118,7 +118,7 @@ export default function ParentRelations() {
           <View style={styles.list}>
             {rel.slice(0, 8).map((r, i, xs) => {
               const d = describeRelation(r, profile.people, profile.child.name);
-              return <Row key={r.id} emoji={d.emoji} text={d.text} date={dateOf(r.createdAt)} last={i === xs.length - 1} />;
+              return <Row key={r.id} emoji={d.emoji} text={d.text} date={shortDate(r.createdAt)} last={i === xs.length - 1} />;
             })}
           </View>
         </Section>

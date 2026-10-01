@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { longDateTime } from '@/lib/format';
 import { ArtCanvas } from '@/components/art/ArtCanvas';
 import { drawingTitle } from '@/components/art/DrawingStrip';
 import { NoteBox } from '@/components/report/NoteBox';
@@ -30,7 +31,7 @@ export default function DrawingDetail() {
     <ParentShell title={drawingTitle(d, profile)}>
       <View style={{ alignItems: 'center', gap: 6 }}>
         <ArtCanvas drawing={d} avatarOf={avatarFor(profile)} labelOf={makeWho(profile.people, profile.child.name)} width={w} />
-        <Text style={styles.date}>{new Date(d.createdAt).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</Text>
+        <Text style={styles.date}>{longDateTime(d.createdAt)}</Text>
       </View>
 
       <Section title="아이가 표현한 것">

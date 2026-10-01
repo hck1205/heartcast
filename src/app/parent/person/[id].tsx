@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
+import { shortDate } from '@/lib/format';
 import { Avatar } from '@/components/Avatar';
 import { MoodLine, TrendBadge, WeatherBar } from '@/components/report/charts';
 import { NoteBox } from '@/components/report/NoteBox';
@@ -108,7 +109,7 @@ export default function PersonDetail() {
                       → {re?.emoji} {re?.parentLabel ?? (r.value === 'unknown' ? '잘 모르겠어' : code)}
                     </Text>
                   </View>
-                  <Text style={styles.date}>{new Date(r.createdAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}</Text>
+                  <Text style={styles.date}>{shortDate(r.createdAt)}</Text>
                 </View>
               );
             })}
@@ -122,7 +123,7 @@ export default function PersonDetail() {
             const d = describeResponse(r, profile.people, profile.child.name);
             return (
               <Text key={r.id} style={styles.line}>
-                {d.emoji} {new Date(r.createdAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} · {d.text}
+                {d.emoji} {shortDate(r.createdAt)} · {d.text}
               </Text>
             );
           })}
