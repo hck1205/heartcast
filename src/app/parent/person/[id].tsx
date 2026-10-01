@@ -8,6 +8,8 @@ import { NoteBox } from '@/components/report/NoteBox';
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
 import { SignalCard } from '@/components/report/SignalCard';
 import { PortraitSection } from '@/components/report/PortraitSection';
+import { DrawingStrip } from '@/components/art/DrawingStrip';
+import { bubbleCounts, bubbleOf } from '@/games/art';
 import { PersonCard } from '@/components/studio/PersonCard';
 import { BigButton } from '@/components/ui';
 import { WeatherIcon } from '@/components/WeatherIcon';
@@ -19,7 +21,7 @@ import { colors, fonts, radius } from '@/theme';
 
 export default function PersonDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { profile, responses } = useApp();
+  const { profile, responses, drawings } = useApp();
   const { width } = useWindowDimensions();
   const report14 = useMemo(() => buildReport(responses, profile?.people ?? [], new Date(), 14), [responses, profile]);
   const person = profile?.people.find((p) => p.id === id);
@@ -51,6 +53,22 @@ export default function PersonDetail() {
       ))}
 
       <PortraitSection person={person} responses={responses} />
+
+      {(() => {
+        const mine = drawings.filter((d) => d.figures.some((f) => f.personId === person.id));
+        if (!mine.length) return null;
+        const top = bubbleCounts(mine, person.id).slice(0, 3);
+        return (
+          <Section title="아이가 그린 그림" sub="이 사람이 나온 그림이에요">
+            <DrawingStrip drawings={mine} profile={profile} />
+            {top.length > 0 && (
+              <Text style={styles.bubbles}>
+                자주 그린 말풍선: {top.map((b) => `"${bubbleOf(b.id)?.text}" ${b.n}번`).join(' · ')}
+              </Text>
+            )}
+          </Section>
+        );
+      })()}
 
       <Section title="날씨 흐름 (14일)" sub="-2(천둥) ~ +2(맑음). 하루에 여러 번 고르면 평균이에요">
         <Panel>
@@ -122,6 +140,7 @@ export default function PersonDetail() {
 }
 
 const styles = StyleSheet.create({
+  bubbles: { fontFamily: fonts.body, fontSize: 14, color: colors.ink },
   big: { fontFamily: fonts.body, fontWeight: '700', fontSize: 19, color: colors.ink },
   meta: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft },
   faceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },

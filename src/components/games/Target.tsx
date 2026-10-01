@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { TOPICS } from '@/games/content';
+import { nameOf } from '@/games/persona';
 import { colors, fonts, radius } from '@/theme';
 import type { Expression, Person, Profile, TopicId } from '@/types';
 import { Avatar } from '../Avatar';
@@ -16,7 +17,7 @@ export function resolveTarget(profile: Profile, targetType: 'person' | 'topic', 
 }
 
 export function displayName(p: Person) {
-  return p.kind === 'teacher' ? `${p.name} 선생님` : p.name;
+  return nameOf(p);
 }
 
 /** 질문 대상(사람 아바타 또는 주제 그림)을 크게 보여준다. 머리 위에는 스티커 자리가 있다. */

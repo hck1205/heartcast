@@ -5,7 +5,8 @@ import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 import { Avatar } from '@/components/Avatar';
 import { Maru } from '@/components/Mascot';
 import { BigButton, Confetti, Dots, Screen } from '@/components/ui';
-import { edgeSentence, makeWho, NOBODY, planQuests, questPrompt, relationOf, relationResponse, SELF, UNKNOWN } from '@/games/relations';
+import { edgeSentence, makeWho, NOBODY, PAIR_CHOICES, planQuests, questPrompt, relationOf, relationResponse, SELF, UNKNOWN, type RelationId } from '@/games/relations';
+import { josa } from '@/lib/josa';
 import { celebrate, say, stopSpeaking, tap } from '@/lib/feedback';
 import { uuid } from '@/lib/util';
 import { useApp } from '@/state/AppContext';
@@ -24,6 +25,8 @@ export default function RelationsGame() {
   const [quests] = useState(() => planQuests(people, app.responses));
   const [qi, setQi] = useState(0);
   const [answer, setAnswer] = useState<string | null>(null);
+  /** 두 사람 질문에서 고른 관계 */
+  const [pairRel, setPairRel] = useState<RelationId | null>(null);
   const [done, setDone] = useState(quests.length === 0);
   const [pop] = useState(() => new Animated.Value(0));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,6 +54,31 @@ export default function RelationsGame() {
 
   const avatarOf = (id: string): AvatarConfig | null => (id === SELF ? profile.child.avatar : (people.find((p) => p.id === id)?.avatar ?? null));
 
+  const next = () => {
+    timer.current = setTimeout(() => {
+      setAnswer(null);
+      setPairRel(null);
+      if (qi + 1 < quests.length) setQi(qi + 1);
+      else setDone(true);
+    }, 1800);
+  };
+
+  /** 두 사람 질문: 관계 스티커 고르기 (모르면 rel 없이 'unknown') */
+  const choosePair = (rel: RelationId | null) => {
+    if (!quest?.other || answer) return;
+    tap();
+    const other = quest.other;
+    setAnswer(rel ? other : UNKNOWN);
+    setPairRel(rel);
+    app.saveRelations([relationResponse(quest.subject, rel ?? 'close', rel ? other : UNKNOWN, uuid())], 1).catch(() => {});
+    if (rel) {
+      say(`${edgeSentence({ rel, from: quest.subject, to: other }, who)}!`);
+      pop.setValue(0);
+      Animated.spring(pop, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }).start();
+    } else say('괜찮아, 몰라도 돼!');
+    next();
+  };
+
   const choose = (to: string) => {
     if (!quest || answer) return;
     tap();
@@ -63,12 +91,11 @@ export default function RelationsGame() {
       pop.setValue(0);
       Animated.spring(pop, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }).start();
     }
-    timer.current = setTimeout(() => {
-      setAnswer(null);
-      if (qi + 1 < quests.length) setQi(qi + 1);
-      else setDone(true);
-    }, 1800);
+    next();
   };
+
+  const linkRel = quest?.other ? pairRel : quest?.rel;
+  const second = quest?.other ? (pairRel ? quest.other : null) : answer && answer !== NOBODY && answer !== UNKNOWN ? answer : null;
 
   return (
     <Screen>
@@ -95,19 +122,45 @@ export default function RelationsGame() {
         <>
           {/* 주인공 ─ 스티커 ─ 고른 사람 */}
           <View style={styles.stage}>
-            <Face avatar={avatarOf(quest.subject)} name={who(quest.subject)} size={answer ? 92 : 112} />
-            {answer && answer !== NOBODY && answer !== UNKNOWN && (
+            <Face avatar={avatarOf(quest.other === SELF ? SELF : quest.subject)} name={who(quest.other === SELF ? SELF : quest.subject)} size={answer || quest.other ? 92 : 112} />
+            {quest.other && !second && <Text style={styles.qmark}>?</Text>}
+            {second && linkRel && (
               <Animated.View style={[styles.link, { transform: [{ scale: pop }] }]}>
-                <Text style={styles.linkEmoji}>{relationOf(quest.rel)!.emoji}</Text>
-                <View style={[styles.linkLine, { backgroundColor: relationOf(quest.rel)!.color }]} />
+                <Text style={styles.linkEmoji}>{relationOf(linkRel)!.emoji}</Text>
+                <View style={[styles.linkLine, { backgroundColor: relationOf(linkRel)!.color }]} />
               </Animated.View>
             )}
-            {answer && answer !== NOBODY && answer !== UNKNOWN && (
-              <Animated.View style={{ transform: [{ scale: pop }] }}>
-                <Face avatar={avatarOf(answer)} name={who(answer)} size={92} />
-              </Animated.View>
+            {quest.other ? (
+              <Face avatar={avatarOf(quest.other === SELF ? quest.subject : quest.other)} name={who(quest.other === SELF ? quest.subject : quest.other)} size={92} />
+            ) : (
+              second && (
+                <Animated.View style={{ transform: [{ scale: pop }] }}>
+                  <Face avatar={avatarOf(second)} name={who(second)} size={92} />
+                </Animated.View>
+              )
             )}
           </View>
+
+          {quest.other ? (
+            <ScrollView key={`p${qi}`} contentContainerStyle={styles.grid} style={[styles.sheet, answer ? { opacity: 0.4 } : null]}>
+              {PAIR_CHOICES.map((rel) => {
+                const def = relationOf(rel)!;
+                const label = rel === 'yell' ? `${josa(who(quest.subject), '이/가')} 화내요` : def.label;
+                return (
+                  <Pressable key={rel} accessibilityLabel={label} disabled={!!answer} onPress={() => choosePair(rel)} style={[styles.card, pairRel === rel && styles.cardOn]}>
+                    <Text style={styles.big}>{def.emoji}</Text>
+                    <Text style={styles.name} numberOfLines={2}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+              <Pressable accessibilityLabel="몰라" disabled={!!answer} onPress={() => choosePair(null)} style={[styles.card, styles.soft]}>
+                <Text style={styles.big}>🤔</Text>
+                <Text style={styles.name}>몰라</Text>
+              </Pressable>
+            </ScrollView>
+          ) : (
 
           <ScrollView key={qi} contentContainerStyle={styles.grid} style={[styles.sheet, answer ? { opacity: 0.4 } : null]}>
             {quest.candidates.map((id) => (
@@ -126,6 +179,7 @@ export default function RelationsGame() {
               <Text style={styles.name}>몰라</Text>
             </Pressable>
           </ScrollView>
+          )}
         </>
       ) : null}
       {done && quests.length > 0 && <Confetti />}
@@ -181,6 +235,7 @@ const styles = StyleSheet.create({
   circle: { overflow: 'hidden', backgroundColor: colors.skySoft, alignItems: 'center' },
   name: { fontFamily: fonts.title, fontSize: 15, color: colors.ink, marginTop: 4 },
   big: { fontSize: 40 },
+  qmark: { fontFamily: fonts.title, fontSize: 40, color: colors.inkMuted, marginHorizontal: 12 },
   end: { flex: 1, justifyContent: 'center', padding: 24, gap: 16 },
   stars: { fontFamily: fonts.title, fontSize: 28, color: colors.ink, textAlign: 'center' },
 });

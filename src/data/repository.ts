@@ -1,4 +1,4 @@
-import type { ParentNote, PlayResponse, PlaySession, Profile } from '@/types';
+import type { Drawing, ParentNote, PlayResponse, PlaySession, Profile } from '@/types';
 
 export type AccountMode = 'demo' | 'cloud';
 
@@ -9,6 +9,9 @@ export interface Repository {
   saveProfile(profile: Profile): Promise<void>;
   saveSession(session: PlaySession, responses: PlayResponse[]): Promise<void>;
   listResponses(sinceIso: string): Promise<PlayResponse[]>;
+  /** 그림 놀이 원본 (분석용 응답은 saveSession 으로 따로 저장) */
+  saveDrawing(drawing: Drawing): Promise<void>;
+  listDrawings(sinceIso: string): Promise<Drawing[]>;
   addNote(note: ParentNote): Promise<void>;
   listNotes(): Promise<ParentNote[]>;
   resetAll(): Promise<void>;

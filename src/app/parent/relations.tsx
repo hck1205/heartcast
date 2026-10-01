@@ -5,6 +5,7 @@ import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
 import { KIND_RING, RelationMap } from '@/components/relations/RelationMap';
 import { callName } from '@/games/persona';
 import { currentEdges, edgeSentence, makeWho, NOBODY, parseRelationValue, relationOf, RELATIONS, SELF, UNKNOWN } from '@/games/relations';
+import { sceneStats } from '@/games/art';
 import { describeRelation } from '@/report/analyze';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
@@ -13,7 +14,7 @@ const dateOf = (iso: string) => new Date(iso).toLocaleDateString('ko-KR', { mont
 
 /** 부모용 관계도: 아이가 이은 지금의 관계 지도 + 걱정되는 선 / 좋은 선 / 대답 기록 */
 export default function ParentRelations() {
-  const { profile, responses } = useApp();
+  const { profile, responses, drawings } = useApp();
   const data = useMemo(() => {
     if (!profile) return null;
     const people = profile.people;
@@ -32,7 +33,7 @@ export default function ParentRelations() {
   const good = edges.filter((e) => relationOf(e.rel)!.score >= 0);
   const nodes = [
     { id: SELF, name: profile.child.name, kind: 'self' as const, avatar: profile.child.avatar },
-    ...profile.people.map((p) => ({ id: p.id, name: callName(p.name, p.kind), kind: p.kind, avatar: p.avatar })),
+    ...profile.people.map((p) => ({ id: p.id, name: callName(p.name, p.kind, p.role), kind: p.kind, avatar: p.avatar })),
   ];
 
   return (
@@ -90,6 +91,21 @@ export default function ParentRelations() {
           </View>
         </Section>
       )}
+
+      {(() => {
+        const scene = [...drawings].filter((d) => d.kind === 'scene').sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+        if (!scene) return null;
+        const st = sceneStats(scene, profile.people);
+        const pairs = st.neighbors.map(([a, b]) => `${who(a)} – ${who(b)}`);
+        return (
+          <Section title="우리 반 그림에서" sub={`${dateOf(scene.createdAt)}에 그린 그림 기준이에요`}>
+            <View style={styles.list}>
+              <Row emoji="🤝" text={`서로 옆에 그린 사람: ${pairs.length ? pairs.join(', ') : '없음'}`} date="" last={!st.missingTeachers.length} />
+              {st.missingTeachers.length > 0 && <Row emoji="❔" text={`그리지 않은 선생님: ${st.missingTeachers.map(who).join(', ')}`} date="" last />}
+            </View>
+          </Section>
+        );
+      })()}
 
       <Section title="관계 스티커 뜻">
         <Panel style={styles.stickers}>

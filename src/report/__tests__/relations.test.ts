@@ -74,8 +74,10 @@ describe('planQuests', () => {
       expect(new Set(subjects).size).toBe(subjects.length);
       for (const q of qs) {
         expect(q.candidates).not.toContain(q.subject);
-        expect(q.candidates.length).toBeGreaterThan(0);
+        // 두 사람 질문은 사람을 고르지 않고 스티커를 고른다
+        expect(q.candidates.length > 0).toBe(!q.other);
       }
+      expect(qs.filter((q) => q.other).length).toBeLessThanOrEqual(1);
     }
   });
 
@@ -96,7 +98,20 @@ describe('planQuests', () => {
   it('works with only teachers (no friends yet)', () => {
     const qs = planQuests([people[0]], [], 1);
     expect(qs.length).toBeGreaterThan(0);
-    expect(qs.every((q) => q.candidates.length > 0)).toBe(true);
+    expect(qs.every((q) => q.candidates.length > 0 || !!q.other)).toBe(true);
+  });
+
+  it('asks about adults: 원장님↔선생님, 선생님↔선생님, 선생님↔우리 엄마, 나↔선생님', () => {
+    const withDirector: Person[] = [...people, { id: 'd-1', kind: 'teacher', role: 'director', name: '나래', avatar }];
+    const family = [rel('p-1', 'family', SELF, 3)];
+    const seen = new Set<string>();
+    for (let seed = 1; seed < 200; seed++) for (const q of planQuests(withDirector, family, seed)) if (q.other) seen.add(q.template);
+    expect([...seen].sort()).toEqual(['pairDirector', 'pairMe', 'pairParent', 'pairTeachers']);
+    const who = makeWho(withDirector, '나', { kid: true });
+    const base = { id: 'q', candidates: [], allowNobody: false, sensitive: false, rel: 'close' as const };
+    expect(questPrompt({ ...base, template: 'pairDirector', subject: 'd-1', other: 't-1' }, who)).toBe('나래 원장님이랑 단비 선생님은 어떤 사이야?');
+    expect(questPrompt({ ...base, template: 'pairMe', subject: 't-1', other: SELF }, who)).toBe('나랑 단비 선생님은 어떤 사이야?');
+    expect(edgeSentence({ rel: 'laugh', from: 'd-1', to: 't-2' }, who)).toBe('나래 원장님이랑 미소 선생님은 같이 웃어요');
   });
 });
 
@@ -112,6 +127,13 @@ describe('relation signals', () => {
     expect(relationSignals([rel(SELF, 'runto', NOBODY, 1)], people, NOW, 7).map((s) => s.kind)).toEqual(['relation-alone']);
     // 나중에 선생님을 고르면 사라진다
     expect(relationSignals([rel(SELF, 'runto', NOBODY, 3), rel(SELF, 'runto', 't-2', 1)], people, NOW, 7).map((s) => s.kind)).toEqual(['relation-safe']);
+  });
+
+  it('notices tension between adults', () => {
+    const withDirector: Person[] = [...people, { id: 'd-1', kind: 'teacher', role: 'director', name: '나래', avatar }];
+    const sig = relationSignals([rel('d-1', 'yell', 't-1', 1), rel('t-1', 'fight', 'p-1', 1)], withDirector, NOW, 7, '콩이');
+    expect(sig.map((s) => s.kind)).toEqual(['relation-adults', 'relation-adults']);
+    expect(sig[0].detail).toContain('나래 원장님이 단비 선생님에게');
   });
 
   it('ignores lines drawn before the report window', () => {

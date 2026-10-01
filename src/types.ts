@@ -131,6 +131,8 @@ export interface Person {
   avatar: AvatarConfig;
   /** 아이가 가장 최근에 고른 이미지 (변화 이력은 portrait 응답에 남는다) */
   persona?: Persona;
+  /** 선생님 중 원장님 */
+  role?: 'director';
 }
 
 export interface Child {
@@ -145,7 +147,7 @@ export type TopicId = 'class' | 'meal' | 'nap' | 'play' | 'self';
 
 export type TargetType = 'person' | 'topic';
 
-export type GameType = 'weather' | 'face' | 'story' | 'portrait' | 'relation';
+export type GameType = 'weather' | 'face' | 'story' | 'portrait' | 'relation' | 'art';
 
 export type WeatherCode = 'sunny' | 'partly' | 'cloudy' | 'rainy' | 'stormy';
 
@@ -184,5 +186,46 @@ export interface ParentNote {
   id: string;
   targetId: string | null;
   body: string;
+  createdAt: string;
+}
+
+// ── 그림 놀이 ──
+
+/** portrait: 한 사람 그리기 / scene: 우리 반 그리기 */
+export type ArtKind = 'portrait' | 'scene';
+export type ArtSky = 'sunny' | 'cloudy' | 'rainy' | 'night' | 'storm';
+
+/** 도화지 좌표는 가로 1000 × 세로 1250 기준 */
+export interface ArtStroke {
+  color: string;
+  /** [x1, y1, x2, y2, …] */
+  points: number[];
+}
+
+export interface ArtStamp {
+  id: string;
+  x: number;
+  y: number;
+}
+
+export interface ArtFigure {
+  /** 사람 id 또는 'self' */
+  personId: string;
+  x: number;
+  y: number;
+  scale: number;
+  expression: Expression;
+  bubble: string | null;
+}
+
+export interface Drawing {
+  id: string;
+  kind: ArtKind;
+  /** portrait 일 때 그린 사람 */
+  subjectId: string | null;
+  sky: ArtSky;
+  figures: ArtFigure[];
+  stamps: ArtStamp[];
+  strokes: ArtStroke[];
   createdAt: string;
 }

@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { DrawingStrip } from '@/components/art/DrawingStrip';
 import { RelationMap } from '@/components/relations/RelationMap';
 import { TrendBadge } from '@/components/report/charts';
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
@@ -19,7 +20,7 @@ import type { Person } from '@/types';
 
 /** 부모 리포트: 한 줄 요약 → 이야기 나눠볼 것 → 사람 목록 → 하루 속 순간들 → 최근 기록 */
 export default function ParentReport() {
-  const { profile, responses } = useApp();
+  const { profile, responses, drawings } = useApp();
   const [range, setRange] = useState<'7' | '30'>('7');
   const days = Number(range);
   const report = useMemo(() => buildReport(responses, profile?.people ?? [], new Date(), days, profile?.child.name), [responses, profile, days]);
@@ -82,13 +83,17 @@ export default function ParentReport() {
         </View>
       </Section>
 
+      <Section title="아이가 그린 그림" sub="표정 · 말풍선 · 스탬프 · 크레용으로 그린 선생님과 우리 반이에요">
+        <DrawingStrip drawings={drawings} profile={profile} />
+      </Section>
+
       <Section title="관계도" sub="아이가 이은 선생님 · 친구 · 어른 사이의 관계예요">
         <Pressable onPress={() => router.push('/parent/relations')} style={({ pressed }) => [styles.mapCard, pressed && { opacity: 0.8 }]}>
           {edges.length ? (
             <RelationMap
               nodes={[
                 { id: SELF, name: name, kind: 'self', avatar: profile.child.avatar },
-                ...profile.people.map((p) => ({ id: p.id, name: callName(p.name, p.kind), kind: p.kind, avatar: p.avatar })),
+                ...profile.people.map((p) => ({ id: p.id, name: callName(p.name, p.kind, p.role), kind: p.kind, avatar: p.avatar })),
               ]}
               edges={edges}
               height={260}

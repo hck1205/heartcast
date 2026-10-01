@@ -48,7 +48,7 @@ export function PersonCard({
       </View>
       {showName && (
         <Text style={[styles.name, { fontSize: Math.max(13, size * 0.13) }]} numberOfLines={1}>
-          {callName(person.name, person.kind)}
+          {callName(person.name, person.kind, person.role)}
         </Text>
       )}
       {showTraits && p && p.traits.length > 0 && (

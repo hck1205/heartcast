@@ -27,8 +27,8 @@ const makeCandidates = (current: FullAvatar | null, age: FullAvatar['age']) => [
   ...Array.from({ length: current ? CANDIDATES - 1 : CANDIDATES }, () => randomAvatar(age)),
 ];
 
-function question(step: StepId, name: string, kind: Person['kind']): string {
-  const who = callName(name || { teacher: '우리', friend: '친구', parent: '어른' }[kind], kind);
+function question(step: StepId, name: string, kind: Person['kind'], role?: Person['role']): string {
+  const who = callName(name || { teacher: '우리', friend: '친구', parent: '어른' }[kind], kind, role);
   switch (step) {
     case 'name':
       return { teacher: '누구 선생님을 만들어 볼까?', friend: '어떤 친구를 만들어 볼까?', parent: '어떤 어른을 만들어 볼까?' }[kind];
@@ -67,6 +67,7 @@ export function Studio({
   onDelete?: () => void;
 }) {
   const [name, setName] = useState(initial.name);
+  const [role, setRole] = useState<Person['role']>(initial.role);
   const [avatar, setAvatar] = useState<FullAvatar>(() => normalizeAvatar(initial.avatar));
   const [persona, setPersona] = useState<Persona>(initial.persona ?? EMPTY_PERSONA);
   const [unknown, setUnknown] = useState<Set<PersonaFacet>>(new Set());
@@ -89,7 +90,7 @@ export function Studio({
   const [bounce] = useState(() => new Animated.Value(1));
   const step = steps[idx];
   const kind = initial.kind;
-  const q = question(step, name, kind);
+  const q = question(step, name, kind, role);
 
   useEffect(() => {
     const t = setTimeout(() => say(q), 300);
@@ -122,7 +123,7 @@ export function Studio({
     pop();
   };
 
-  const personNow: Person = { ...initial, name: name.trim(), avatar, persona };
+  const personNow: Person = { ...initial, name: name.trim(), avatar, persona, role };
   const canNext =
     step === 'name'
       ? name.trim().length > 0
@@ -210,7 +211,20 @@ export function Studio({
                 maxLength={10}
                 autoFocus
               />
-              <Text style={styles.helper}>{kind === 'teacher' ? `“${callName(name || '○○', 'teacher')}”으로 불러요 · ` : kind === 'parent' ? '우리 엄마, 하준이 아빠, 할머니처럼 불러요 · ' : ''}글씨는 엄마·아빠가 도와줘도 좋아요</Text>
+              {kind === 'teacher' && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: role === 'director' }}
+                  onPress={() => {
+                    tap();
+                    setRole((r) => (r === 'director' ? undefined : 'director'));
+                  }}
+                  style={[styles.roleChip, role === 'director' && styles.roleChipOn]}
+                >
+                  <Text style={styles.roleText}>👑 원장님이에요</Text>
+                </Pressable>
+              )}
+              <Text style={styles.helper}>{kind === 'teacher' ? `“${callName(name || '○○', 'teacher', role)}”으로 불러요 · ` : kind === 'parent' ? '우리 엄마, 하준이 아빠, 할머니처럼 불러요 · ' : ''}글씨는 엄마·아빠가 도와줘도 좋아요</Text>
             </View>
           )}
 
@@ -314,6 +328,9 @@ const styles = StyleSheet.create({
   },
   faceOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   row: { flexDirection: 'row', gap: 8 },
+  roleChip: { alignSelf: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
+  roleChipOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  roleText: { fontFamily: fonts.title, fontSize: 16, color: colors.ink },
   sheet: {
     flex: 1,
     backgroundColor: colors.paper,

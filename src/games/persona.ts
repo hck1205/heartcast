@@ -1,5 +1,5 @@
 import { josa } from '@/lib/josa';
-import type { Persona, PersonKind } from '@/types';
+import type { Person, Persona, PersonKind } from '@/types';
 
 /**
  * 아이가 선생님(친구)을 어떻게 느끼는지 "이미지"로 고르는 선택지.
@@ -127,13 +127,17 @@ export const EMPTY_PERSONA: Persona = { color: null, animal: null, shape: null, 
 export const KIND_LABEL: Record<PersonKind, string> = { teacher: '선생님', friend: '친구', parent: '어른' };
 
 /** 부르는 이름: "미소 선생님" / "하준" / "하준이 엄마" */
-export function callName(name: string, kind: PersonKind) {
-  return kind === 'teacher' ? `${name} 선생님` : name;
+export function callName(name: string, kind: PersonKind, role?: Person['role']) {
+  if (kind !== 'teacher') return name;
+  return role === 'director' ? `${name} 원장님` : `${name} 선생님`;
 }
 
+/** 사람 하나를 부르는 이름 */
+export const nameOf = (p: Pick<Person, 'name' | 'kind' | 'role'>) => callName(p.name, p.kind, p.role);
+
 /** 공방/놀이에서 마루가 묻는 말 */
-export function facetQuestion(facet: PersonaFacet, name: string, kind: PersonKind): string {
-  const who = callName(name, kind);
+export function facetQuestion(facet: PersonaFacet, name: string, kind: PersonKind, role?: Person['role']): string {
+  const who = callName(name, kind, role);
   switch (facet) {
     case 'color':
       return `${josa(who, '은/는')} 무슨 색깔 같아?`;

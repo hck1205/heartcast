@@ -1,5 +1,5 @@
 import { getSupabase } from '@/lib/supabase';
-import type { ParentNote, Person, PlayResponse, PlaySession, Profile } from '@/types';
+import type { Drawing, ParentNote, Person, PlayResponse, PlaySession, Profile } from '@/types';
 import type { Repository } from './repository';
 
 async function uid(): Promise<string> {
@@ -29,7 +29,7 @@ export const supabaseRepository: Repository = {
     ) as any[];
     return {
       child: { id: child.id, name: child.name, avatar: child.avatar, className: child.class_name ?? '' },
-      people: people.map((p): Person => ({ id: p.id, kind: p.kind, name: p.name, avatar: p.avatar, persona: p.persona ?? undefined })),
+      people: people.map((p): Person => ({ id: p.id, kind: p.kind, name: p.name, avatar: p.avatar, persona: p.persona ?? undefined, role: p.role ?? undefined })),
       pinHash: family.pin_hash,
       stars: family.stars ?? 0,
       stickers: family.stickers ?? [],
@@ -69,6 +69,7 @@ export const supabaseRepository: Repository = {
             name: x.name,
             avatar: x.avatar,
             persona: x.persona ?? null,
+            role: x.role ?? null,
             sort_order: i,
           })),
         ),
@@ -142,6 +143,22 @@ export const supabaseRepository: Repository = {
         createdAt: new Date(r.created_at).toISOString(),
       }),
     );
+  },
+
+  async saveDrawing(d: Drawing) {
+    const sb = getSupabase();
+    const familyId = await uid();
+    const child = check(await sb.from('children').select('id').eq('family_id', familyId).limit(1).single()) as { id: string };
+    check(await sb.from('drawings').upsert({ id: d.id, family_id: familyId, child_id: child.id, data: d, created_at: d.createdAt }));
+  },
+
+  async listDrawings(sinceIso: string) {
+    const sb = getSupabase();
+    const familyId = await uid();
+    const rows = check(
+      await sb.from('drawings').select('data').eq('family_id', familyId).gte('created_at', sinceIso).order('created_at', { ascending: true }),
+    ) as { data: Drawing }[];
+    return rows.map((r) => r.data);
   },
 
   async addNote(note: ParentNote) {

@@ -5,10 +5,11 @@ import { demoHistory, demoProfile, withDemoPersonas } from '@/data/demoSeed';
 import { localRepository } from '@/data/localRepository';
 import type { AccountMode, Repository } from '@/data/repository';
 import { supabaseRepository } from '@/data/supabaseRepository';
+import { artResponses } from '@/games/art';
 import { withAgeDefaults } from '@/lib/avatar';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import { uuid } from '@/lib/util';
-import type { ParentNote, Person, PlayResponse, PlaySession, Profile } from '@/types';
+import type { Drawing, ParentNote, Person, PlayResponse, PlaySession, Profile } from '@/types';
 
 const MODE_KEY = 'mn:mode';
 const HISTORY_DAYS = 60;
@@ -20,6 +21,7 @@ interface AppState {
   profile: Profile | null;
   responses: PlayResponse[];
   notes: ParentNote[];
+  drawings: Drawing[];
   error: string | null;
   cloudAvailable: boolean;
   /** 부모 PIN 통과 여부 (앱을 다시 열면 다시 잠김) */
@@ -36,6 +38,8 @@ interface AppState {
   removePerson(id: string): Promise<void>;
   /** 관계도 놀이에서 이은 선(응답)을 기록하고 별을 준다 */
   saveRelations(responses: PlayResponse[], stars?: number): Promise<void>;
+  /** 그림 놀이: 그림 원본 + 분석용 응답을 저장하고 별을 준다 */
+  saveDrawing(drawing: Drawing): Promise<void>;
   /** 프로필 저장 직후 온보딩 중 모아둔 응답을 한꺼번에 기록 */
   saveResponses(responses: PlayResponse[]): Promise<void>;
   addNote(note: ParentNote): Promise<void>;
@@ -56,6 +60,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [responses, setResponses] = useState<PlayResponse[]>([]);
   const [notes, setNotes] = useState<ParentNote[]>([]);
+  const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [parentUnlocked, setParentUnlocked] = useState(false);
 
@@ -65,13 +70,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       setResponses([]);
       setNotes([]);
+      setDrawings([]);
       return;
     }
     const since = new Date(Date.now() - HISTORY_DAYS * 86400000).toISOString();
-    const [p, rs, ns] = await Promise.all([repo.loadProfile(), repo.listResponses(since), repo.listNotes()]);
+    const [p, rs, ns, ds] = await Promise.all([repo.loadProfile(), repo.listResponses(since), repo.listNotes(), repo.listDrawings(since)]);
     setProfile(p ? withAgeDefaults(p) : null);
     setResponses(rs);
     setNotes(ns);
+    setDrawings(ds);
   }, []);
 
   useEffect(() => {
@@ -130,6 +137,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       profile,
       responses,
       notes,
+      drawings,
       error,
       cloudAvailable: isSupabaseConfigured,
       parentUnlocked,
@@ -213,6 +221,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setProfile(next);
           }
         }),
+      saveDrawing: (d) =>
+        run(async () => {
+          const r = need();
+          if (!profile) throw new Error('프로필이 없어요');
+          await r.saveDrawing(d);
+          setDrawings((prev) => [...prev.filter((x) => x.id !== d.id), d]);
+          const sessionId = uuid();
+          const rs = artResponses(d, profile.people, sessionId);
+          await r.saveSession({ id: sessionId, startedAt: d.createdAt, finishedAt: new Date().toISOString() }, rs);
+          setResponses((prev) => [...prev, ...rs]);
+          const next: Profile = { ...profile, stars: profile.stars + 3 };
+          await r.saveProfile(next);
+          setProfile(next);
+        }),
       saveResponses: (rs) =>
         run(async () => {
           if (!rs.length) return;
@@ -232,7 +254,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const r = need();
           const base = withDemoPersonas(profile ?? demoProfile());
           await r.saveProfile(base);
-          const { sessions, responses: rs } = demoHistory(base);
+          const { sessions, responses: rs, drawings: ds } = demoHistory(base);
+          for (const d of ds) await r.saveDrawing(d);
           for (const s of sessions) {
             await r.saveSession(
               s,
@@ -249,7 +272,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }),
       refresh: () => run(() => loadFor(mode)),
     };
-  }, [ready, mode, email, profile, responses, notes, error, parentUnlocked, run, switchMode, loadFor]);
+  }, [ready, mode, email, profile, responses, notes, drawings, error, parentUnlocked, run, switchMode, loadFor]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

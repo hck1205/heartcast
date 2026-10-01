@@ -65,6 +65,10 @@ export default function PlayHome() {
         <BigButton label={done ? '한 번 더 놀기' : '날씨 놀이 시작'} onPress={() => router.push('/play/session')} style={styles.main} />
 
         <View style={styles.row}>
+          <Pressable onPress={() => router.push('/play/art')} style={styles.tile}>
+            <Text style={styles.tileIcon}>🖍️</Text>
+            <Text style={styles.tileText}>그림</Text>
+          </Pressable>
           <Pressable onPress={() => router.push('/play/workshop')} style={styles.tile}>
             <Text style={styles.tileIcon}>🎨</Text>
             <Text style={styles.tileText}>공방</Text>
@@ -95,7 +99,7 @@ const styles = StyleSheet.create({
   sun: { position: 'absolute', top: 16, right: 16 },
   backRow: { flexDirection: 'row', gap: 6 },
   main: { minHeight: 64 },
-  row: { flexDirection: 'row', gap: 10 },
+  row: { flexDirection: 'row', gap: 8 },
   tile: {
     flex: 1,
     alignItems: 'center',

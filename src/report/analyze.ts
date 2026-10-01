@@ -1,5 +1,6 @@
 import { FACES, SCENES, TOPICS, WEATHERS, faceByCode, sceneById, weatherByCode } from '@/games/content';
 import { animalOf, callName, choiceEmoji, FACET_LABEL, findChoice, type PersonaFacet } from '@/games/persona';
+import { bubbleOf, describeArtValue } from '@/games/art';
 import { parsePortraitValue } from '@/games/portrait';
 import { currentEdges, edgeSentence, makeWho, NOBODY, parseRelationValue, relationOf, SELF, UNKNOWN } from '@/games/relations';
 import { josa } from '@/lib/josa';
@@ -43,7 +44,7 @@ export interface PortraitShift {
 }
 
 export type SignalLevel = 'talk' | 'watch' | 'good';
-export type SignalKind = 'fear' | 'streak' | 'low' | 'drop' | 'bright' | 'self-low' | 'portrait-shift' | 'relation-fear' | 'relation-alone' | 'relation-conflict' | 'relation-safe';
+export type SignalKind = 'fear' | 'streak' | 'low' | 'drop' | 'bright' | 'self-low' | 'portrait-shift' | 'relation-fear' | 'relation-alone' | 'relation-conflict' | 'relation-safe' | 'relation-adults' | 'art-words';
 
 export interface Signal {
   id: string;
@@ -101,7 +102,7 @@ export function targetName(targetType: TargetType, targetId: string, people: Per
   if (targetType === 'topic') return TOPICS[targetId as keyof typeof TOPICS]?.name ?? targetId;
   const p = people.find((x) => x.id === targetId);
   if (!p) return '(삭제된 사람)';
-  return callName(p.name, p.kind);
+  return callName(p.name, p.kind, p.role);
 }
 
 function summarize(
@@ -342,6 +343,7 @@ export function describeResponse(r: PlayResponse, people: Person[], childName = 
   const who = targetName(r.targetType, r.targetId, people);
   if (r.value === 'unknown') return { emoji: '🤔', text: `${who}: "잘 모르겠어"를 골랐어요` };
   if (r.game === 'relation') return describeRelation(r, people, childName);
+  if (r.game === 'art') return describeArtValue(r.value, r.targetId === 'self' ? childName : r.targetId === 'class' ? '우리 반' : who);
   if (r.game === 'weather') {
     const label = weatherByCode(r.value)?.parentLabel ?? r.value;
     const emoji = weatherEmoji[r.value as WeatherCode] ?? '☁️';
@@ -511,13 +513,48 @@ export function relationSignals(responses: PlayResponse[], people: Person[], now
         detail: `${josa(childName, '이/가')} ${josa(who(e.to), '을/를')} 무섭다고 이었어요. 어떤 모습이 무서운지, 언제 그런 마음이 드는지 천천히 물어봐 주세요.`,
       });
     } else if (e.rel === 'yell' && kindOf(e.from) === 'teacher') {
-      out.push({ ...base, level: 'watch', kind: 'relation-fear', targetId: e.from, targetName: who(e.from), detail: '다른 친구에게 큰 소리를 내는 모습을 아이가 기억하고 있어요. 그걸 볼 때 아이 마음은 어땠는지 물어봐 주세요.' });
+      const toGrown = e.to !== SELF && kindOf(e.to) !== 'friend';
+      out.push({
+        ...base,
+        level: 'watch',
+        kind: toGrown ? 'relation-adults' : 'relation-fear',
+        targetId: e.from,
+        targetName: who(e.from),
+        detail: toGrown
+          ? `${josa(who(e.from), '이/가')} ${who(e.to)}에게 화내는 모습을 아이가 기억하고 있어요. 어른들 사이의 긴장도 아이는 민감하게 느껴요. 그때 어떤 마음이었는지 들어봐 주세요.`
+          : '다른 친구에게 큰 소리를 내는 모습을 아이가 기억하고 있어요. 그걸 볼 때 아이 마음은 어땠는지 물어봐 주세요.',
+      });
+    } else if (e.rel === 'fight' && e.from !== SELF && e.to !== SELF && kindOf(e.from) !== 'friend' && kindOf(e.to) !== 'friend') {
+      out.push({ ...base, level: 'watch', kind: 'relation-adults', targetId: e.from, targetName: who(e.from), detail: `아이 눈에는 ${josa(who(e.from), '과/와')} ${josa(who(e.to), '이/가')} 자주 다투는 것처럼 보였어요. 어른들 사이의 분위기를 아이가 어떻게 느끼는지 물어봐 주세요.` });
     } else if ((e.rel === 'fight' && (e.from === SELF || e.to === SELF)) || (e.rel === 'ignore' && e.to === SELF)) {
       const other = e.from === SELF ? e.to : e.from;
       out.push({ ...base, level: 'watch', kind: 'relation-conflict', targetId: other, targetName: who(other), detail: '친구 사이의 작은 갈등일 수 있어요. 누가 잘못했는지보다 그때 아이 마음이 어땠는지 먼저 들어봐 주세요.' });
     } else if (e.rel === 'runto' && e.from === SELF && kindOf(e.to) === 'teacher') {
       out.push({ ...base, level: 'good', kind: 'relation-safe', targetId: e.to, targetName: who(e.to), detail: `힘들 때 ${who(e.to)}에게 달려간대요. 아이가 기댈 수 있는 어른이 어린이집에 있다는 좋은 신호예요.` });
     }
+  }
+
+  // 그림 놀이: 한 사람의 말풍선에서 무서운 말이 2번 이상
+  const words = new Map<string, number>();
+  for (const r of responses) {
+    if (r.game !== 'art' || !r.value.startsWith('bubble:') || !inWin(r.createdAt) || !r.fear) continue;
+    words.set(r.targetId, (words.get(r.targetId) ?? 0) + 1);
+  }
+  for (const [id, n] of words) {
+    if (n < 2) continue;
+    const said = responses
+      .filter((r) => r.game === 'art' && r.targetId === id && r.fear && r.value.startsWith('bubble:'))
+      .map((r) => bubbleOf(r.value.split(':')[1])?.text)
+      .filter(Boolean);
+    out.push({
+      id: `art:words:${id}`,
+      level: 'talk',
+      kind: 'art-words',
+      targetId: id,
+      targetName: who(id),
+      title: `그림 속 ${who(id)}의 말풍선에 무서운 말이 ${n}번 나왔어요`,
+      detail: `아이가 그린 ${who(id)}의 말: ${[...new Set(said)].map((t) => `"${t}"`).join(', ')}. 아이가 실제로 들은 말인지, 어떤 때 그런 말을 하는지 천천히 들어봐 주세요.`,
+    });
   }
 
   // "무섭거나 슬플 때 누구한테 달려가?" → 가장 최근 대답이 '아무도 없어'

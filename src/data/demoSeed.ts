@@ -2,9 +2,10 @@ import { FACES, SCENES, WEATHERS } from '@/games/content';
 import { FACET_CHOICES } from '@/games/persona';
 import { planSession, seededRandom } from '@/games/planner';
 import { portraitDiff } from '@/games/portrait';
+import { artResponses, emptyDrawing } from '@/games/art';
 import { relationResponse, SELF, type RelationId } from '@/games/relations';
 import { hashPin, uuid } from '@/lib/util';
-import type { AvatarConfig, Persona, Person, PlayResponse, PlaySession, Profile } from '@/types';
+import type { AvatarConfig, Drawing, Persona, Person, PlayResponse, PlaySession, Profile } from '@/types';
 
 /**
  * "먼저 둘러보기"용 예시 데이터: 2주치 놀이 기록.
@@ -69,6 +70,14 @@ export function demoProfile(): Profile {
     grownup('우리 아빠', { skin: 'warm', faceShape: 'square', eyes: 'basic', brows: 'thick', hair: 'dandy', hairColor: '#1E1B1A', top: 'sweatshirt', shirt: '#34466B', glasses: 'square', facialHair: 'stubble' }),
     grownup('하준이 엄마', { skin: 'medium', faceShape: 'heart', eyes: 'smile', hair: 'lowPony', hairColor: '#2F2320', top: 'cardigan', shirt: '#AEDCC0' }),
     grownup('할머니', { skin: 'light', age: 'senior', faceShape: 'round', eyes: 'smile', hair: 'bun', hairColor: '#EDEBE6', top: 'cardigan', pattern: 'flower', shirt: '#C9B8F0', glasses: 'gold' }),
+    {
+      id: uuid(),
+      kind: 'teacher',
+      role: 'director',
+      name: '나래',
+      avatar: { skin: 'light', age: 'adult', faceShape: 'square', eyes: 'basic', brows: 'thick', hair: 'shortPerm', hairColor: '#4A3226', top: 'shirt', shirt: '#34466B', glasses: 'gold', neckwear: 'lanyard', nameTag: true },
+      persona: { color: 'navy', animal: 'owl', shape: 'square', traits: ['busy', 'quiet'] },
+    },
   ];
   return {
     child: {
@@ -85,7 +94,7 @@ export function demoProfile(): Profile {
   };
 }
 
-export function demoHistory(profile: Profile, now = new Date()): { sessions: PlaySession[]; responses: PlayResponse[] } {
+export function demoHistory(profile: Profile, now = new Date()): { sessions: PlaySession[]; responses: PlayResponse[]; drawings: Drawing[] } {
   const rand = seededRandom(20260930);
   const [miso, danbi] = profile.people;
   const sessions: PlaySession[] = [];
@@ -133,6 +142,74 @@ export function demoHistory(profile: Profile, now = new Date()): { sessions: Pla
   link(2, SELF, 'scare', danbi?.id);
   link(2, SELF, 'fight', byName('도윤'));
   link(1, SELF, 'close', byName('서아'));
+  // 어른들 사이 (두 사람 질문)
+  const director = profile.people.find((p) => p.role === 'director')?.id;
+  link(6, director, 'laugh', miso?.id);
+  link(2, director, 'fight', danbi?.id);
+  link(4, miso?.id, 'close', byName('우리 엄마'));
+
+  // 그림 놀이: 단비 선생님(화난 얼굴·"조용히 해!"·번개), 미소 선생님(웃는 얼굴·하트), 우리 반 그림
+  const drawings: Drawing[] = [];
+  const draw = (daysAgo: number, d: Drawing) => {
+    const at = new Date(now);
+    at.setDate(at.getDate() - daysAgo);
+    at.setHours(19, 0, 0, 0);
+    if (at > now) at.setTime(now.getTime() - 20000);
+    const dd = { ...d, createdAt: at.toISOString() };
+    drawings.push(dd);
+    const sessionId = uuid();
+    responses.push(...artResponses(dd, profile.people, sessionId));
+    sessions.push({ id: sessionId, startedAt: dd.createdAt, finishedAt: dd.createdAt });
+  };
+  if (danbi) {
+    const d = emptyDrawing('portrait', danbi.id);
+    draw(4, {
+      ...d,
+      sky: 'storm',
+      figures: [{ ...d.figures[0], scale: 1.4, expression: 'angry', bubble: 'quiet' }],
+      stamps: [
+        { id: 'bolt', x: 180, y: 380 },
+        { id: 'bolt', x: 830, y: 420 },
+        { id: 'tear', x: 160, y: 900 },
+      ],
+      strokes: [{ color: '#2B2B35', points: [120, 1080, 260, 1020, 400, 1100, 560, 1010, 720, 1090, 880, 1020] }],
+    });
+    draw(1, {
+      ...d,
+      id: uuid(),
+      sky: 'rainy',
+      figures: [{ ...d.figures[0], scale: 1.2, expression: 'angry', bubble: 'shout' }],
+      stamps: [{ id: 'fire', x: 820, y: 300 }],
+      strokes: [{ color: '#E5484D', points: [300, 520, 420, 470, 560, 520, 680, 470] }],
+    });
+  }
+  if (miso) {
+    const d = emptyDrawing('portrait', miso.id);
+    draw(5, {
+      ...d,
+      figures: [{ ...d.figures[0], expression: 'happy', bubble: 'good' }],
+      stamps: [
+        { id: 'heart', x: 170, y: 420 },
+        { id: 'heart', x: 840, y: 470 },
+        { id: 'flower', x: 180, y: 1000 },
+        { id: 'star', x: 820, y: 1020 },
+      ],
+      strokes: [{ color: '#FFD23F', points: [100, 1150, 300, 1120, 500, 1160, 700, 1120, 900, 1150] }],
+    });
+  }
+  const seoa = byName('서아');
+  draw(2, {
+    ...emptyDrawing('scene', null),
+    figures: [
+      { personId: SELF, x: 330, y: 960, scale: 1, expression: 'happy', bubble: null },
+      ...(seoa ? [{ personId: seoa, x: 520, y: 980, scale: 1, expression: 'happy' as const, bubble: 'play' }] : []),
+      ...(miso ? [{ personId: miso.id, x: 200, y: 700, scale: 1, expression: 'happy' as const, bubble: null }] : []),
+      ...(danbi ? [{ personId: danbi.id, x: 840, y: 640, scale: 1, expression: 'angry' as const, bubble: 'shout' }] : []),
+      ...(director ? [{ personId: director, x: 860, y: 920, scale: 1, expression: 'neutral' as const, bubble: 'silent' }] : []),
+    ],
+    stamps: [{ id: 'heart', x: 430, y: 820 }],
+  });
+
 
   for (let daysAgo = 13; daysAgo >= 0; daysAgo--) {
     const d = new Date(now);
@@ -199,7 +276,7 @@ export function demoHistory(profile: Profile, now = new Date()): { sessions: Pla
     });
     sessions.push({ id: sessionId, startedAt: d.toISOString(), finishedAt: new Date(d.getTime() + 200000).toISOString() });
   }
-  return { sessions, responses };
+  return { sessions, responses, drawings };
 }
 
 /** 예시 기록을 기존 프로필에 넣을 때, 이미지가 없는 선생님에게 예시 이미지를 채운다 */

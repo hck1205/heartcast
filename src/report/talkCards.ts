@@ -83,6 +83,33 @@ export function talkCardFor(signal: Signal): TalkCard {
         avoid: ['선을 이은 이유를 캐묻거나 "정말이야?" 하고 되묻기', ...COMMON_AVOID],
         tip: '관계도는 아이가 느끼는 마음의 지도예요. 한 번의 선보다 여러 날 같은 선이 이어지는지 함께 보세요. 걱정이 계속되면 담임·원장님과 차분히 상담하고, 필요하면 CCTV 열람을 요청할 수 있어요.',
       };
+    case 'art-words':
+      return {
+        id: signal.id,
+        title: '그림 속 말풍선, 그대로 들어주기',
+        when: signal.title,
+        openQuestions: [
+          `"그림에서 ${josa(who, '이/가')} 이렇게 말하고 있네. 언제 이런 말을 해?"`,
+          '"그 말을 들으면 너는 어떤 마음이 들어?"',
+          '"그때 다른 친구들은 어떻게 했어?"',
+        ],
+        empathy: ['"그랬구나. 그 말을 들으면 무서웠겠다."', ...COMMON_EMPATHY],
+        avoid: ['"정말 그렇게 말했어?" 하고 되묻거나 다그치기', ...COMMON_AVOID],
+        tip: 'CCTV에는 말소리가 담기지 않아요. 아이가 그림으로 보여준 말을 날짜와 함께 대화 기록에 그대로 적어 두세요. 같은 말이 계속되면 담임·원장님과 차분히 상담해 보세요.',
+      };
+    case 'relation-adults':
+      return {
+        id: signal.id,
+        title: '어른들 사이의 분위기 들어보기',
+        when: signal.title,
+        openQuestions: [
+          '"관계도 놀이에서 선생님들 사이를 이렇게 이었네. 어떤 모습을 봤어?"',
+          '"그걸 볼 때 너는 어떤 마음이었어?"',
+        ],
+        empathy: ['"그랬구나. 어른들이 그러면 마음이 불편했겠다."', ...COMMON_EMPATHY],
+        avoid: ['아이 앞에서 선생님이나 다른 어른을 평가하기', ...COMMON_AVOID.slice(2)],
+        tip: '아이는 어른들 사이의 긴장을 민감하게 느껴요. 한 번의 선택보다는 흐름을 보고, 필요하면 원과 편하게 이야기해 보세요.',
+      };
     case 'relation-conflict':
       return {
         id: signal.id,

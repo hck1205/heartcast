@@ -41,7 +41,7 @@ function promptFor(step: Step, profile: Profile): string {
   if (step.game === 'portrait' && t.kind === 'person') {
     const who = displayName(t.person);
     if (step.facet === 'trait') return `오늘 ${who}에게 어울리는 스티커 하나를 골라줘!`;
-    return `오늘 ${facetQuestion(step.facet ?? 'animal', t.person.name, t.person.kind)}`;
+    return `오늘 ${facetQuestion(step.facet ?? 'animal', t.person.name, t.person.kind, t.person.role)}`;
   }
   const scene = SCENES.find((s) => s.id === step.sceneId)!;
   return scene.prompt.replace('{name}', t.kind === 'person' ? t.person.name : '');
