@@ -20,14 +20,13 @@ import {
 } from '@/components/art/ArtTools';
 import { AskBar, KidHeader } from '@/components/kid/KidTop';
 import { BigButton, Confetti, Screen } from '@/components/ui';
-import { CRAYONS, emptyDrawing, SELF } from '@/games/art';
+import { addFigure, CRAYONS, emptyDrawing, patchFigure, removeFigure, SELF, toggleStampAt } from '@/games/art';
 import { avatarFor, makeWho } from '@/games/people';
 import { celebrate, say, tap, useSayOnChange } from '@/lib/feedback';
 import { josa } from '@/lib/josa';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts } from '@/theme';
 import type { Drawing } from '@/types';
-
 
 /**
  * 그림 놀이: 한 사람 그리기(인물화) 또는 우리 반 그리기(장면화).
@@ -90,13 +89,13 @@ export default function ArtGame() {
 
   const setFigure = (patch: Partial<Drawing['figures'][number]>) => {
     if (selected === null) return;
-    update((d) => ({ ...d, figures: d.figures.map((f, i) => (i === selected ? { ...f, ...patch } : f)) }));
+    update((d) => patchFigure(d, selected, patch));
   };
 
   const onCanvasPress = (x: number, y: number) => {
     if (tool === 'people' && tray) {
       tap();
-      update((d) => ({ ...d, figures: [...d.figures, { personId: tray, x, y, scale: 1, expression: 'calm', bubble: null }] }));
+      update((d) => addFigure(d, tray, x, y));
       // 방금 놓은 사람을 고른 상태로 (표정·말 도구로 바로 꾸밀 수 있게). 사람 서랍은 그대로 둔다
       setSelected(drawing ? drawing.figures.length : null);
       say(`${nameFor(tray)}!`);
@@ -105,11 +104,8 @@ export default function ArtGame() {
     }
     if (tool === 'stamp') {
       tap();
-      update((d) => {
-        const near = d.stamps.findIndex((s) => Math.hypot(s.x - x, s.y - y) < 55);
-        // 이미 찍은 스탬프를 누르면 지운다
-        return near >= 0 ? { ...d, stamps: d.stamps.filter((_, i) => i !== near) } : { ...d, stamps: [...d.stamps, { id: stamp, x, y }] };
-      });
+      // 이미 찍은 스탬프를 누르면 지운다
+      update((d) => toggleStampAt(d, stamp, x, y));
     }
   };
 
@@ -188,7 +184,7 @@ export default function ArtGame() {
                     label={`${nameFor(drawing.figures[selected]?.personId ?? '')} 빼기`}
                     emoji="❌"
                     onPress={() => {
-                      update((d) => ({ ...d, figures: d.figures.filter((_, i) => i !== selected) }));
+                      update((d) => removeFigure(d, selected));
                       setSelected(null);
                       setPickedFigure(false);
                     }}

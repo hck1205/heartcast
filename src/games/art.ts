@@ -86,6 +86,27 @@ function portraitFigure(personId: string): ArtFigure {
   return { personId, x: 500, y: 640, scale: 1, expression: 'calm', bubble: null };
 }
 
+// ── 그림 고치기 (그림 놀이 화면에서 쓰는 순수 함수) ──
+
+/** 그림에 사람을 놓는다 (보통 크기·차분한 얼굴·말풍선 없음) */
+export const addFigure = (d: Drawing, personId: string, x: number, y: number): Drawing => ({
+  ...d,
+  figures: [...d.figures, { personId, x, y, scale: 1, expression: 'calm', bubble: null }],
+});
+
+export const patchFigure = (d: Drawing, index: number, patch: Partial<ArtFigure>): Drawing => ({
+  ...d,
+  figures: d.figures.map((f, i) => (i === index ? { ...f, ...patch } : f)),
+});
+
+export const removeFigure = (d: Drawing, index: number): Drawing => ({ ...d, figures: d.figures.filter((_, i) => i !== index) });
+
+/** 스탬프 찍기. 이미 찍은 스탬프 가까이(55)를 누르면 그 스탬프를 지운다 */
+export function toggleStampAt(d: Drawing, id: string, x: number, y: number): Drawing {
+  const near = d.stamps.findIndex((s) => Math.hypot(s.x - x, s.y - y) < 55);
+  return near >= 0 ? { ...d, stamps: d.stamps.filter((_, i) => i !== near) } : { ...d, stamps: [...d.stamps, { id, x, y }] };
+}
+
 export function emptyDrawing(kind: Drawing['kind'], subjectId: string | null): Drawing {
   return {
     id: uuid(),

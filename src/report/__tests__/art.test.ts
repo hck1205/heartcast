@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { demoHistory, demoProfile } from '@/data/demoSeed';
-import { artResponses, bubbleCounts, crayonStats, describeDrawing, emptyDrawing, sceneStats, SELF } from '@/games/art';
+import { addFigure, artResponses, bubbleCounts, crayonStats, describeDrawing, emptyDrawing, patchFigure, removeFigure, sceneStats, SELF, toggleStampAt } from '@/games/art';
 import { buildReport, describeResponse } from '@/report/analyze';
 import { talkCardFor } from '@/report/talkCards';
 import type { Drawing, Person } from '@/types';
@@ -34,6 +34,26 @@ function angryPortrait(daysAgo: number): Drawing {
     strokes: [{ color: '#2B2B35', points: [100, 1000, 400, 1000, 700, 1000] }],
   };
 }
+
+describe('editing a drawing', () => {
+  it('places, changes and removes people without touching the original', () => {
+    const d0 = emptyDrawing('scene', null);
+    const d1 = addFigure(d0, 't-1', 300, 400);
+    expect(d0.figures).toHaveLength(0);
+    expect(d1.figures[0]).toEqual({ personId: 't-1', x: 300, y: 400, scale: 1, expression: 'calm', bubble: null });
+    const d2 = patchFigure(addFigure(d1, SELF, 600, 500), 1, { expression: 'happy', bubble: 'love' });
+    expect(d2.figures[0].expression).toBe('calm');
+    expect(d2.figures[1]).toMatchObject({ personId: SELF, expression: 'happy', bubble: 'love' });
+    expect(removeFigure(d2, 0).figures.map((f) => f.personId)).toEqual([SELF]);
+  });
+
+  it('stamps, and a tap near a stamp takes it off', () => {
+    const d1 = toggleStampAt(emptyDrawing('scene', null), 'heart', 100, 100);
+    const d2 = toggleStampAt(d1, 'star', 400, 400);
+    expect(d2.stamps.map((s) => s.id)).toEqual(['heart', 'star']);
+    expect(toggleStampAt(d2, 'star', 120, 130).stamps.map((s) => s.id)).toEqual(['star']);
+  });
+});
 
 describe('artResponses', () => {
   it('turns a portrait into face · bubble · stamps · sky · crayon responses', () => {
