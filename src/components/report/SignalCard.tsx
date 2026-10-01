@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Signal } from '@/report/analyze';
 import { colors, fonts, radius } from '@/theme';
 
-export const SIGNAL_META = {
+const SIGNAL_META = {
   talk: { icon: '💬', label: '대화 추천', color: colors.signal.talk, bg: '#FFF1EC' },
   watch: { icon: '👀', label: '살펴보기', color: colors.signal.watch, bg: '#FFF7E8' },
   good: { icon: '🌟', label: '좋은 신호', color: colors.signal.good, bg: '#ECF8F2' },

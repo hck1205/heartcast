@@ -32,7 +32,7 @@ interface Pos {
  * 자리 잡기: 나는 가운데, 선생님은 위, 어른은 아래, 친구는 양옆.
  * 사람이 많으면 2~3겹 고리에 번갈아 놓아 겹치지 않게 한다.
  */
-export function layoutNodes(nodes: MapNode[], w: number, h: number): { pos: Record<string, Pos>; size: number; selfSize: number } {
+function layoutNodes(nodes: MapNode[], w: number, h: number): { pos: Record<string, Pos>; size: number; selfSize: number } {
   const others = nodes.filter((n) => n.id !== SELF);
   const n = others.length;
   const base = Math.min(w, h);

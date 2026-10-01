@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -24,6 +25,7 @@ import {
 import { colors, fonts, palettes } from '@/theme';
 import type { FullAvatar, Person } from '@/types';
 import { Avatar } from '../Avatar';
+import { Tabs } from '../ui';
 import { OptionTile, Section, Swatch } from './pickers';
 
 /** 공방 생김새 단계(얼굴·머리·옷)의 탭 목록과 탭별 선택지. 아이 아바타 꾸미기에서도 같이 쓴다. */
@@ -48,7 +50,42 @@ export type LookTab =
   | 'earrings'
   | 'nameTag';
 
-export function lookTabs(step: 'face' | 'hair' | 'outfit' | string): { id: LookTab; label: string }[] {
+export type LookGroup = 'face' | 'hair' | 'outfit';
+
+const GROUPS: { id: LookGroup; label: string }[] = [
+  { id: 'face', label: '얼굴' },
+  { id: 'hair', label: '머리' },
+  { id: 'outfit', label: '옷·소품' },
+];
+
+/** 그룹(얼굴·머리·옷) + 세부 탭 상태. hide 에 든 세부 탭은 보이지 않는다 */
+export function useLookTabs(hide: LookTab[] = []) {
+  const visible = (g: LookGroup) => lookTabs(g).filter((t) => !hide.includes(t.id));
+  const [group, setGroup] = useState<LookGroup>('face');
+  const [tab, setTab] = useState<LookTab>(() => visible('face')[0].id);
+  return {
+    group,
+    tab,
+    setTab,
+    tabs: visible(group),
+    selectGroup: (g: LookGroup) => {
+      setGroup(g);
+      setTab(visible(g)[0].id);
+    },
+  };
+}
+
+/** 그룹 탭 줄 + 세부 탭 줄 */
+export function LookTabs({ look }: { look: ReturnType<typeof useLookTabs> }) {
+  return (
+    <>
+      <Tabs items={GROUPS} value={look.group} onChange={look.selectGroup} />
+      <Tabs items={look.tabs} value={look.tab} onChange={look.setTab} />
+    </>
+  );
+}
+
+function lookTabs(step: 'face' | 'hair' | 'outfit' | string): { id: LookTab; label: string }[] {
   if (step === 'face')
     return [
       { id: 'age', label: '나이' },

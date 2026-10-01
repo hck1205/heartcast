@@ -56,7 +56,7 @@ export function describeResponse(r: PlayResponse, people: Person[], childName = 
   };
 }
 
-export const weatherEmoji: Record<WeatherCode, string> = {
+const weatherEmoji: Record<WeatherCode, string> = {
   sunny: '☀️',
   partly: '⛅',
   cloudy: '☁️',

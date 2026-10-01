@@ -52,7 +52,7 @@ export function avgToWeather(avg: number | null): WeatherCode | null {
   return 'stormy';
 }
 
-export function scoreToWeather(score: number): WeatherCode {
+function scoreToWeather(score: number): WeatherCode {
   return avgToWeather(score) as WeatherCode;
 }
 

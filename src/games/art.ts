@@ -82,7 +82,7 @@ export const stampOf = (id: string) => STAMPS.find((s) => s.id === id);
 export const skyOf = (id: ArtSky) => SKIES.find((s) => s.id === id)!;
 
 /** 한 사람 그림의 기본 자리: 가운데 */
-export function portraitFigure(personId: string): ArtFigure {
+function portraitFigure(personId: string): ArtFigure {
   return { personId, x: 500, y: 640, scale: 1, expression: 'calm', bubble: null };
 }
 

@@ -99,12 +99,6 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
-export function H1({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
-  return <Text style={[styles.h1, style]}>{children}</Text>;
-}
-export function H2({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
-  return <Text style={[styles.h2, style]}>{children}</Text>;
-}
 export function Body({ children, style, muted }: { children: ReactNode; style?: StyleProp<TextStyle>; muted?: boolean }) {
   return <Text style={[styles.body, muted && { color: colors.inkSoft }, style]}>{children}</Text>;
 }
@@ -247,8 +241,6 @@ export const styles = StyleSheet.create({
   btnIcon: { fontSize: 20 },
   btnText: { fontFamily: fonts.title, fontSize: 19 },
   card: { backgroundColor: colors.paper, borderRadius: radius.lg, padding: 16, borderWidth: 1, borderColor: colors.line },
-  h1: { fontFamily: fonts.title, fontSize: 26, color: colors.ink, lineHeight: 34 },
-  h2: { fontFamily: fonts.title, fontSize: 20, color: colors.ink, lineHeight: 27 },
   body: { fontFamily: fonts.body, fontSize: 15, color: colors.ink, lineHeight: 22 },
   progressTrack: { height: 6, borderRadius: 3, backgroundColor: colors.line, marginHorizontal: 12, overflow: 'hidden' },
   progressFill: { height: 6, borderRadius: 3, backgroundColor: colors.primary },

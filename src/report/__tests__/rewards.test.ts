@@ -1,7 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { promptFor } from '@/games/prompts';
-import { BADGES, bonusStars, buy, dayKey, isEquipped, newBadges, shopItem, streak, streakBonus, toggleEquip, weekStamps } from '@/games/rewards';
+import { BADGES, bonusStars, buy, isEquipped, newBadges, playedOn, selfWeatherOn, shopItem, streak, streakBonus, toggleEquip, weekStamps } from '@/games/rewards';
+import { dayKey } from '@/lib/dates';
 import { normalizeAvatar } from '@/lib/avatar';
 import type { PlayResponse, Profile } from '@/types';
 
@@ -64,6 +65,14 @@ describe('출석 도장 · 연속', () => {
     expect(w[0].weather).toBe('sunny');
     expect(w[1].weather).toBeNull();
     expect(w[2]).toMatchObject({ weather: 'rainy', today: true });
+  });
+
+  it('knows whether I played on a day and which weather I picked last', () => {
+    const later = { ...played(0, 'cloudy'), id: 'later', createdAt: new Date(NOW.getTime() + 60_000).toISOString() };
+    expect(playedOn([played(1)], NOW)).toBe(false);
+    expect(playedOn([played(1), played(0, 'portrait', 'portrait')], NOW)).toBe(true);
+    expect(selfWeatherOn([later, played(0, 'rainy'), played(1, 'sunny')], NOW)).toBe('cloudy');
+    expect(selfWeatherOn([played(0, 'unknown'), played(0, 'portrait', 'portrait')], NOW)).toBeNull();
   });
 
   it('gives a bonus only on the first play of a 3rd/5th/7th day', () => {

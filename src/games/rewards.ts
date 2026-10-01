@@ -63,8 +63,6 @@ export function buy(p: Profile, id: string): { profile: Profile; ok: boolean; re
 
 // ── 출석 도장 · 연속 보너스 ──
 
-export { dayKey };
-
 const isSelfWeather = (r: PlayResponse) => r.game === 'weather' && r.targetType === 'topic' && r.targetId === 'self' && r.value !== 'unknown';
 
 /** 그날 놀이를 했는지 (날씨 놀이·관계도·그림 모두) */

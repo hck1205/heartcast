@@ -84,7 +84,7 @@ export interface Edge {
   createdAt: string;
 }
 
-export const edgeKey = (rel: RelationId, from: string, to: string) =>
+const edgeKey = (rel: RelationId, from: string, to: string) =>
   relationOf(rel)!.directed ? `${rel}|${from}|${to}` : `${rel}|${[from, to].sort().join('|')}`;
 
 /** 지금 관계도에 그려진 선들: 같은 선은 가장 최근 응답이 이긴다(지우기 포함). 지워진 사람은 뺀다. */

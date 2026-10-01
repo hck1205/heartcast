@@ -3,7 +3,7 @@ import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } fr
 
 import { animalOf, callName, EMPTY_PERSONA, facetQuestion, traitOf, type PersonaFacet } from '@/games/persona';
 import { portraitDiff, portraitResponse } from '@/games/portrait';
-import { normalizeAvatar, randomAvatar } from '@/lib/avatar';
+import { normalizeAvatar } from '@/lib/avatar';
 import { celebrate, tap, useSayOnChange } from '@/lib/feedback';
 import { useBounce } from '@/lib/motion';
 import { josa } from '@/lib/josa';
@@ -11,22 +11,14 @@ import { uuid } from '@/lib/util';
 import { colors, fonts, radius } from '@/theme';
 import type { FullAvatar, Persona, Person, PlayResponse } from '@/types';
 import { AskBar, HeaderTextButton, KidHeader } from '../kid/KidTop';
-import { Avatar } from '../Avatar';
-import { BigButton, Confetti, Dots, Screen, Tabs } from '../ui';
+import { BigButton, Confetti, Dots, Screen } from '../ui';
 import { PersonCard } from './PersonCard';
-import { LookOptions, lookTabs, type LookTab } from './LookOptions';
+import { LookOptions, LookTabs, useLookTabs } from './LookOptions';
+import { FacePicker, makeCandidates } from './LookStep';
 import { PersonaPicker } from './pickers';
 
 /** 공방 단계: 이름 → 닮은 얼굴 고르기 → 동물 → 성격(선생님만) → 완성 */
 type StepId = 'name' | 'look' | 'animal' | 'trait' | 'done';
-type Group = 'face' | 'hair' | 'outfit';
-
-const CANDIDATES = 6;
-/** 닮은 얼굴 후보: 지금 얼굴 + 같은 나이대의 랜덤 얼굴 */
-const makeCandidates = (current: FullAvatar | null, age: FullAvatar['age']) => [
-  ...(current ? [current] : []),
-  ...Array.from({ length: current ? CANDIDATES - 1 : CANDIDATES }, () => randomAvatar(age)),
-];
 
 function question(step: StepId, name: string, kind: Person['kind'], role?: Person['role']): string {
   const who = callName(name || { teacher: '우리', friend: '친구', parent: '어른' }[kind], kind, role);
@@ -85,8 +77,7 @@ export function Studio({
     return makeCandidates(initial.name ? a : null, a.age).map((x, i) => (i === 0 && !initial.name ? a : x));
   });
   const [detail, setDetail] = useState(false);
-  const [group, setGroup] = useState<Group>('face');
-  const [tab, setTab] = useState<LookTab>('age');
+  const look = useLookTabs(initial.kind === 'teacher' ? [] : ['nameTag']);
   const [saving, setSaving] = useState(false);
   const { value: bounce, bounce: pop } = useBounce();
   const step = steps[idx];
@@ -141,8 +132,6 @@ export function Studio({
     }
   };
 
-  const groupTabs = lookTabs(group).filter((t) => kind === 'teacher' || t.id !== 'nameTag');
-
   return (
     <Screen>
       {/* 상단: 닫기 · 진행 점 · 지우기 */}
@@ -165,24 +154,8 @@ export function Studio({
 
       {/* 고르기 판 */}
       <View style={styles.sheet}>
-        {step === 'look' && detail && (
-          <>
-            <Tabs
-              items={[
-                { id: 'face', label: '얼굴' },
-                { id: 'hair', label: '머리' },
-                { id: 'outfit', label: '옷·소품' },
-              ]}
-              value={group}
-              onChange={(g) => {
-                setGroup(g);
-                setTab(lookTabs(g)[0].id);
-              }}
-            />
-            <Tabs items={groupTabs} value={tab} onChange={setTab} />
-          </>
-        )}
-        <ScrollView key={`${step}-${detail ? tab : 'pick'}`} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
+        {step === 'look' && detail && <LookTabs look={look} />}
+        <ScrollView key={`${step}-${detail ? look.tab : 'pick'}`} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
           {step === 'name' && (
             <View style={{ gap: 8 }}>
               <TextInput
@@ -212,42 +185,18 @@ export function Studio({
           )}
 
           {step === 'look' && !detail && (
-            <View style={{ gap: 12 }}>
-              <View style={styles.faces}>
-                {candidates.map((c, i) => {
-                  const on = JSON.stringify(c) === JSON.stringify(avatar);
-                  return (
-                    <Pressable
-                      key={i}
-                      accessibilityLabel={`얼굴 ${i + 1}`}
-                      onPress={() => {
-                        tap();
-                        setAvatar(c);
-                        pop();
-                      }}
-                      style={[styles.faceCard, on && styles.faceOn]}
-                    >
-                      <Avatar avatar={c} size={86} />
-                    </Pressable>
-                  );
-                })}
-              </View>
-              <View style={styles.row}>
-                <BigButton
-                  small
-                  variant="secondary"
-                  label="🔄 다른 얼굴"
-                  onPress={() => {
-                    tap();
-                    setCandidates([avatar, ...makeCandidates(null, avatar.age).slice(1)]);
-                  }}
-                  style={{ flex: 1 }}
-                />
-                <BigButton small variant="ghost" label="✏️ 더 꾸미기" onPress={() => setDetail(true)} style={{ flex: 1 }} />
-              </View>
-            </View>
+            <FacePicker
+              candidates={candidates}
+              avatar={avatar}
+              onPick={(c) => {
+                setAvatar(c);
+                pop();
+              }}
+              onShuffle={() => setCandidates([avatar, ...makeCandidates(null, avatar.age).slice(1)])}
+              onDetail={() => setDetail(true)}
+            />
           )}
-          {step === 'look' && detail && <LookOptions tab={tab} avatar={avatar} setLook={setLook} kind={kind} />}
+          {step === 'look' && detail && <LookOptions tab={look.tab} avatar={avatar} setLook={setLook} kind={kind} />}
 
           {step === 'animal' && <PersonaPicker facet="animal" value={unknown.has('animal') ? 'unknown' : persona.animal} onChange={(v) => setFacet('animal', v)} />}
           {step === 'trait' && (
@@ -291,20 +240,6 @@ export function Studio({
 
 const styles = StyleSheet.create({
   preview: { alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
-  faces: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  faceCard: {
-    width: 104,
-    height: 112,
-    borderRadius: radius.lg,
-    borderWidth: 3,
-    borderColor: colors.line,
-    backgroundColor: colors.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  faceOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  row: { flexDirection: 'row', gap: 8 },
   roleChip: { alignSelf: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
   roleChipOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   roleText: { fontFamily: fonts.title, fontSize: 16, color: colors.ink },
