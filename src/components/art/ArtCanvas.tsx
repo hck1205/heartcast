@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'r
 import Svg, { Circle, Ellipse, Path, Polyline, Rect } from 'react-native-svg';
 
 import { bubbleOf, CANVAS_H, CANVAS_W, FIGURE_BASE, SELF, skyOf, stampOf } from '@/games/art';
+import { usePagePoint } from '@/lib/usePagePoint';
 import { colors, fonts } from '@/theme';
 import type { ArtStroke, AvatarConfig, Drawing } from '@/types';
 import { Avatar } from '../Avatar';
@@ -87,14 +88,11 @@ export function ArtCanvas({
   const k = width / CANVAS_W;
   const height = CANVAS_H * k;
   const [live, setLive] = useState<number[] | null>(null);
-  // 터치 좌표: 화면 좌표(pageX/Y)에서 도화지 위치를 빼서 구한다 (웹·안드로이드 모두 같은 방식)
-  const boxRef = useRef<View>(null);
-  const originRef = useRef({ x: 0, y: 0 });
-  const measure = () => boxRef.current?.measureInWindow((x, y) => (originRef.current = { x, y }));
-  const at = (e: GestureResponderEvent) => [
-    Math.round((e.nativeEvent.pageX - originRef.current.x) / k),
-    Math.round((e.nativeEvent.pageY - originRef.current.y) / k),
-  ];
+  const { ref: boxRef, measure, point } = usePagePoint();
+  const at = (e: GestureResponderEvent) => {
+    const p = point(e);
+    return [Math.round(p.x / k), Math.round(p.y / k)];
+  };
   // 손가락 그리기: 이벤트 핸들러에서만 ref 를 읽는다
   const ptsRef = useRef<number[]>([]);
   const drawHandlers = {

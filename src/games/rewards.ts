@@ -1,3 +1,4 @@
+import { dayKey, isSameDay } from '@/lib/dates';
 import type { Cape, Drawing, Headwear, PlayResponse, Profile, WeatherCode } from '@/types';
 import { STICKERS } from './content';
 
@@ -62,7 +63,18 @@ export function buy(p: Profile, id: string): { profile: Profile; ok: boolean; re
 
 // ── 출석 도장 · 연속 보너스 ──
 
-export const dayKey = (d: Date) => `${d.getFullYear()}-${`${d.getMonth() + 1}`.padStart(2, '0')}-${`${d.getDate()}`.padStart(2, '0')}`;
+export { dayKey };
+
+const isSelfWeather = (r: PlayResponse) => r.game === 'weather' && r.targetType === 'topic' && r.targetId === 'self' && r.value !== 'unknown';
+
+/** 그날 놀이를 했는지 (날씨 놀이·관계도·그림 모두) */
+export const playedOn = (responses: PlayResponse[], day = new Date()) => responses.some((r) => isSameDay(r.createdAt, day));
+
+/** 그날 마지막으로 고른 "내 마음 날씨" (없으면 null) */
+export function selfWeatherOn(responses: PlayResponse[], day = new Date()): WeatherCode | null {
+  const mine = responses.filter((r) => isSelfWeather(r) && isSameDay(r.createdAt, day));
+  return (mine.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).at(-1)?.value as WeatherCode) ?? null;
+}
 
 /** 놀이한 날들 (날씨 놀이·관계도·그림 모두) */
 function playedDays(responses: PlayResponse[]): Set<string> {
@@ -87,7 +99,7 @@ export function weekStamps(responses: PlayResponse[], now = new Date()): DayStam
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
   const selfWeather = new Map<string, WeatherCode>();
   for (const r of [...responses].sort((a, b) => a.createdAt.localeCompare(b.createdAt)))
-    if (r.game === 'weather' && r.targetType === 'topic' && r.targetId === 'self' && r.value !== 'unknown') selfWeather.set(dayKey(new Date(r.createdAt)), r.value as WeatherCode);
+    if (isSelfWeather(r)) selfWeather.set(dayKey(new Date(r.createdAt)), r.value as WeatherCode);
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);

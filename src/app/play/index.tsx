@@ -5,21 +5,16 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BigButton, Screen } from '@/components/ui';
 import { HomeScene } from '@/components/fun/HomeScene';
 import { WeekStamps } from '@/components/fun/WeekStamps';
-import { streak, weekStamps } from '@/games/rewards';
+import { playedOn, streak, weekStamps } from '@/games/rewards';
 import { say } from '@/lib/feedback';
 import { josa } from '@/lib/josa';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
 
-function playedToday(dates: string[]) {
-  const today = new Date().toDateString();
-  return dates.some((d) => new Date(d).toDateString() === today);
-}
-
 /** 아이 홈: 인사 한 줄 · 우리 반 모습 · 큰 버튼 하나 · 작은 타일 둘 */
 export default function PlayHome() {
   const { profile, responses, setParentUnlocked } = useApp();
-  const done = playedToday(responses.map((r) => r.createdAt));
+  const done = playedOn(responses);
   const name = profile?.child.name ?? '';
   const greeting = done ? `${josa(name, '아/야')}, 한 번 더 할까?` : `${josa(name, '아/야')}, 안녕!`;
 

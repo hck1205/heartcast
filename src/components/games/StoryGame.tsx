@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 
 import { SCENES, type Reaction } from '@/games/content';
 import { resolveTarget } from '@/games/target';
 import { withoutHeadwear } from '@/lib/avatar';
+import { useShake } from '@/lib/motion';
 import { Avatar } from '../Avatar';
 import { Pop } from './Pop';
 import { gameStyles, type GameProps } from './shared';
@@ -23,11 +24,16 @@ export function StoryGame({ step, profile, picked, onPick }: GameProps) {
   const t = resolveTarget(profile, step.targetType, step.targetId);
   // 위치에 따른 선택 편향을 줄이려고 보기 순서를 섞는다
   const options = useMemo(() => shuffleOnce(scene.reactions), [scene]);
-  const shake = useShake(scene.id);
+  const { shake, rotate } = useShake();
+  useEffect(() => {
+    shake([1, -1, 0.5, 0], [120, 120, 100, 100]);
+    // 장면이 바뀔 때만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene.id]);
   if (!t || t.kind !== 'person') return null;
   return (
     <View style={{ gap: 14 }}>
-      <Animated.View style={[gameStyles.sceneCard, { transform: [{ rotate: shake }] }]}>
+      <Animated.View style={[gameStyles.sceneCard, { transform: [{ rotate: rotate(4) }] }]}>
         <Text style={{ fontSize: 64 }}>{scene.emoji}</Text>
         <Text style={gameStyles.sceneTitle}>{scene.title}</Text>
       </Animated.View>
@@ -54,18 +60,4 @@ export function StoryGame({ step, profile, picked, onPick }: GameProps) {
       </View>
     </View>
   );
-}
-
-function useShake(key: string) {
-  const v = useState(() => new Animated.Value(0))[0];
-  useEffect(() => {
-    v.setValue(0);
-    Animated.sequence([
-      Animated.timing(v, { toValue: 1, duration: 120, useNativeDriver: true }),
-      Animated.timing(v, { toValue: -1, duration: 120, useNativeDriver: true }),
-      Animated.timing(v, { toValue: 0.5, duration: 100, useNativeDriver: true }),
-      Animated.timing(v, { toValue: 0, duration: 100, useNativeDriver: true }),
-    ]).start();
-  }, [key, v]);
-  return v.interpolate({ inputRange: [-1, 1], outputRange: ['-4deg', '4deg'] });
 }

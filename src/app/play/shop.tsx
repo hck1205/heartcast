@@ -9,6 +9,7 @@ import { BigButton, Confetti, Screen } from '@/components/ui';
 import { isEquipped, isUnlocked, SHOP, shopItem, type ShopItem } from '@/games/rewards';
 import { normalizeAvatar } from '@/lib/avatar';
 import { celebrate, say, tap, useSayOnChange } from '@/lib/feedback';
+import { useShake } from '@/lib/motion';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
 
@@ -18,7 +19,7 @@ export default function Shop() {
   const profile = app.profile;
   const [opening, setOpening] = useState<ShopItem | null>(null);
   const [revealed, setRevealed] = useState(false);
-  const [shake] = useState(() => new Animated.Value(0));
+  const { shake, rotate } = useShake();
   const [msg, setMsg] = useState('별로 선물을 열어 봐!');
   useSayOnChange(msg);
   if (!profile) return null;
@@ -38,10 +39,7 @@ export default function Shop() {
     // 선물 상자 흔들기 → 열기
     setOpening(item);
     setRevealed(false);
-    shake.setValue(0);
-    Animated.sequence(
-      [1, -1, 1, -1, 0].map((v) => Animated.timing(shake, { toValue: v, duration: 110, useNativeDriver: true })),
-    ).start(async () => {
+    shake([1, -1, 1, -1, 0], 110, async () => {
       const r = await app.buyItem(item.id);
       if (r.ok) {
         setRevealed(true);
@@ -96,7 +94,7 @@ export default function Shop() {
               <Confetti />
             </>
           ) : (
-            <Animated.Text style={{ fontSize: 120, transform: [{ rotate: shake.interpolate({ inputRange: [-1, 1], outputRange: ['-12deg', '12deg'] }) }] }}>🎁</Animated.Text>
+            <Animated.Text style={{ fontSize: 120, transform: [{ rotate: rotate(12) }] }}>🎁</Animated.Text>
           )}
         </View>
       )}

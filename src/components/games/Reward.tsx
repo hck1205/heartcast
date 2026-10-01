@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 
 import { celebrate, say, tap } from '@/lib/feedback';
+import { useShake, useSpringIn } from '@/lib/motion';
 import { Floating } from '../Mascot';
 import { BigButton, Confetti, SkyBackground } from '../ui';
 import { gameStyles } from './shared';
@@ -24,21 +25,21 @@ export function Reward({
 }) {
   const [opened, setOpened] = useState(false);
   const [opening, setOpening] = useState(false);
-  const [pop] = useState(() => new Animated.Value(0));
-  const [shake] = useState(() => new Animated.Value(0));
+  const { value: pop, play: popIn } = useSpringIn(3, 90);
+  const { shake, rotate: rotateBy } = useShake();
   // 상자가 흔들흔들 → 펑! 스티커가 위로 솟아오른다
   const open = () => {
     tap();
     setOpening(true);
-    Animated.sequence([1, -1, 1, -1, 1, 0].map((v) => Animated.timing(shake, { toValue: v, duration: 90, useNativeDriver: true }))).start(() => {
+    shake([1, -1, 1, -1, 1, 0], 90, () => {
       setOpened(true);
       celebrate();
       say(`짜잔! 새 스티커!`);
-      Animated.spring(pop, { toValue: 1, useNativeDriver: true, friction: 3, tension: 90 }).start();
+      popIn();
     });
   };
   const rise = pop.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
-  const rotate = shake.interpolate({ inputRange: [-1, 1], outputRange: ['-14deg', '14deg'] });
+  const rotate = rotateBy(14);
   return (
     <SkyBackground top="#FFF3D6">
       <View style={gameStyles.rewardWrap}>

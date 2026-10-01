@@ -8,6 +8,7 @@ import { BigButton, Confetti, Dots, Screen } from '@/components/ui';
 import { edgeSentence, makeWho, NOBODY, PAIR_CHOICES, planQuests, questPrompt, relationOf, relationResponse, SELF, UNKNOWN, type RelationId } from '@/games/relations';
 import { josa } from '@/lib/josa';
 import { celebrate, say, tap, useSayOnChange } from '@/lib/feedback';
+import { useSpringIn } from '@/lib/motion';
 import { uuid } from '@/lib/util';
 import { avatarFor } from '@/games/people';
 import { useApp } from '@/state/AppContext';
@@ -29,7 +30,7 @@ export default function RelationsGame() {
   /** 두 사람 질문에서 고른 관계 */
   const [pairRel, setPairRel] = useState<RelationId | null>(null);
   const [done, setDone] = useState(quests.length === 0);
-  const [pop] = useState(() => new Animated.Value(0));
+  const { value: pop, play: popIn } = useSpringIn(4, 120);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const who = makeWho(people, '나', { kid: true });
@@ -71,8 +72,7 @@ export default function RelationsGame() {
     app.saveRelations([relationResponse(quest.subject, rel ?? 'close', rel ? other : UNKNOWN, uuid())], 1).catch(() => {});
     if (rel) {
       say(`${edgeSentence({ rel, from: quest.subject, to: other }, who)}!`);
-      pop.setValue(0);
-      Animated.spring(pop, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }).start();
+      popIn();
     } else say('괜찮아, 몰라도 돼!');
     next();
   };
@@ -86,8 +86,7 @@ export default function RelationsGame() {
     if (to === NOBODY || to === UNKNOWN) say(to === NOBODY ? '그렇구나. 알려줘서 고마워!' : '괜찮아, 몰라도 돼!');
     else {
       say(`${edgeSentence({ rel: quest.rel, from: quest.subject, to }, who)}!`);
-      pop.setValue(0);
-      Animated.spring(pop, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }).start();
+      popIn();
     }
     next();
   };

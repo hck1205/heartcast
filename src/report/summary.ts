@@ -4,7 +4,9 @@ import { callName } from '@/games/persona';
 import { parsePortraitValue } from '@/games/portrait';
 import type { Person, PlayResponse, TargetType, WeatherCode } from '@/types';
 
-export const DAY = 24 * 60 * 60 * 1000;
+import { DAY, dayKey, startOfDay } from '@/lib/dates';
+
+export { DAY, dayKey, startOfDay };
 
 export type Trend = 'up' | 'down' | 'flat';
 
@@ -55,18 +57,6 @@ export function scoreToWeather(score: number): WeatherCode {
 }
 
 export const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
-export const dayKey = (d: Date) => {
-  const y = d.getFullYear();
-  const m = `${d.getMonth() + 1}`.padStart(2, '0');
-  const day = `${d.getDate()}`.padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
-
-export function startOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
 
 export function targetName(targetType: TargetType, targetId: string, people: Person[]): string {
   if (targetType === 'topic') return TOPICS[targetId as keyof typeof TOPICS]?.name ?? targetId;

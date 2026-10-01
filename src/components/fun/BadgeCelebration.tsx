@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { badgeOf } from '@/games/rewards';
 import { celebrate, say } from '@/lib/feedback';
+import { useSpringIn } from '@/lib/motion';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts } from '@/theme';
 import { BigButton, Confetti } from '../ui';
@@ -11,15 +12,16 @@ import { BigButton, Confetti } from '../ui';
 export function BadgeCelebration() {
   const { pendingBadges, dismissBadge } = useApp();
   const badge = pendingBadges[0] ? badgeOf(pendingBadges[0]) : undefined;
-  const [pop] = useState(() => new Animated.Value(0));
+  const { value: pop, play } = useSpringIn(4, 90);
   useEffect(() => {
     if (!badge) return;
-    pop.setValue(0);
-    Animated.spring(pop, { toValue: 1, friction: 4, tension: 90, useNativeDriver: true }).start();
+    play();
     celebrate();
     const t = setTimeout(() => say(`새 배지! ${badge.label}! ${badge.desc}`), 300);
     return () => clearTimeout(t);
-  }, [badge, pop]);
+    // 새 배지가 올 때만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [badge]);
   if (!badge) return null;
   return (
     <View style={styles.overlay}>

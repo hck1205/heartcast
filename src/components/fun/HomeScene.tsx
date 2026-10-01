@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { nameOf } from '@/games/persona';
+import { selfWeatherOn } from '@/games/rewards';
 import { say, tap } from '@/lib/feedback';
+import { useJump } from '@/lib/motion';
 import { josa } from '@/lib/josa';
 import { colors, fonts } from '@/theme';
-import type { AvatarConfig, Expression, PlayResponse, Profile, WeatherCode } from '@/types';
+import type { AvatarConfig, Expression, PlayResponse, Profile } from '@/types';
 import { Avatar } from '../Avatar';
 import { Floating, Maru } from '../Mascot';
 import { WeatherIcon } from '../WeatherIcon';
@@ -30,13 +32,6 @@ function skyOf(hour: number) {
   return { bg: colors.skySoft, night: false };
 }
 
-/** 오늘 고른 "내 마음 날씨" (없으면 맑음) */
-function todayWeather(responses: PlayResponse[]): WeatherCode {
-  const today = new Date().toDateString();
-  const mine = responses.filter((r) => r.game === 'weather' && r.targetType === 'topic' && r.targetId === 'self' && r.value !== 'unknown' && new Date(r.createdAt).toDateString() === today);
-  return (mine.at(-1)?.value as WeatherCode) ?? 'sunny';
-}
-
 /** 캐릭터 위 말풍선 */
 function SpeechBubble({ text }: { text: string | null }) {
   return text ? <Text style={styles.bubble}>{text}</Text> : null;
@@ -44,7 +39,7 @@ function SpeechBubble({ text }: { text: string | null }) {
 
 /** 누르면 통 튀어 오르며 말풍선으로 인사하는 캐릭터 */
 function Jumper({ children, line, onSay }: { children: React.ReactNode; line: () => string; onSay: (text: string) => void }) {
-  const [y] = useState(() => new Animated.Value(0));
+  const { value: y, jump } = useJump();
   return (
     <Pressable
       accessibilityRole="button"
@@ -53,11 +48,7 @@ function Jumper({ children, line, onSay }: { children: React.ReactNode; line: ()
         const text = line();
         onSay(text);
         say(text);
-        y.setValue(0);
-        Animated.sequence([
-          Animated.timing(y, { toValue: -22, duration: 160, useNativeDriver: true }),
-          Animated.spring(y, { toValue: 0, friction: 3, tension: 140, useNativeDriver: true }),
-        ]).start();
+        jump();
       }}
     >
       <Animated.View style={{ transform: [{ translateY: y }] }}>{children}</Animated.View>
@@ -83,7 +74,8 @@ export function HomeScene({ profile, responses }: { profile: Profile; responses:
   };
 
   const sky = skyOf(hour);
-  const weather = todayWeather(responses);
+  // 오늘 고른 "내 마음 날씨" (없으면 맑음)
+  const weather = selfWeatherOn(responses) ?? 'sunny';
   const child = profile.child;
   const others = [...profile.people.filter((p) => p.kind === 'teacher').slice(0, 2), ...profile.people.filter((p) => p.kind === 'friend').slice(0, 2)];
   const greet = (who: string, kind: string) => () =>

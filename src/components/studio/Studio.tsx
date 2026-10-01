@@ -5,6 +5,7 @@ import { animalOf, callName, EMPTY_PERSONA, facetQuestion, traitOf, type Persona
 import { portraitDiff, portraitResponse } from '@/games/portrait';
 import { normalizeAvatar, randomAvatar } from '@/lib/avatar';
 import { celebrate, tap, useSayOnChange } from '@/lib/feedback';
+import { useBounce } from '@/lib/motion';
 import { josa } from '@/lib/josa';
 import { uuid } from '@/lib/util';
 import { colors, fonts, radius } from '@/theme';
@@ -87,7 +88,7 @@ export function Studio({
   const [group, setGroup] = useState<Group>('face');
   const [tab, setTab] = useState<LookTab>('age');
   const [saving, setSaving] = useState(false);
-  const [bounce] = useState(() => new Animated.Value(1));
+  const { value: bounce, bounce: pop } = useBounce();
   const step = steps[idx];
   const kind = initial.kind;
   const q = question(step, name, kind, role);
@@ -98,10 +99,6 @@ export function Studio({
     if (step === 'done') celebrate();
   }, [step]);
 
-  const pop = () => {
-    bounce.setValue(0.94);
-    Animated.spring(bounce, { toValue: 1, friction: 4, tension: 160, useNativeDriver: true }).start();
-  };
   const setLook = <K extends keyof FullAvatar>(k: K, v: FullAvatar[K]) => {
     setAvatar((a) => ({ ...a, [k]: v }));
     pop();

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { KidHeader } from '@/components/kid/KidTop';
@@ -7,6 +7,7 @@ import { SkyBackground, Tabs } from '@/components/ui';
 import { STICKERS } from '@/games/content';
 import { BADGES } from '@/games/rewards';
 import { tap } from '@/lib/feedback';
+import { usePagePoint } from '@/lib/usePagePoint';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
 
@@ -18,8 +19,7 @@ export default function StickerBook() {
   const profile = app.profile;
   const [tab, setTab] = useState<Tab>('board');
   const [picked, setPicked] = useState<string | null>(null);
-  const boxRef = useRef<View>(null);
-  const originRef = useRef({ x: 0, y: 0, w: 1, h: 1 });
+  const { ref: boxRef, measure, ratio } = usePagePoint();
   if (!profile) return null;
 
   const counts = new Map<string, number>();
@@ -27,8 +27,6 @@ export default function StickerBook() {
   const board = profile.stickerBoard ?? [];
   const used = (id: string) => board.filter((b) => b.id === id).length;
   const badges = new Set(profile.badges ?? []);
-
-  const measure = () => boxRef.current?.measureInWindow((x, y, w, h) => (originRef.current = { x, y, w, h }));
 
   return (
     <SkyBackground>
@@ -56,9 +54,9 @@ export default function StickerBook() {
             onPress={(e) => {
               if (!picked || used(picked) >= (counts.get(picked) ?? 0)) return;
               tap();
-              const o = originRef.current;
-              const x = Math.min(0.95, Math.max(0.05, (e.nativeEvent.pageX - o.x) / o.w));
-              const y = Math.min(0.95, Math.max(0.05, (e.nativeEvent.pageY - o.y) / o.h));
+              const r = ratio(e);
+              const x = Math.min(0.95, Math.max(0.05, r.x));
+              const y = Math.min(0.95, Math.max(0.05, r.y));
               app.saveStickerBoard([...board, { id: picked, x, y }]);
             }}
             style={styles.board}
