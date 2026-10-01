@@ -140,6 +140,8 @@ export function Confetti({ count = 24 }: { count?: number }) {
       delay: Math.random() * 500,
       rot: Math.random() * 360,
       color: [colors.primary, colors.mint, colors.lemon, colors.lilac, colors.pink, colors.sky][i % 6],
+      // 종이 조각 사이사이에 별·하트
+      shape: i % 4 === 1 ? '★' : i % 4 === 3 ? '♥' : null,
       v: new Animated.Value(0),
     })),
   );
@@ -152,25 +154,25 @@ export function Confetti({ count = 24 }: { count?: number }) {
   }, [pieces]);
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      {pieces.map((p, i) => (
-        <Animated.View
-          key={i}
-          style={{
-            position: 'absolute',
-            left: p.x,
-            top: -20,
-            width: 8,
-            height: 14,
-            borderRadius: 3,
-            backgroundColor: p.color,
-            opacity: p.v.interpolate({ inputRange: [0, 0.8, 1], outputRange: [1, 1, 0] }),
-            transform: [
-              { translateY: p.v.interpolate({ inputRange: [0, 1], outputRange: [0, height * 0.7] }) },
-              { rotate: p.v.interpolate({ inputRange: [0, 1], outputRange: [`${p.rot}deg`, `${p.rot + 540}deg`] }) },
-            ],
-          }}
-        />
-      ))}
+      {pieces.map((p, i) => {
+        const motion = {
+          position: 'absolute' as const,
+          left: p.x,
+          top: -20,
+          opacity: p.v.interpolate({ inputRange: [0, 0.8, 1], outputRange: [1, 1, 0] }),
+          transform: [
+            { translateY: p.v.interpolate({ inputRange: [0, 1], outputRange: [0, height * 0.7] }) },
+            { rotate: p.v.interpolate({ inputRange: [0, 1], outputRange: [`${p.rot}deg`, `${p.rot + 540}deg`] }) },
+          ],
+        };
+        return p.shape ? (
+          <Animated.Text key={i} style={[motion, { color: p.color, fontSize: 18 }]}>
+            {p.shape}
+          </Animated.Text>
+        ) : (
+          <Animated.View key={i} style={[motion, { width: 8, height: 14, borderRadius: 3, backgroundColor: p.color }]} />
+        );
+      })}
     </View>
   );
 }

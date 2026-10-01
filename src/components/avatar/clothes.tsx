@@ -1,7 +1,7 @@
 /** 일상툰 아바타 파츠: 옷 · 무늬 · 이름표 · 목 장식 */
 import { Circle, ClipPath, Defs, G, Line, Path, Rect } from 'react-native-svg';
 
-import type { Neckwear, Pattern, TopStyle } from '@/types';
+import type { Cape, Neckwear, Pattern, TopStyle } from '@/types';
 import { OL, shade, SW } from './shared';
 
 /* ─────────── 옷 ─────────── */
@@ -221,6 +221,19 @@ export function NeckLayer({ top, color, neckwear }: { top: TopStyle; color: stri
           <Line x1={56} y1={129.5} x2={64} y2={129.5} stroke={OL} strokeWidth={1} opacity={0.6} />
         </G>
       )}
+    </G>
+  );
+}
+
+/** 별 상점 망토: 몸 뒤에 그린다 */
+export function CapeLayer({ kind }: { kind: Cape }) {
+  if (kind === 'none') return null;
+  const fill = kind === 'hero' ? '#E5484D' : '#3E5BB8';
+  return (
+    <G stroke={OL} strokeWidth={SW} strokeLinejoin="round">
+      <Path d="M36 104 C30 116 22 130 16 140 L104 140 C98 130 90 116 84 104 Z" fill={fill} />
+      {kind === 'star' && <Path d="M28 132 l3 -6 l3 6 l6 1 l-5 4 l1 6 l-5 -3 l-5 3 l1 -6 l-5 -4 Z" fill="#FFD23F" strokeWidth={1} />}
+      {kind === 'star' && <Path d="M88 128 l2 -4 l2 4 l4 1 l-3 3 l1 4 l-4 -2 l-4 2 l1 -4 l-3 -3 Z" fill="#FFD23F" strokeWidth={1} />}
     </G>
   );
 }

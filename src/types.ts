@@ -76,7 +76,16 @@ export type Headwear =
   | 'bucket'
   | 'claw'
   | 'wideband'
-  | 'bigBow';
+  | 'bigBow'
+  // 별 상점에서 여는 특별 아이템
+  | 'kingCrown'
+  | 'wizard'
+  | 'tiara'
+  | 'dinoHood'
+  | 'spaceHelmet'
+  | 'bunnyEars';
+/** 별 상점 망토 */
+export type Cape = 'none' | 'hero' | 'star';
 export type Neckwear = 'none' | 'necklace' | 'scarf' | 'tie' | 'bowtie' | 'whistle' | 'lanyard';
 export type Earrings = 'none' | 'stud' | 'hoop' | 'drop';
 /** 나이대: 아이는 머리가 크고 몸이 작게, 할머니·할아버지는 주름을 그린다 */
@@ -107,6 +116,7 @@ export interface AvatarConfig {
   headwear?: Headwear;
   neckwear?: Neckwear;
   earrings?: Earrings;
+  cape?: Cape;
   /** 가슴에 다는 이름표 */
   nameTag?: boolean;
 }
@@ -158,6 +168,16 @@ export interface Profile {
   stars: number;
   stickers: string[];
   onboardedAt: string;
+  /** 별 상점에서 연 아이템 id */
+  unlocked?: string[];
+  /** 홈에서 나를 따라다니는 반려 친구 */
+  pet?: string | null;
+  /** 받은 배지 id */
+  badges?: string[];
+  /** 스티커판에 붙인 스티커 (좌표는 0~1 비율) */
+  stickerBoard?: { id: string; x: number; y: number }[];
+  /** 보너스 게임으로 별을 받은 날 (YYYY-MM-DD, 하루 한 번) */
+  bonusDay?: string;
 }
 
 export interface PlayResponse {

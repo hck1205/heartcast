@@ -2,20 +2,43 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 
-import { tap } from '@/lib/feedback';
+import { celebrate, say, tap } from '@/lib/feedback';
 import { Floating } from '../Mascot';
 import { BigButton, Confetti, SkyBackground } from '../ui';
 import { gameStyles } from './shared';
 
 /** 놀이를 마친 뒤: 저장 중 / 다시 저장 / 선물 상자 열기 */
-export function Reward({ phase, sticker, count, onRetry }: { phase: 'saving' | 'reward' | 'error'; sticker: string; count: number; onRetry: () => void }) {
+export function Reward({
+  phase,
+  sticker,
+  count,
+  bonus,
+  onRetry,
+}: {
+  phase: 'saving' | 'reward' | 'error';
+  sticker: string;
+  count: number;
+  /** 연속 출석 보너스 (있으면 한 줄 더 보여준다) */
+  bonus?: { streakDays: number; bonusStars: number } | null;
+  onRetry: () => void;
+}) {
   const [opened, setOpened] = useState(false);
-  const pop = useState(() => new Animated.Value(0))[0];
+  const [opening, setOpening] = useState(false);
+  const [pop] = useState(() => new Animated.Value(0));
+  const [shake] = useState(() => new Animated.Value(0));
+  // 상자가 흔들흔들 → 펑! 스티커가 위로 솟아오른다
   const open = () => {
     tap();
-    setOpened(true);
-    Animated.spring(pop, { toValue: 1, useNativeDriver: true, friction: 3, tension: 90 }).start();
+    setOpening(true);
+    Animated.sequence([1, -1, 1, -1, 1, 0].map((v) => Animated.timing(shake, { toValue: v, duration: 90, useNativeDriver: true }))).start(() => {
+      setOpened(true);
+      celebrate();
+      say(`짜잔! 새 스티커!`);
+      Animated.spring(pop, { toValue: 1, useNativeDriver: true, friction: 3, tension: 90 }).start();
+    });
   };
+  const rise = pop.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
+  const rotate = shake.interpolate({ inputRange: [-1, 1], outputRange: ['-14deg', '14deg'] });
   return (
     <SkyBackground top="#FFF3D6">
       <View style={gameStyles.rewardWrap}>
@@ -30,19 +53,25 @@ export function Reward({ phase, sticker, count, onRetry }: { phase: 'saving' | '
           <>
             <Text style={gameStyles.rewardTitle}>다 했어요!</Text>
             <Text style={gameStyles.rewardSub}>⭐ 별 {count}개를 모았어요</Text>
-            <Pressable onPress={open} disabled={opened} style={gameStyles.gift} accessibilityLabel="선물 열기">
+            {bonus && (
+              <Text style={gameStyles.bonus}>
+                🔥 {bonus.streakDays}일 연속! 보너스 별 {bonus.bonusStars}개 더!
+              </Text>
+            )}
+            <Pressable onPress={open} disabled={opened || opening} style={gameStyles.gift} accessibilityLabel="선물 열기">
               {opened ? (
-                <Animated.Text style={{ fontSize: 120, transform: [{ scale: pop }] }}>{sticker}</Animated.Text>
+                <Animated.Text style={{ fontSize: 120, transform: [{ scale: pop }, { translateY: rise }] }}>{sticker}</Animated.Text>
               ) : (
                 <Floating distance={10} duration={600}>
-                  <Text style={{ fontSize: 120 }}>🎁</Text>
+                  <Animated.Text style={{ fontSize: 120, transform: [{ rotate }] }}>🎁</Animated.Text>
                 </Floating>
               )}
             </Pressable>
             <Text style={gameStyles.rewardSub}>{opened ? '새 스티커를 받았어!' : '선물 상자를 눌러봐!'}</Text>
             {opened && (
               <View style={{ gap: 10, alignSelf: 'stretch' }}>
-                <BigButton label="처음으로" onPress={() => router.replace('/play')} />
+                <BigButton label="☀️ 보너스 게임: 해님 구하기" onPress={() => router.replace('/play/sunny')} />
+                <BigButton variant="secondary" label="처음으로" onPress={() => router.replace('/play')} />
                 <BigButton variant="ghost" label="스티커북 보기" onPress={() => router.replace('/play/stickers')} />
               </View>
             )}

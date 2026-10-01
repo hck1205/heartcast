@@ -13,13 +13,13 @@ import { ProgressBar, SkyBackground } from '@/components/ui';
 import { SCENES, STICKERS } from '@/games/content';
 import { planSession } from '@/games/planner';
 import { promptFor } from '@/games/prompts';
+import { CHEERS } from '@/games/rewards';
 import { celebrate, say, stopSpeaking, tap } from '@/lib/feedback';
 import { uuid } from '@/lib/util';
 import { useApp } from '@/state/AppContext';
 import { colors } from '@/theme';
 import type { PlayResponse } from '@/types';
 
-const CHEERS = ['고마워!', '알려줘서 고마워~', '좋아, 다음 날씨로 슝!', '우와, 그랬구나!', '멋지게 골랐어!'];
 
 export default function Session() {
   const app = useApp();
@@ -34,6 +34,7 @@ export default function Session() {
   const [phase, setPhase] = useState<'play' | 'saving' | 'reward' | 'error'>('play');
   const [sticker] = useState(() => STICKERS[Math.floor(Math.random() * STICKERS.length)]);
   const stepStart = useRef(0);
+  const [bonus, setBonus] = useState<{ streakDays: number; bonusStars: number } | null>(null);
 
   const step = steps[idx];
   const prompt = step ? promptFor(step, profile) : '';
@@ -51,7 +52,7 @@ export default function Session() {
   const finish = async (all: PlayResponse[]) => {
     setPhase('saving');
     try {
-      await app.recordSession({ id: sessionId, startedAt, finishedAt: new Date().toISOString() }, all, sticker);
+      setBonus(await app.recordSession({ id: sessionId, startedAt, finishedAt: new Date().toISOString() }, all, sticker));
       celebrate();
       setPhase('reward');
       say(`와! 오늘 날씨 모험 끝! 새 스티커를 받았어!`);
@@ -91,7 +92,7 @@ export default function Session() {
   };
 
   if (phase === 'reward' || phase === 'saving' || phase === 'error') {
-    return <Reward phase={phase} sticker={sticker} count={answers.length} onRetry={() => finish(answers)} />;
+    return <Reward phase={phase} sticker={sticker} count={answers.length} bonus={bonus} onRetry={() => finish(answers)} />;
   }
 
   // 놀이마다 바탕색만 살짝 다르게 (장식 없음)

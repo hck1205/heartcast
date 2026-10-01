@@ -6,6 +6,7 @@ import { localRepository } from '@/data/localRepository';
 import type { AccountMode, Repository } from '@/data/repository';
 import { supabaseRepository } from '@/data/supabaseRepository';
 import { artResponses } from '@/games/art';
+import { bonusStars, buy, dayKey as rewardDayKey, newBadges, shopItem, streakBonus, toggleEquip } from '@/games/rewards';
 import { withAgeDefaults } from '@/lib/avatar';
 import { getSupabase, isSupabaseConfigured } from '@/lib/supabase';
 import { uuid } from '@/lib/util';
@@ -32,7 +33,8 @@ interface AppState {
   signUp(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
   saveProfile(p: Profile): Promise<void>;
-  recordSession(session: PlaySession, responses: PlayResponse[], sticker: string): Promise<void>;
+  /** 날씨 놀이 기록 + 별·스티커. 오늘 첫 놀이로 3·5·7일 연속이면 보너스 별을 더 주고 알려준다 */
+  recordSession(session: PlaySession, responses: PlayResponse[], sticker: string): Promise<{ streakDays: number; bonusStars: number } | null>;
   /** 공방에서 만든/고친 사람을 저장하고, 아이가 고른 이미지 응답을 기록한다 */
   savePerson(person: Person, responses: PlayResponse[]): Promise<void>;
   removePerson(id: string): Promise<void>;
@@ -43,6 +45,16 @@ interface AppState {
   /** 프로필 저장 직후 온보딩 중 모아둔 응답을 한꺼번에 기록 */
   saveResponses(responses: PlayResponse[]): Promise<void>;
   addNote(note: ParentNote): Promise<void>;
+  /** 별 상점: 열기 (별이 모자라면 ok=false) */
+  buyItem(id: string): Promise<{ ok: boolean; reason?: string }>;
+  /** 별 상점: 쓰기/벗기 */
+  equipItem(id: string): Promise<void>;
+  saveStickerBoard(board: NonNullable<Profile['stickerBoard']>): Promise<void>;
+  /** 보너스 게임 별 받기 (하루 한 번). 받은 별 수를 돌려준다 */
+  claimBonus(popped: number): Promise<number>;
+  /** 새로 받은 배지 (축하 화면을 보여준 뒤 dismissBadge) */
+  pendingBadges: string[];
+  dismissBadge(): void;
   loadDemoData(): Promise<void>;
   resetAll(): Promise<void>;
   refresh(): Promise<void>;
@@ -61,6 +73,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [responses, setResponses] = useState<PlayResponse[]>([]);
   const [notes, setNotes] = useState<ParentNote[]>([]);
   const [drawings, setDrawings] = useState<Drawing[]>([]);
+  const [pendingBadges, setPendingBadges] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [parentUnlocked, setParentUnlocked] = useState(false);
 
@@ -137,10 +150,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await need().saveSession(s, rs);
       setResponses((prev) => [...prev, ...rs]);
     };
-    /** 프로필 고치기 (별·스티커·사람) — 저장소와 화면 state 를 함께 바꾼다 */
-    const updateProfile = async (change: (p: Profile) => Profile) => {
+    /**
+     * 프로필 고치기 (별·스티커·사람·상점) — 저장소와 화면 state 를 함께 바꾼다.
+     * 고친 뒤 새로 받을 배지가 있으면 함께 넣고 축하 대기열에 올린다. extra 는 방금 저장한(아직 state 에 안 들어간) 기록.
+     */
+    const updateProfile = async (change: (p: Profile) => Profile, extra: { responses?: PlayResponse[]; drawings?: Drawing[] } = {}) => {
       if (!profile) return;
-      const next = change(profile);
+      let next = change(profile);
+      const earned = newBadges({ profile: next, responses: [...responses, ...(extra.responses ?? [])], drawings: [...drawings, ...(extra.drawings ?? [])] });
+      if (earned.length) {
+        next = { ...next, badges: [...(next.badges ?? []), ...earned] };
+        setPendingBadges((b) => [...b, ...earned]);
+      }
       await need().saveProfile(next);
       setProfile(next);
     };
@@ -186,8 +207,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }),
       recordSession: (session, rs, sticker) =>
         run(async () => {
+          const bonus = streakBonus(responses);
           await persist(rs, session);
-          await updateProfile((p) => ({ ...p, stars: p.stars + rs.length, stickers: [...p.stickers, sticker] }));
+          await updateProfile((p) => ({ ...p, stars: p.stars + rs.length + (bonus?.stars ?? 0), stickers: [...p.stickers, sticker] }), { responses: rs });
+          return bonus ? { streakDays: bonus.days, bonusStars: bonus.stars } : null;
         }),
       savePerson: (person, rs) =>
         run(async () => {
@@ -203,7 +226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveRelations: (rs, stars = 0) =>
         run(async () => {
           await persist(rs);
-          if (stars) await updateProfile((p) => ({ ...p, stars: p.stars + stars }));
+          if (stars) await updateProfile((p) => ({ ...p, stars: p.stars + stars }), { responses: rs });
         }),
       saveDrawing: (d) =>
         run(async () => {
@@ -211,7 +234,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           await need().saveDrawing(d);
           setDrawings((prev) => [...prev.filter((x) => x.id !== d.id), d]);
           await persist(artResponses(d, profile.people, uuid()));
-          await updateProfile((p) => ({ ...p, stars: p.stars + 3 }));
+          await updateProfile((p) => ({ ...p, stars: p.stars + 3 }), { drawings: [d] });
         }),
       saveResponses: (rs) =>
         run(async () => {
@@ -219,6 +242,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const sessionId = uuid();
           await persist(rs.map((x) => ({ ...x, sessionId })));
         }),
+      buyItem: (id) =>
+        run(async () => {
+          if (!profile) return { ok: false, reason: 'profile' };
+          const r = buy(profile, id);
+          if (r.ok) await updateProfile(() => r.profile);
+          return { ok: r.ok, reason: r.reason };
+        }),
+      equipItem: (id) =>
+        run(async () => {
+          const item = shopItem(id);
+          if (item) await updateProfile((p) => toggleEquip(p, item));
+        }),
+      saveStickerBoard: (board) => run(() => updateProfile((p) => ({ ...p, stickerBoard: board }))),
+      claimBonus: (popped) =>
+        run(async () => {
+          if (!profile) return 0;
+          const n = bonusStars(popped, profile);
+          if (n) await updateProfile((p) => ({ ...p, stars: p.stars + n, bonusDay: rewardDayKey(new Date()) }));
+          return n;
+        }),
+      pendingBadges,
+      dismissBadge: () => setPendingBadges((b) => b.slice(1)),
       addNote: (n) =>
         run(async () => {
           await need().addNote(n);
@@ -247,7 +292,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }),
       refresh: () => run(() => loadFor(mode)),
     };
-  }, [ready, mode, email, profile, responses, notes, drawings, error, parentUnlocked, run, switchMode, loadFor]);
+  }, [ready, mode, email, profile, responses, notes, drawings, pendingBadges, error, parentUnlocked, run, switchMode, loadFor]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

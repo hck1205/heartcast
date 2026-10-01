@@ -2,6 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { WEATHERS } from '@/games/content';
 import { WeatherIcon } from '../WeatherIcon';
+import { Pop } from './Pop';
 import { gameStyles, type GameProps } from './shared';
 import { TargetStage } from './Target';
 
@@ -17,15 +18,16 @@ export function WeatherGame({ step, profile, picked, onPick }: GameProps) {
       />
       <View style={gameStyles.stickerRow}>
         {WEATHERS.map((w) => (
-          <Pressable
-            key={w.code}
-            accessibilityLabel={w.label}
-            onPress={() => onPick({ value: w.code, score: w.score, fear: false })}
-            style={[gameStyles.stickerBtn, picked?.value === w.code && gameStyles.pickedBtn, picked && picked.value !== w.code && gameStyles.dim]}
-          >
-            <WeatherIcon code={w.code} size={54} />
-            <Text style={gameStyles.stickerLabel}>{w.label}</Text>
-          </Pressable>
+          <Pop key={w.code} active={picked?.value === w.code}>
+            <Pressable
+              accessibilityLabel={w.label}
+              onPress={() => onPick({ value: w.code, score: w.score, fear: false })}
+              style={[gameStyles.stickerBtn, picked?.value === w.code && gameStyles.pickedBtn, picked && picked.value !== w.code && gameStyles.dim]}
+            >
+              <WeatherIcon code={w.code} size={54} />
+              <Text style={gameStyles.stickerLabel}>{w.label}</Text>
+            </Pressable>
+          </Pop>
         ))}
       </View>
     </View>

@@ -4,6 +4,7 @@ import { FACES } from '@/games/content';
 import { resolveTarget } from '@/games/target';
 import { withoutHeadwear } from '@/lib/avatar';
 import { Avatar } from '../Avatar';
+import { Pop } from './Pop';
 import { gameStyles, type GameProps } from './shared';
 import { TargetStage } from './Target';
 
@@ -23,17 +24,18 @@ export function FaceGame({ step, profile, picked, onPick }: GameProps) {
       />
       <View style={gameStyles.faceGrid}>
         {FACES.map((f) => (
-          <Pressable
-            key={f.code}
-            accessibilityLabel={f.label}
-            onPress={() => onPick({ value: f.code, score: f.score, fear: f.fear })}
-            style={[gameStyles.faceBtn, picked?.value === f.code && gameStyles.pickedBtn, picked && picked.value !== f.code && gameStyles.dim]}
-          >
-            <View style={gameStyles.faceCrop}>
-              <Avatar avatar={withoutHeadwear(avatar)} expression={f.code} size={96} />
-            </View>
-            <Text style={gameStyles.stickerLabel}>{f.label}</Text>
-          </Pressable>
+          <Pop key={f.code} active={picked?.value === f.code}>
+            <Pressable
+              accessibilityLabel={f.label}
+              onPress={() => onPick({ value: f.code, score: f.score, fear: f.fear })}
+              style={[gameStyles.faceBtn, picked?.value === f.code && gameStyles.pickedBtn, picked && picked.value !== f.code && gameStyles.dim]}
+            >
+              <View style={gameStyles.faceCrop}>
+                <Avatar avatar={withoutHeadwear(avatar)} expression={f.code} size={96} />
+              </View>
+              <Text style={gameStyles.stickerLabel}>{f.label}</Text>
+            </Pressable>
+          </Pop>
         ))}
       </View>
     </View>

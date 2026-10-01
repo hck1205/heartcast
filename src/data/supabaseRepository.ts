@@ -34,6 +34,8 @@ export const supabaseRepository: Repository = {
       stars: family.stars ?? 0,
       stickers: family.stickers ?? [],
       onboardedAt: family.onboarded_at,
+      // 별 상점·반려 친구·배지·스티커판·보너스 (재미 요소)
+      ...(family.extras ?? {}),
     };
   },
 
@@ -47,6 +49,7 @@ export const supabaseRepository: Repository = {
         stars: p.stars,
         stickers: p.stickers,
         onboarded_at: p.onboardedAt,
+        extras: { unlocked: p.unlocked ?? [], pet: p.pet ?? null, badges: p.badges ?? [], stickerBoard: p.stickerBoard ?? [], bonusDay: p.bonusDay ?? null },
       }),
     );
     check(

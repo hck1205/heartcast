@@ -5,6 +5,7 @@ import { SCENES, type Reaction } from '@/games/content';
 import { resolveTarget } from '@/games/target';
 import { withoutHeadwear } from '@/lib/avatar';
 import { Avatar } from '../Avatar';
+import { Pop } from './Pop';
 import { gameStyles, type GameProps } from './shared';
 
 /** 이야기 장면 놀이: 상황 그림을 보고 선생님이 어떻게 할지 고른다 (보기 순서는 섞는다) */
@@ -32,22 +33,23 @@ export function StoryGame({ step, profile, picked, onPick }: GameProps) {
       </Animated.View>
       <View style={gameStyles.reactionGrid}>
         {options.map((r: Reaction) => (
-          <Pressable
-            key={r.code}
-            accessibilityLabel={r.label}
-            onPress={() => onPick({ value: `${scene.id}:${r.code}`, score: r.score, fear: r.fear })}
-            style={[
-              gameStyles.reactionBtn,
-              picked?.value === `${scene.id}:${r.code}` && gameStyles.pickedBtn,
-              picked && picked.value !== `${scene.id}:${r.code}` && gameStyles.dim,
-            ]}
-          >
-            <View style={gameStyles.faceCrop}>
-              <Avatar avatar={withoutHeadwear(t.person.avatar)} expression={r.face} size={84} />
-            </View>
-            <Text style={{ fontSize: 26 }}>{r.emoji}</Text>
-            <Text style={gameStyles.reactionLabel}>{r.label}</Text>
-          </Pressable>
+          <Pop key={r.code} active={picked?.value === `${scene.id}:${r.code}`}>
+            <Pressable
+              accessibilityLabel={r.label}
+              onPress={() => onPick({ value: `${scene.id}:${r.code}`, score: r.score, fear: r.fear })}
+              style={[
+                gameStyles.reactionBtn,
+                picked?.value === `${scene.id}:${r.code}` && gameStyles.pickedBtn,
+                picked && picked.value !== `${scene.id}:${r.code}` && gameStyles.dim,
+              ]}
+            >
+              <View style={gameStyles.faceCrop}>
+                <Avatar avatar={withoutHeadwear(t.person.avatar)} expression={r.face} size={84} />
+              </View>
+              <Text style={{ fontSize: 26 }}>{r.emoji}</Text>
+              <Text style={gameStyles.reactionLabel}>{r.label}</Text>
+            </Pressable>
+          </Pop>
         ))}
       </View>
     </View>

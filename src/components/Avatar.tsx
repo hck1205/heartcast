@@ -5,6 +5,7 @@ import { normalizeAvatar } from '@/lib/avatar';
 import { palettes } from '@/theme';
 import type { AvatarConfig, Expression } from '@/types';
 import {
+  CapeLayer,
   Clothes,
   Ears,
   EarringsLayer,
@@ -51,6 +52,7 @@ export function Avatar({ avatar, expression = 'calm', size = 120, bg }: Props) {
         <HairBack style={a.hair} color={a.hairColor} />
       </G>
       <G transform={kid ? KID_BODY : undefined}>
+        <CapeLayer kind={a.cape} />
         <Clothes top={a.top} pattern={a.pattern} color={a.shirt} skin={skin} clipId={clipId} nameTag={a.nameTag} />
         {/* 목 */}
         <Path d="M53 88 L53 104 Q60 108 67 104 L67 88 Z" fill={skin} stroke={OL} strokeWidth={2} strokeLinejoin="round" />

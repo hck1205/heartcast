@@ -2,9 +2,10 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Avatar } from '@/components/Avatar';
 import { BigButton, Screen } from '@/components/ui';
-import { WeatherIcon } from '@/components/WeatherIcon';
+import { HomeScene } from '@/components/fun/HomeScene';
+import { WeekStamps } from '@/components/fun/WeekStamps';
+import { streak, weekStamps } from '@/games/rewards';
 import { say } from '@/lib/feedback';
 import { josa } from '@/lib/josa';
 import { useApp } from '@/state/AppContext';
@@ -30,12 +31,14 @@ export default function PlayHome() {
   }, []);
 
   if (!profile) return null;
-  const others = [...profile.people.filter((p) => p.kind === 'teacher').slice(0, 2), ...profile.people.filter((p) => p.kind === 'friend').slice(0, 2)];
 
   return (
     <Screen>
       <View style={styles.top}>
-        <Text style={styles.stars}>⭐ {profile.stars}</Text>
+        <Pressable accessibilityLabel="별 상점" onPress={() => router.push('/play/shop')} style={styles.shop} hitSlop={6}>
+          <Text style={styles.stars}>⭐ {profile.stars}</Text>
+          <Text style={styles.shopText}>상점</Text>
+        </Pressable>
         <Pressable accessibilityLabel="부모님 화면" onPress={() => router.push('/parent/gate')} style={styles.lock} hitSlop={10}>
           <Text style={styles.lockText}>🔒</Text>
         </Pressable>
@@ -47,20 +50,10 @@ export default function PlayHome() {
           <Text style={styles.helloSub}>{done ? '오늘 놀이는 다 했어요 ☀️' : '오늘 어린이집 날씨는 어땠어?'}</Text>
         </View>
 
-        {/* 우리 반 모습 */}
-        <View style={styles.scene}>
-          <View style={styles.sun}>
-            <WeatherIcon code="sunny" size={64} />
-          </View>
-          <View style={styles.backRow}>
-            {others.map((p) => (
-              <Avatar key={p.id} avatar={p.avatar} size={72} expression={p.kind === 'teacher' ? 'calm' : 'happy'} />
-            ))}
-          </View>
-          <View style={{ marginTop: -26 }}>
-            <Avatar avatar={profile.child.avatar} size={140} expression="happy" />
-          </View>
-        </View>
+        <WeekStamps days={weekStamps(responses)} streak={streak(responses)} />
+
+        {/* 살아 있는 우리 반 모습: 누르면 인사해요 */}
+        <HomeScene profile={profile} responses={responses} />
 
         <BigButton label={done ? '한 번 더 놀기' : '날씨 놀이 시작'} onPress={() => router.push('/play/session')} style={styles.main} />
 
@@ -90,14 +83,13 @@ export default function PlayHome() {
 const styles = StyleSheet.create({
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8 },
   stars: { fontFamily: fonts.title, fontSize: 18, color: colors.ink },
+  shop: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.paper, borderRadius: 999, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 12, paddingVertical: 4 },
+  shopText: { fontFamily: fonts.title, fontSize: 14, color: colors.primaryDark },
   lock: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   lockText: { fontSize: 16 },
-  body: { flex: 1, paddingHorizontal: 20, paddingBottom: 20, gap: 18 },
+  body: { flex: 1, paddingHorizontal: 20, paddingBottom: 20, gap: 14 },
   hello: { fontFamily: fonts.title, fontSize: 30, color: colors.ink, marginTop: 8 },
   helloSub: { fontFamily: fonts.body, fontSize: 16, color: colors.inkSoft, marginTop: 4 },
-  scene: { flex: 1, maxHeight: 360, alignItems: 'center', justifyContent: 'flex-end', minHeight: 240, backgroundColor: colors.skySoft, borderRadius: 28, overflow: 'hidden' },
-  sun: { position: 'absolute', top: 16, right: 16 },
-  backRow: { flexDirection: 'row', gap: 6 },
   main: { minHeight: 64 },
   row: { flexDirection: 'row', gap: 8 },
   tile: {

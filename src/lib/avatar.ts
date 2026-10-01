@@ -1,5 +1,6 @@
 import { palettes } from '@/theme';
 import type {
+  Cape,
   AgeGroup,
   PersonKind,
   Profile,
@@ -189,6 +190,22 @@ export const HEADWEAR: Option<Headwear>[] = [
   { id: 'bucket', label: '버킷햇' },
 ];
 
+/** 별 상점에서 여는 특별 머리 장식 (일반 꾸미기 목록에는 안 보인다) */
+export const SPECIAL_HEADWEAR: Option<Headwear>[] = [
+  { id: 'kingCrown', label: '왕관' },
+  { id: 'wizard', label: '마법사 모자' },
+  { id: 'tiara', label: '티아라' },
+  { id: 'dinoHood', label: '공룡 후드' },
+  { id: 'spaceHelmet', label: '우주 헬멧' },
+  { id: 'bunnyEars', label: '토끼 귀' },
+];
+
+export const CAPES: Option<Cape>[] = [
+  { id: 'none', label: '없음' },
+  { id: 'hero', label: '영웅 망토' },
+  { id: 'star', label: '별 망토' },
+];
+
 export const NECKWEAR: Option<Neckwear>[] = [
   { id: 'none', label: '없음' },
   { id: 'necklace', label: '목걸이' },
@@ -226,6 +243,7 @@ const DEFAULTS: FullAvatar = {
   headwear: 'none',
   neckwear: 'none',
   earrings: 'none',
+  cape: 'none',
   nameTag: false,
 };
 
@@ -282,7 +300,8 @@ export function normalizeAvatar(a: Partial<AvatarConfig> | Record<string, unknow
     pattern: pickValid(src.pattern, PATTERNS, LEGACY_PATTERN, 'none'),
     shirt: isHex(src.shirt) ? src.shirt : DEFAULTS.shirt,
     glasses: pickValid(src.glasses ?? (legacyAccessory === 'glasses' ? 'round' : undefined), GLASSES, LEGACY_GLASSES, 'none'),
-    headwear: pickValid(src.headwear ?? (legacyAccessory !== 'glasses' ? legacyAccessory : undefined), HEADWEAR, LEGACY_HEADWEAR, 'none'),
+    headwear: pickValid(src.headwear ?? (legacyAccessory !== 'glasses' ? legacyAccessory : undefined), [...HEADWEAR, ...SPECIAL_HEADWEAR], LEGACY_HEADWEAR, 'none'),
+    cape: pickValid(src.cape, CAPES, {}, 'none'),
     neckwear: pickValid(src.neckwear, NECKWEAR, {}, 'none'),
     earrings: pickValid(earrings, EARRINGS, {}, 'none'),
     nameTag: typeof src.nameTag === 'boolean' ? src.nameTag : false,
@@ -319,6 +338,7 @@ export function randomAvatar(age: AgeGroup = 'adult'): FullAvatar {
     headwear: maybe(0.45, HEADWEAR, 'none'),
     neckwear: maybe(0.3, NECKWEAR, 'none'),
     earrings: grown ? maybe(0.25, EARRINGS, 'none') : 'none',
+    cape: 'none',
     nameTag: false,
   };
 }
@@ -339,7 +359,8 @@ export const ALL_OPTIONS = {
   top: ids(TOPS),
   pattern: ids(PATTERNS),
   glasses: ids(GLASSES),
-  headwear: ids(HEADWEAR),
+  headwear: ids([...HEADWEAR, ...SPECIAL_HEADWEAR]),
+  cape: ids(CAPES),
   neckwear: ids(NECKWEAR),
   earrings: ids(EARRINGS),
 } as const;

@@ -5,7 +5,7 @@
  * 파츠는 주제별 파일로 나뉘어 있고, 여기서 한꺼번에 내보낸다.
  */
 export { Glasses, HeadwearLayer, EarringsLayer } from './accessories';
-export { Clothes, NeckLayer } from './clothes';
+export { CapeLayer, Clothes, NeckLayer } from './clothes';
 export { EmotionMarks, Face, FacialHairLayer } from './face';
 export { HairBack, HairFront } from './hair';
 export { Ears, Head, headGeometry, Wrinkles } from './head';

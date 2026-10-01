@@ -1,5 +1,5 @@
 /** 일상툰 아바타 파츠: 안경 · 머리 장식 · 귀걸이 */
-import { Circle, G, Line, Path, Rect } from 'react-native-svg';
+import { Circle, Ellipse, G, Line, Path, Rect } from 'react-native-svg';
 
 import type { Earrings, GlassesStyle, HairStyle, Headwear } from '@/types';
 import { EY, L, OL, R, shade, SW } from './shared';
@@ -54,6 +54,66 @@ export function Glasses({ style }: { style: GlassesStyle }) {
 export function HeadwearLayer({ kind, hair }: { kind: Headwear; hair: HairStyle }) {
   const s = { stroke: OL, strokeWidth: 1.4, strokeLinejoin: 'round' as const };
   switch (kind) {
+    case 'kingCrown':
+      return (
+        <G stroke={OL} strokeWidth={1.6} strokeLinejoin="round">
+          <Path d="M36 24 L40 6 L50 17 L60 2 L70 17 L80 6 L84 24 Z" fill="#FFD23F" />
+          <Rect x={35} y={21} width={50} height={6} rx={2} fill="#F5B83D" />
+          <Circle cx={60} cy={14} r={3} fill="#E5484D" />
+          <Circle cx={45} cy={17} r={2.2} fill="#4F8EF7" />
+          <Circle cx={75} cy={17} r={2.2} fill="#5BBF8A" />
+        </G>
+      );
+    case 'wizard':
+      return (
+        <G stroke={OL} strokeWidth={1.6} strokeLinejoin="round">
+          <Path d="M28 32 C42 26 80 26 92 32 L66 0 Z" fill="#7B5CD6" />
+          <Ellipse cx={60} cy={32} rx={40} ry={6} fill="#5E43B5" />
+          <Path d="M58 16 l2 -4 l2 4 l4 1 l-4 2 l-2 4 l-2 -4 l-4 -2 Z" fill="#FFE27A" strokeWidth={0.8} />
+          <Circle cx={72} cy={22} r={1.8} fill="#FFE27A" strokeWidth={0.6} />
+        </G>
+      );
+    case 'tiara':
+      return (
+        <G stroke={OL} strokeWidth={1.2} strokeLinejoin="round">
+          <Path d="M34 26 Q60 12 86 26" stroke="#C9CED6" strokeWidth={4} fill="none" strokeLinecap="round" />
+          <Path d="M50 18 L54 8 L58 16 L60 4 L62 16 L66 8 L70 18" fill="#E8ECF2" />
+          <Circle cx={60} cy={13} r={3} fill="#FF8FB1" />
+        </G>
+      );
+    case 'dinoHood':
+      return (
+        <G stroke={OL} strokeWidth={SW} strokeLinejoin="round">
+          {[
+            [38, 20],
+            [50, 13],
+            [63, 11],
+            [76, 14],
+          ].map(([x, y]) => (
+            <Path key={x} d={`M${x - 6} ${y + 6} L${x} ${y - 6} L${x + 6} ${y + 6} Z`} fill="#FFB547" />
+          ))}
+          <Path d="M23 46 C21 12 99 12 97 46 Z" fill="#7BD389" />
+          <Path d="M23 46 Q60 38 97 46" stroke="#5BBF8A" strokeWidth={4} fill="none" />
+        </G>
+      );
+    case 'spaceHelmet':
+      return (
+        <G>
+          <Circle cx={60} cy={54} r={47} fill="rgba(190, 225, 255, 0.22)" stroke="#9FB7D6" strokeWidth={5} />
+          <Path d="M30 34 Q40 18 58 14" stroke="#FFFFFF" strokeWidth={4} fill="none" strokeLinecap="round" opacity={0.8} />
+          <Rect x={50} y={98} width={20} height={6} rx={3} fill="#9FB7D6" stroke={OL} strokeWidth={1.2} />
+        </G>
+      );
+    case 'bunnyEars':
+      return (
+        <G stroke={OL} strokeWidth={1.6}>
+          <Ellipse cx={44} cy={12} rx={7} ry={17} fill="#FFFFFF" transform="rotate(-14 44 12)" />
+          <Ellipse cx={44} cy={13} rx={3.4} ry={11} fill="#FFC7D9" stroke="none" transform="rotate(-14 44 13)" />
+          <Ellipse cx={76} cy={12} rx={7} ry={17} fill="#FFFFFF" transform="rotate(14 76 12)" />
+          <Ellipse cx={76} cy={13} rx={3.4} ry={11} fill="#FFC7D9" stroke="none" transform="rotate(14 76 13)" />
+          <Path d="M30 30 C40 18 80 18 90 30" stroke="#FFFFFF" strokeWidth={5} fill="none" strokeLinecap="round" />
+        </G>
+      );
     case 'headband':
       return <Path d="M26 44 C30 22 90 22 94 44" stroke="#F4A6A0" strokeWidth={5.5} fill="none" strokeLinecap="round" />;
     case 'wideband':

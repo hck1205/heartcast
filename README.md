@@ -37,6 +37,12 @@
 |---|---|---|---|---|---|
 | ![](docs/screenshots/25-art-pick.png) | ![](docs/screenshots/26-art-portrait.png) | ![](docs/screenshots/27-art-scene.png) | ![](docs/screenshots/28-relation-pair.png) | ![](docs/screenshots/29-parent-scene.png) | ![](docs/screenshots/30-parent-drawing.png) |
 
+**🎉 재미 요소 (리포트에는 섞이지 않는 순수 놀이·보상)**
+
+| 살아 있는 홈 · 출석 도장 | 별 상점 | 짜잔! 열기 | 새 배지 | 해님 구하기 | 스티커판 |
+|---|---|---|---|---|---|
+| ![](docs/screenshots/31-fun-home.png) | ![](docs/screenshots/32-fun-shop.png) | ![](docs/screenshots/33-fun-unlock.png) | ![](docs/screenshots/34-fun-badge.png) | ![](docs/screenshots/35-fun-sunny.png) | ![](docs/screenshots/36-fun-board.png) |
+
 ## 주요 기능
 
 ### 1. 쉽고 재미있는 처음 설정 (부모 + 아이 함께)
@@ -111,7 +117,16 @@
 - 공방 이름 단계에서 "👑 원장님이에요"를 누르면 "○○ 원장님"으로 불러요.
 - 관계도 놀이에 **두 사람 질문**이 한 판에 하나씩 섞입니다: "원장님이랑 단비 선생님은 어떤 사이야?", "미소 선생님이랑 단비 선생님은…", "단비 선생님이랑 우리 엄마는…", "나랑 단비 선생님은…". 아이는 큰 스티커(💞 친해요 · 😄 같이 웃어요 · 🤝 도와줘요 · 💢 자주 다퉈요 · 📢 ○○이 화내요 · 🤔 몰라) 중 하나를 고릅니다.
 
-### 7. 부모 리포트 (PIN 잠금)
+### 7. 🎉 재미 요소 (화면은 단순하게, 누르면 반응하고 모이고 자라는 것)
+- **살아 있는 홈**: 하늘이 시간대(아침·낮·저녁·밤)와 오늘 고른 내 마음 날씨로 바뀌어요. 선생님·친구·나·반려 친구·마루를 누르면 통 튀어 오르며 말풍선으로 인사해요.
+- **출석 도장판**: 이번 주 7칸에 그날의 내 마음 날씨 도장이 찍혀요. 3·5·7일 연속이면 🔥 보너스 별을 받아요.
+- **⭐ 별 상점**: 모은 별로 특별 아이템을 열어요. 왕관·마법사 모자·티아라·공룡 후드·우주 헬멧·토끼 귀, 영웅 망토·별 망토, **반려 친구**(병아리·강아지·고양이·아기 공룡·유니콘)가 있어요. 선물 상자가 흔들흔들하다 "짜잔!" 열리고, 연 아이템은 언제든 쓰고 벗을 수 있어요.
+- **배지 12종**: 첫 날씨, 꼬마 화가, 그림 박사, 관계도 탐험가, 공방 장인, 3일·7일 연속, 스티커 수집가·박사, 날씨 요정, 첫 선물, 반려 친구. 처음 받을 때 메달이 뿅 나타나며 크게 축하해요.
+- **보너스 게임 "해님 구하기"**: 날씨 놀이를 마치면 12초 동안 먹구름을 콕콕 터뜨려 해님을 구해요. 별은 하루 한 번(최대 3개).
+- **스티커판**: 모은 스티커를 판 위 아무 데나 붙이고 떼어요.
+- **반응 더하기**: 칭찬 문구 20가지, 고를 때 '뿅' 커지는 카드, 흔들리다 열리는 선물 상자, 별·하트 색종이.
+
+### 8. 부모 리포트 (PIN 잠금)
 - **한 줄 요약**: 이번 주 전체 마음날씨와 교실 하늘을 요일별로 보여줍니다.
 - **함께 이야기 나눠볼 것** (신호)
   - 💬 대화 추천: 한 사람과 관련해 무서운 장면(큰 소리, 무서운 눈빛, 화난·무서운 얼굴)을 2번 이상 골랐거나, 흐린 날씨를 3번 연속 골랐을 때
@@ -146,18 +161,20 @@
 src/
   app/                 # 화면 (Expo Router)
     onboarding/        #   처음 설정 (계정 → 아이 → 선생님 → 친구·가족 → PIN)
-    play/              #   아이 놀이 (홈, 세션, 그림, 공방, 관계도, 스티커북)
+    play/              #   아이 놀이 (홈, 세션, 그림, 공방, 관계도, 상점, 해님 구하기, 스티커북)
     parent/            #   부모 (PIN, 리포트, 상세, 관계도, 대화 카드, 설정)
   components/          # 아바타(avatar/parts.tsx)·날씨·마스코트·UI, 게임, 리포트 차트
     studio/            #   공방(Studio), 사람 카드, 고르기 판
     relations/         #   관계도 지도(RelationMap)
     art/               #   그림 도화지(ArtCanvas)·도구(ArtTools)·고르기(ArtPick)·썸네일
     kid/               #   아이 화면 상단 공용(KidHeader·AskBar)
+    games/             #   날씨·표정·이미지·이야기 놀이, 보상 화면
+    fun/               #   살아 있는 홈, 출석 도장, 반려 친구, 배지 축하
     avatar/            #   아바타 파츠 (head·hair·clothes·face·accessories)
-  games/               # 문항(content.ts), 선생님 이미지 선택지(persona.ts), 코스 구성(planner.ts), 관계도(relations.ts), 그림 놀이(art.ts)
+  games/               # 문항(content.ts), 질문 문장(prompts.ts), 선생님 이미지(persona.ts), 코스 구성(planner.ts), 관계도(relations.ts), 그림 놀이(art.ts), 보상·상점·배지(rewards.ts), 사람 id(people.ts)
   lib/                 # avatar(파츠 목록·예전 데이터 변환), format(날짜), feedback(소리·진동·useSayOnChange)
   report/              # 리포트: analyze(buildReport)·summary·signals·relationSignals·describe, 대화 카드 + 테스트
-  data/                # 저장소: Supabase / 기기(체험 모드) / 예시 데이터
+  data/                # 저장소: Supabase / 기기(체험 모드) / 예시 데이터(demo/)
   state/               # 앱 상태(Context)
 supabase/migrations/   # DB 스키마 + RLS
 ```
@@ -175,7 +192,7 @@ npm run web          # 브라우저로 미리보기
 
 ### Supabase(서버/계정) 연결
 1. [supabase.com](https://supabase.com)에서 프로젝트를 만듭니다.
-2. SQL Editor에서 `supabase/migrations/` 폴더의 SQL 파일(`0001_init.sql`, `0002_teacher_studio.sql`, `0003_relations.sql`, `0004_drawings.sql`)을 번호 순서대로 실행합니다. Supabase CLI를 쓴다면 `supabase db push` 로도 됩니다.
+2. SQL Editor에서 `supabase/migrations/` 폴더의 SQL 파일(`0001_init.sql`, `0002_teacher_studio.sql`, `0003_relations.sql`, `0004_drawings.sql`, `0005_fun.sql`)을 번호 순서대로 실행합니다. Supabase CLI를 쓴다면 `supabase db push` 로도 됩니다.
 3. `.env.example` 을 `.env` 로 복사하고 Project URL과 anon key를 넣습니다.
    ```
    EXPO_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co

@@ -56,5 +56,6 @@ export const gameStyles = StyleSheet.create({
   rewardWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 },
   rewardTitle: { fontFamily: fonts.title, fontSize: 30, color: colors.ink, textAlign: 'center' },
   rewardSub: { fontFamily: fonts.body, fontSize: 16, color: colors.inkSoft },
+  bonus: { fontFamily: fonts.title, fontSize: 18, color: colors.primaryDark },
   gift: { height: 170, justifyContent: 'center' },
 });

@@ -78,13 +78,23 @@ export function demoProfile(): Profile {
       id: uuid(),
       name: '콩이',
       className: '햇님반',
-      avatar: { skin: 'light', age: 'kid', faceShape: 'round', eyes: 'big', hair: 'bobBangs', hairColor: '#2F2320', top: 'sweatshirt', pattern: 'none', shirt: '#C9B8F0' },
+      avatar: { skin: 'light', age: 'kid', headwear: 'kingCrown', faceShape: 'round', eyes: 'big', hair: 'bobBangs', hairColor: '#2F2320', top: 'sweatshirt', pattern: 'none', shirt: '#C9B8F0' },
     },
     people,
     pinHash: hashPin('0000'),
     stars: 42,
     stickers: ['🦄', '🌈', '🐳', '🍓', '🚀'],
     onboardedAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+    // 재미 요소: 별 상점에서 연 왕관·강아지, 받은 배지, 스티커판
+    unlocked: ['hw:kingCrown', 'pet:puppy'],
+    pet: 'puppy',
+    badges: ['first-play', 'first-art', 'explorer', 'maker', 'shopper', 'pet-friend'],
+    stickerBoard: [
+      { id: '🦄', x: 0.25, y: 0.3 },
+      { id: '🌈', x: 0.6, y: 0.22 },
+      { id: '🐳', x: 0.45, y: 0.62 },
+      { id: '🍓', x: 0.78, y: 0.7 },
+    ],
   };
 }
 
