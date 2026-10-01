@@ -8,7 +8,7 @@ import { celebrate, tap, useSayOnChange } from '@/lib/feedback';
 import { useBounce } from '@/lib/motion';
 import { josa } from '@/lib/josa';
 import { uuid } from '@/lib/util';
-import { colors, fonts, radius } from '@/theme';
+import { colors, fonts, radius, selectedLook } from '@/theme';
 import type { FullAvatar, Persona, Person, PlayResponse } from '@/types';
 import { AskBar, HeaderTextButton, KidHeader } from '../kid/KidTop';
 import { BigButton, Confetti, Dots, Screen } from '../ui';
@@ -241,7 +241,7 @@ export function Studio({
 const styles = StyleSheet.create({
   preview: { alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
   roleChip: { alignSelf: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: radius.pill, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
-  roleChipOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  roleChipOn: selectedLook,
   roleText: { fontFamily: fonts.title, fontSize: 16, color: colors.ink },
   sheet: {
     flex: 1,

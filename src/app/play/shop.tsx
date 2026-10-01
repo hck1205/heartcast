@@ -11,7 +11,7 @@ import { normalizeAvatar } from '@/lib/avatar';
 import { celebrate, say, tap, useSayOnChange } from '@/lib/feedback';
 import { useShake } from '@/lib/motion';
 import { useApp } from '@/state/AppContext';
-import { colors, fonts, radius } from '@/theme';
+import { colors, fonts, radius, selectedLook } from '@/theme';
 
 /** 별 상점: 모은 별로 특별 아이템(머리 장식·망토·반려 친구)을 열고, 연 것은 쓰고 벗는다 */
 export default function Shop() {
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   stars: { fontFamily: fonts.title, fontSize: 22, color: colors.ink, marginLeft: 12, marginBottom: 12 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', padding: 14, paddingBottom: 30 },
   card: { width: 106, alignItems: 'center', paddingVertical: 8, borderRadius: radius.lg, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
-  cardOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  cardOn: selectedLook,
   crop: { width: 84, height: 70, overflow: 'hidden', alignItems: 'center' },
   name: { fontFamily: fonts.title, fontSize: 13, color: colors.ink, marginTop: 4 },
   price: { fontFamily: fonts.title, fontSize: 13, color: colors.inkSoft },

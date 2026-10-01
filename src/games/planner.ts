@@ -1,3 +1,4 @@
+import { seededRandom, shuffle } from '@/lib/random';
 import type { GameType, Person, PlayResponse, TargetType, TopicId } from '@/types';
 import { SCENES } from './content';
 import type { PersonaFacet } from './persona';
@@ -9,24 +10,6 @@ export interface Step {
   sceneId?: string;
   /** portrait 문항: 어떤 이미지(동물·색·모양·성격)를 물을지 */
   facet?: PersonaFacet;
-}
-
-/** 작은 시드 난수 (테스트에서 결정적으로 돌리기 위함) */
-export function seededRandom(seed: number) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-}
-
-function shuffle<T>(arr: T[], rand: () => number): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
 }
 
 /** 최근에 적게 물어본 대상을 먼저 고른다 → 선생님별로 고르게 데이터가 쌓인다. */

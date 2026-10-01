@@ -9,7 +9,7 @@ import { BADGES } from '@/games/rewards';
 import { tap } from '@/lib/feedback';
 import { usePagePoint } from '@/lib/usePagePoint';
 import { useApp } from '@/state/AppContext';
-import { colors, fonts, radius } from '@/theme';
+import { colors, fonts, radius, selectedLook } from '@/theme';
 
 type Tab = 'board' | 'all' | 'badges';
 
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   placed: { position: 'absolute', marginLeft: -24, marginTop: -26 },
   tray: { gap: 8, paddingVertical: 4 },
   trayItem: { width: 60, height: 66, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
-  on: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  on: selectedLook,
   left: { position: 'absolute', right: 4, bottom: 2, fontFamily: fonts.title, fontSize: 12, color: colors.primaryDark },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
   cell: { width: 76, height: 76, borderRadius: radius.md, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },

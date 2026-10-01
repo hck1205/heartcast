@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { randomAvatar } from '@/lib/avatar';
 import { tap } from '@/lib/feedback';
-import { colors, radius } from '@/theme';
+import { colors, radius, selectedLook } from '@/theme';
 import type { FullAvatar } from '@/types';
 import { Avatar } from '../Avatar';
 import { BigButton } from '../ui';
@@ -79,6 +79,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  faceOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  faceOn: selectedLook,
   row: { flexDirection: 'row', gap: 8 },
 });

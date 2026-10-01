@@ -1,8 +1,8 @@
 import { josa } from '@/lib/josa';
+import { seededRandom } from '@/lib/random';
 import { uuid } from '@/lib/util';
 import type { Person, PlayResponse } from '@/types';
 import { NOBODY, SELF, UNKNOWN, type Who } from './people';
-import { seededRandom } from './planner';
 
 // 예전 import 경로 호환 (관계도 화면·테스트)
 export { makeWho, NOBODY, SELF, UNKNOWN } from './people';

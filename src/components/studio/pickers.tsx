@@ -11,7 +11,7 @@ import {
   visibleChoices,
 } from '@/games/persona';
 import { say, tap } from '@/lib/feedback';
-import { colors, fonts, radius } from '@/theme';
+import { colors, fonts, radius, selectedLook } from '@/theme';
 
 /** 고르기 타일: 선택되면 주황 테두리 + 살짝 커짐 */
 export function OptionTile({
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.line,
   },
-  tileOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  tileOn: selectedLook,
   tileLabel: { fontFamily: fonts.body, fontSize: 12, color: colors.inkSoft, marginTop: 4, fontWeight: '600' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   sectionTitle: { fontFamily: fonts.body, fontSize: 13, fontWeight: '700', color: colors.inkMuted, marginLeft: 4 },

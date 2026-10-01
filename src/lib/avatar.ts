@@ -37,6 +37,7 @@ import {
   SPECIAL_HEADWEAR,
   TOPS,
 } from './avatarOptions';
+import { pick } from './random';
 
 /** 아바타 데이터 도우미: 예전 형식 변환 · 랜덤 얼굴 · 나이 기본값. 선택지 목록은 avatarOptions 에 있다 */
 export * from './avatarOptions';
@@ -127,7 +128,6 @@ export function withoutHeadwear(a: AvatarConfig): FullAvatar {
   return { ...normalizeAvatar(a), headwear: 'none' };
 }
 
-const pick = <T,>(xs: readonly T[]) => xs[Math.floor(Math.random() * xs.length)];
 const maybe = <T,>(p: number, xs: readonly Option<T>[], none: T) => (Math.random() < p ? pick(xs.slice(1)).id : none);
 
 export function randomAvatar(age: AgeGroup = 'adult'): FullAvatar {

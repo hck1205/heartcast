@@ -15,6 +15,7 @@ import { planSession } from '@/games/planner';
 import { promptFor } from '@/games/prompts';
 import { CHEERS } from '@/games/rewards';
 import { celebrate, say, stopSpeaking, tap } from '@/lib/feedback';
+import { pick } from '@/lib/random';
 import { uuid } from '@/lib/util';
 import { useApp } from '@/state/AppContext';
 import { colors } from '@/theme';
@@ -32,7 +33,7 @@ export default function Session() {
   const [answers, setAnswers] = useState<PlayResponse[]>([]);
   const [cheer, setCheer] = useState<string | null>(null);
   const [phase, setPhase] = useState<'play' | 'saving' | 'reward' | 'error'>('play');
-  const [sticker] = useState(() => STICKERS[Math.floor(Math.random() * STICKERS.length)]);
+  const [sticker] = useState(() => pick(STICKERS));
   const stepStart = useRef(0);
   const [bonus, setBonus] = useState<{ streakDays: number; bonusStars: number } | null>(null);
 
@@ -65,7 +66,7 @@ export default function Session() {
     if (picked) return;
     tap();
     setPicked(a);
-    const c = CHEERS[Math.floor(Math.random() * CHEERS.length)];
+    const c = pick(CHEERS);
     setCheer(c);
     say(c);
     const r: PlayResponse = {

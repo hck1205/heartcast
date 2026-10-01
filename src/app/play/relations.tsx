@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
@@ -9,10 +9,11 @@ import { edgeSentence, makeWho, NOBODY, PAIR_CHOICES, planQuests, questPrompt, r
 import { josa } from '@/lib/josa';
 import { celebrate, say, tap, useSayOnChange } from '@/lib/feedback';
 import { useSpringIn } from '@/lib/motion';
+import { useLater } from '@/lib/useLater';
 import { uuid } from '@/lib/util';
 import { avatarFor } from '@/games/people';
 import { useApp } from '@/state/AppContext';
-import { colors, fonts, radius } from '@/theme';
+import { colors, fonts, radius, selectedLook } from '@/theme';
 import type { AvatarConfig } from '@/types';
 
 /**
@@ -31,7 +32,7 @@ export default function RelationsGame() {
   const [pairRel, setPairRel] = useState<RelationId | null>(null);
   const [done, setDone] = useState(quests.length === 0);
   const { value: pop, play: popIn } = useSpringIn(4, 120);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const later = useLater();
 
   const who = makeWho(people, '나', { kid: true });
   const quest = quests[qi];
@@ -42,19 +43,13 @@ export default function RelationsGame() {
   useEffect(() => {
     if (done && quests.length) celebrate();
   }, [done, quests.length]);
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
 
   if (!profile) return null;
 
   const avatarOf = avatarFor(profile);
 
   const next = () => {
-    timer.current = setTimeout(() => {
+    later(() => {
       setAnswer(null);
       setPairRel(null);
       if (qi + 1 < quests.length) setQi(qi + 1);
@@ -210,7 +205,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  cardOn: selectedLook,
   soft: { borderStyle: 'dashed' },
   circle: { overflow: 'hidden', backgroundColor: colors.skySoft, alignItems: 'center' },
   name: { fontFamily: fonts.title, fontSize: 15, color: colors.ink, marginTop: 4 },

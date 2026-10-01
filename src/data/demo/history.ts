@@ -1,6 +1,7 @@
 import { FACES, SCENES, WEATHERS } from '@/games/content';
 import { FACET_CHOICES } from '@/games/persona';
-import { planSession, seededRandom } from '@/games/planner';
+import { planSession } from '@/games/planner';
+import { seededRandom } from '@/lib/random';
 import { portraitDiff } from '@/games/portrait';
 import { uuid } from '@/lib/util';
 import type { Drawing, Persona, Person, PlayResponse, PlaySession, Profile } from '@/types';

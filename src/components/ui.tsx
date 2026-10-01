@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { tap } from '@/lib/feedback';
-import { colors, fonts, radius } from '@/theme';
+import { colors, fonts, radius, selectedLook } from '@/theme';
 
 /**
  * 화면 바탕: 단색 한 가지 (기본은 따뜻한 흰색, top 을 주면 그 색).
@@ -257,7 +257,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 6,
   },
-  chipOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  chipOn: selectedLook,
   tabs: { flexDirection: 'row', backgroundColor: '#F1ECE4', borderRadius: 12, padding: 3, gap: 3 },
   tab: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
   tabOn: { backgroundColor: colors.paper },

@@ -36,6 +36,9 @@ export const colors = {
   },
 } as const;
 
+/** 고른 칸·칩·카드의 공통 강조 (테두리 + 연한 바탕) */
+export const selectedLook = { borderColor: colors.primary, backgroundColor: colors.primarySoft };
+
 export const radius = { sm: 10, md: 16, lg: 20, pill: 999 };
 export const space = (n: number) => n * 4;
 

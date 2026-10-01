@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { nameOf } from '@/games/persona';
 import { selfWeatherOn } from '@/games/rewards';
 import { say, tap } from '@/lib/feedback';
 import { useJump } from '@/lib/motion';
+import { pick } from '@/lib/random';
+import { useLater } from '@/lib/useLater';
 import { josa } from '@/lib/josa';
 import { colors, fonts } from '@/theme';
 import type { AvatarConfig, Expression, PlayResponse, Profile } from '@/types';
@@ -22,7 +24,6 @@ const MARU_LINES = [
   '관계도에서 누가 누구랑 친한지 알려 줘!',
   '나는 구름 마루야! 둥실둥실~',
 ];
-const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
 
 /** 시간대별 하늘 */
 function skyOf(hour: number) {
@@ -63,14 +64,10 @@ function Jumper({ children, line, onSay }: { children: React.ReactNode; line: ()
 export function HomeScene({ profile, responses }: { profile: Profile; responses: PlayResponse[] }) {
   const [hour] = useState(() => new Date().getHours());
   const [bubble, setBubble] = useState<{ key: string; text: string } | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
+  const later = useLater();
   const show = (key: string) => (text: string) => {
     setBubble({ key, text });
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setBubble(null), 1800);
+    later(() => setBubble(null), 1800);
   };
 
   const sky = skyOf(hour);

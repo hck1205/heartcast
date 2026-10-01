@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { colors, fonts, radius } from '@/theme';
+import { colors, fonts, radius, selectedLook } from '@/theme';
 import type { Profile } from '@/types';
 import type { Step } from '@/games/planner';
 
@@ -27,7 +27,7 @@ export const gameStyles = StyleSheet.create({
   stickerRow: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 8 },
   stickerBtn: { ...tileBase, width: 66, paddingVertical: 8 },
   stickerLabel: { fontFamily: fonts.body, fontSize: 11, fontWeight: '600', color: colors.inkSoft, marginTop: 2, textAlign: 'center' },
-  pickedBtn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  pickedBtn: selectedLook,
   dim: { opacity: 0.35 },
   faceGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
   faceBtn: { ...tileBase, width: 104, paddingBottom: 8 },

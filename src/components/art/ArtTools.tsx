@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BUBBLES, CRAYONS, EXPRESSIONS, SKIES, STAMPS } from '@/games/art';
 import { FACES } from '@/games/content';
 import { say, tap } from '@/lib/feedback';
-import { colors, fonts, radius } from '@/theme';
+import { colors, fonts, radius, selectedLook } from '@/theme';
 import type { ArtFigure, ArtSky, AvatarConfig, Expression } from '@/types';
 import { Avatar } from '../Avatar';
 
@@ -196,7 +196,7 @@ export function SizeButtons({ scale, onChange }: { scale: number; onChange: (sca
 const styles = StyleSheet.create({
   chip: { width: 70, paddingVertical: 6, alignItems: 'center', borderRadius: radius.md, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
   chipText: { fontFamily: fonts.body, fontSize: 11, fontWeight: '600', color: colors.ink, marginTop: 2 },
-  on: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  on: selectedLook,
   trayItem: { width: 64, alignItems: 'center', paddingVertical: 4, borderRadius: radius.md, borderWidth: 2, borderColor: colors.line, backgroundColor: colors.paper },
   trayName: { fontFamily: fonts.body, fontSize: 10, fontWeight: '600', color: colors.ink },
   crayon: { width: 40, height: 40, borderRadius: 20, borderWidth: 3, borderColor: '#FFFFFF' },

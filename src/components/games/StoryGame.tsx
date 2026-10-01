@@ -5,25 +5,17 @@ import { SCENES, type Reaction } from '@/games/content';
 import { resolveTarget } from '@/games/target';
 import { withoutHeadwear } from '@/lib/avatar';
 import { useShake } from '@/lib/motion';
+import { shuffle } from '@/lib/random';
 import { Avatar } from '../Avatar';
 import { Pop } from './Pop';
 import { gameStyles, type GameProps } from './shared';
 
 /** 이야기 장면 놀이: 상황 그림을 보고 선생님이 어떻게 할지 고른다 (보기 순서는 섞는다) */
-function shuffleOnce<T>(xs: T[]): T[] {
-  const a = [...xs];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 export function StoryGame({ step, profile, picked, onPick }: GameProps) {
   const scene = SCENES.find((s) => s.id === step.sceneId)!;
   const t = resolveTarget(profile, step.targetType, step.targetId);
   // 위치에 따른 선택 편향을 줄이려고 보기 순서를 섞는다
-  const options = useMemo(() => shuffleOnce(scene.reactions), [scene]);
+  const options = useMemo(() => shuffle(scene.reactions), [scene]);
   const { shake, rotate } = useShake();
   useEffect(() => {
     shake([1, -1, 0.5, 0], [120, 120, 100, 100]);
