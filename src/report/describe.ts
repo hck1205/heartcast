@@ -1,5 +1,6 @@
 /** 응답 하나를 부모가 읽을 수 있는 문장으로 (날씨·표정·이야기·이미지·관계도·그림) */
 import { describeArtValue } from '@/games/art';
+import { deviceOf, parseDiaryValue } from '@/games/diary';
 import { faceByCode, sceneById, weatherByCode, WEATHERS } from '@/games/content';
 import { makeWho, NOBODY, UNKNOWN } from '@/games/people';
 import { choiceEmoji, FACET_LABEL, findChoice, type PersonaFacet } from '@/games/persona';
@@ -17,6 +18,12 @@ export function describeResponse(r: PlayResponse, people: Person[], childName = 
   const who = targetName(r.targetType, r.targetId, people);
   if (r.value === 'unknown') return { emoji: '🤔', text: `${who}: "잘 모르겠어"를 골랐어요` };
   if (r.game === 'relation') return describeRelation(r, people, childName);
+  if (r.game === 'diary') {
+    const d = parseDiaryValue(r.value);
+    if (!d) return { emoji: '📔', text: `${who}의 그림일기` };
+    const dev = deviceOf(d.device)!;
+    return { emoji: d.choice.emoji === '●' ? '🎨' : d.choice.emoji, text: `그림일기: ${who}의 ${dev.label}로 '${d.choice.label}'(${d.choice.parentLabel})${josa(d.choice.label, '을/를').slice(d.choice.label.length)} 골랐어요` };
+  }
   if (r.game === 'art') return describeArtValue(r.value, r.targetId === 'self' ? childName : r.targetId === 'class' ? '우리 반' : who);
   if (r.game === 'weather') {
     const label = weatherByCode(r.value)?.parentLabel ?? r.value;

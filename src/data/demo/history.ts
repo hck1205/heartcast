@@ -5,6 +5,7 @@ import { seededRandom } from '@/lib/random';
 import { portraitDiff } from '@/games/portrait';
 import { uuid } from '@/lib/util';
 import type { Drawing, Persona, Person, PlayResponse, PlaySession, Profile } from '@/types';
+import { addDemoDiary } from './diary';
 import { addDemoDrawings } from './drawings';
 import { newDemoLog } from './log';
 import { DEMO_PERSONA } from './people';
@@ -32,6 +33,7 @@ export function demoHistory(profile: Profile, now = new Date()): { sessions: Pla
 
   addDemoRelations(log);
   addDemoDrawings(log);
+  addDemoDiary(log);
 
   for (let daysAgo = 13; daysAgo >= 0; daysAgo--) {
     const d = new Date(now);

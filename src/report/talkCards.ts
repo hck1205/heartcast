@@ -97,6 +97,21 @@ export function talkCardFor(signal: Signal): TalkCard {
         avoid: ['"정말 그렇게 말했어?" 하고 되묻거나 다그치기', ...COMMON_AVOID],
         tip: 'CCTV에는 말소리가 담기지 않아요. 아이가 그림으로 보여준 말을 날짜와 함께 대화 기록에 그대로 적어 두세요. 같은 말이 계속되면 담임·원장님과 차분히 상담해 보세요.',
       };
+    case 'diary-fear':
+    case 'diary-shift':
+      return {
+        id: signal.id,
+        title: '그림일기 함께 펼쳐 보기',
+        when: signal.title,
+        openQuestions: [
+          `"오늘 일기에 ${josa(who, '을/를')} 이렇게 그렸네. 어떤 모습이 그렇게 보였어?"`,
+          `"지난번엔 다르게 그렸었지? 그때랑 오늘은 뭐가 달랐어?"`,
+          `"${josa(who, '이/가')} 어떻게 해 주면 해님 날씨가 될까?"`,
+        ],
+        empathy: ['"그랬구나, 오늘은 그렇게 느껴졌구나."', ...COMMON_EMPATHY],
+        avoid: ['"왜 선생님을 사자로 그렸어? 그러면 안 되지"처럼 아이 그림을 고치게 하기', ...COMMON_AVOID],
+        tip: '일기는 그날의 느낌이에요. 하루 그림보다 여러 장의 흐름을 함께 봐 주세요. 무서운 칸이 계속 나오면 담임·원장님과 차분히 이야기해 보세요.',
+      };
     case 'relation-adults':
       return {
         id: signal.id,

@@ -1,6 +1,7 @@
 /** 부모 리포트 만들기: 기간 안의 응답 → 요약 + 신호 */
 import type { Person, PlayResponse, TargetType, WeatherCode } from '@/types';
 import { avgToWeather, DAY, dayKey, mean, startOfDay, summarize, type TargetSummary } from './summary';
+import { diarySignals } from './diarySignals';
 import { relationSignals } from './relationSignals';
 import { signalsFor, type Signal, type SignalLevel } from './signals';
 
@@ -29,8 +30,8 @@ export function buildReport(
   const end = now.getTime();
   const start = startOfDay(new Date(end - (days - 1) * DAY)).getTime();
   const all = responses;
-  // 관계도 응답은 날씨 흐름(평균)에 섞지 않고, 관계 신호로 따로 본다
-  responses = responses.filter((r) => r.game !== 'relation');
+  // 관계도·그림일기 응답은 날씨 흐름(평균)에 섞지 않고, 각자의 신호로 따로 본다 (일기는 한 장에 응답이 여러 개라 평균이 쏠린다)
+  responses = responses.filter((r) => r.game !== 'relation' && r.game !== 'diary');
   const inWin = responses.filter((r) => {
     const t = Date.parse(r.createdAt);
     return t >= start && t <= end;
@@ -45,6 +46,7 @@ export function buildReport(
 
   const signals: Signal[] = [...teachers, ...friends, classroom].flatMap(signalsFor);
   signals.push(...relationSignals(all, people, now, days, childName));
+  signals.push(...diarySignals(all, people, now, days));
   if (self.avg !== null && self.answered >= 3 && self.avg <= -0.5) {
     signals.push({
       id: 'self:low',
@@ -82,6 +84,7 @@ export function buildReport(
 export { FACES, SCENES, WEATHERS } from '@/games/content';
 export { callName } from '@/games/persona';
 export * from './describe';
+export * from './diarySignals';
 export * from './relationSignals';
 export * from './signals';
 export * from './summary';

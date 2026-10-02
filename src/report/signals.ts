@@ -4,7 +4,7 @@ import { josa } from '@/lib/josa';
 import type { TargetSummary } from './summary';
 
 export type SignalLevel = 'talk' | 'watch' | 'good';
-export type SignalKind = 'fear' | 'streak' | 'low' | 'drop' | 'bright' | 'self-low' | 'portrait-shift' | 'relation-fear' | 'relation-alone' | 'relation-conflict' | 'relation-safe' | 'relation-adults' | 'art-words';
+export type SignalKind = 'fear' | 'streak' | 'low' | 'drop' | 'bright' | 'self-low' | 'portrait-shift' | 'relation-fear' | 'relation-alone' | 'relation-conflict' | 'relation-safe' | 'relation-adults' | 'art-words' | 'diary-fear' | 'diary-shift';
 
 export interface Signal {
   id: string;

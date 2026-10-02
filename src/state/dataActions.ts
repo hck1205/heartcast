@@ -32,6 +32,7 @@ export type DataActions = Pick<
   | 'savePerson'
   | 'removePerson'
   | 'saveRelations'
+  | 'saveDiary'
   | 'saveDrawing'
   | 'saveResponses'
   | 'addNote'
@@ -103,6 +104,11 @@ export function makeDataActions(d: DataDeps): DataActions {
       run(async () => {
         await persist(rs);
         if (stars) await updateProfile((p) => ({ ...p, stars: p.stars + stars }), { responses: rs });
+      }),
+    saveDiary: (rs) =>
+      run(async () => {
+        await persist(rs);
+        await updateProfile((p) => ({ ...p, stars: p.stars + 2 }), { responses: rs });
       }),
     saveDrawing: (drawing) =>
       run(async () => {

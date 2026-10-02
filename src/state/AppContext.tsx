@@ -37,6 +37,8 @@ export interface AppState {
   removePerson(id: string): Promise<void>;
   /** 관계도 놀이에서 이은 선(응답)을 기록하고 별을 준다 */
   saveRelations(responses: PlayResponse[], stars?: number): Promise<void>;
+  /** 그림일기 한 장(칸마다 응답)을 저장하고 별 2개를 준다 */
+  saveDiary(responses: PlayResponse[]): Promise<void>;
   /** 그림 놀이: 그림 원본 + 분석용 응답을 저장하고 별을 준다 */
   saveDrawing(drawing: Drawing): Promise<void>;
   /** 프로필 저장 직후 온보딩 중 모아둔 응답을 한꺼번에 기록 */

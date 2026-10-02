@@ -4,6 +4,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { shortDate } from '@/lib/format';
 import { DrawingStrip } from '@/components/art/DrawingStrip';
+import { DiaryStrip } from '@/components/report/DiaryCard';
+import { diaryPages } from '@/games/diary';
 import { nodesFor, RelationMap } from '@/components/relations/RelationMap';
 import { TrendBadge } from '@/components/report/charts';
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
@@ -29,6 +31,7 @@ export default function ParentReport() {
   const recent = [...responses].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
   const signals = report.signals.slice(0, 3);
   const people = [...report.teachers, ...report.friends];
+  const diaries = diaryPages(responses).slice(-6).reverse();
   const edges = currentEdges(responses, profile.people);
 
   return (
@@ -86,6 +89,12 @@ export default function ParentReport() {
       <Section title="아이가 그린 그림" sub="표정 · 말풍선 · 스탬프 · 크레용으로 그린 선생님과 우리 반이에요">
         <DrawingStrip drawings={drawings} profile={profile} />
       </Section>
+
+      {diaries.length > 0 && (
+        <Section title="최근 그림일기" sub="그날 그 사람이 아이에게 어떻게 느껴졌는지예요. 누르면 지난 장과 비교해 볼 수 있어요">
+          <DiaryStrip pages={diaries} profile={profile} />
+        </Section>
+      )}
 
       <Section title="관계도" sub="아이가 이은 선생님 · 친구 · 어른 사이의 관계예요">
         <Pressable onPress={() => router.push('/parent/relations')} style={({ pressed }) => [styles.mapCard, pressed && { opacity: 0.8 }]}>

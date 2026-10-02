@@ -157,7 +157,7 @@ export type TopicId = 'class' | 'meal' | 'nap' | 'play' | 'self';
 
 export type TargetType = 'person' | 'topic';
 
-export type GameType = 'weather' | 'face' | 'story' | 'portrait' | 'relation' | 'art';
+export type GameType = 'weather' | 'face' | 'story' | 'portrait' | 'relation' | 'art' | 'diary';
 
 export type WeatherCode = 'sunny' | 'partly' | 'cloudy' | 'rainy' | 'stormy';
 
@@ -186,7 +186,7 @@ export interface PlayResponse {
   targetType: TargetType;
   targetId: string;
   game: GameType;
-  /** weather: WeatherCode, face: Expression, story: `${sceneId}:${reactionCode}`, portrait: `${facet}:${id}`, relation: `${rel}>${to}` (지우기는 `-${rel}>${to}`), 'unknown' = 잘 모르겠어 */
+  /** weather: WeatherCode, face: Expression, story: `${sceneId}:${reactionCode}`, portrait: `${facet}:${id}`, relation: `${rel}>${to}` (지우기는 `-${rel}>${to}`), diary: `${칸}:${id}`, 'unknown' = 잘 모르겠어 */
   value: string;
   /** -2(매우 부정) ~ +2(매우 긍정). 모르겠어는 null */
   score: number | null;

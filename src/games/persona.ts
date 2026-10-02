@@ -58,7 +58,7 @@ export const PERSONA_ANIMALS: EmojiChoice[] = [
   { id: 'snake', emoji: '🐍', label: '뱀', hint: '쉿, 무서워', parentLabel: '뱀(무섭고 싫음)', score: -2, fear: true },
 ];
 
-const PERSONA_SHAPES: EmojiChoice[] = [
+export const PERSONA_SHAPES: EmojiChoice[] = [
   { id: 'star', emoji: '⭐', label: '반짝 별', hint: '멋지고 반짝여', parentLabel: '별(반짝임)', score: 2, fear: false },
   { id: 'heart', emoji: '💖', label: '하트', hint: '사랑이 가득해', parentLabel: '하트(다정함)', score: 2, fear: false },
   { id: 'cloud', emoji: '☁️', label: '폭신 구름', hint: '말랑하고 포근해', parentLabel: '구름(포근함)', score: 2, fear: false },

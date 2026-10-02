@@ -150,6 +150,7 @@ export const BADGES: Badge[] = [
   { id: 'first-play', emoji: '🌤️', label: '첫 날씨', desc: '날씨 놀이를 처음 했어요', earned: (c) => c.responses.some((r) => r.game === 'weather') },
   { id: 'first-art', emoji: '🖍️', label: '꼬마 화가', desc: '그림을 처음 그렸어요', earned: (c) => c.drawings.length >= 1 },
   { id: 'artist', emoji: '🎨', label: '그림 박사', desc: '그림을 5장 그렸어요', earned: (c) => c.drawings.length >= 5 },
+  { id: 'diarist', emoji: '📔', label: '일기 작가', desc: '그림일기를 3장 썼어요', earned: (c) => new Set(c.responses.filter((r) => r.game === 'diary').map((r) => r.sessionId)).size >= 3 },
   {
     id: 'explorer',
     emoji: '🕸️',

@@ -65,6 +65,10 @@ export default function PlayHome() {
             <Text style={styles.tileIcon}>🕸️</Text>
             <Text style={styles.tileText}>관계도</Text>
           </Pressable>
+          <Pressable onPress={() => router.push('/play/diary')} style={styles.tile}>
+            <Text style={styles.tileIcon}>📔</Text>
+            <Text style={styles.tileText}>일기</Text>
+          </Pressable>
           <Pressable onPress={() => router.push('/play/stickers')} style={styles.tile}>
             <Text style={styles.tileIcon}>📒</Text>
             <Text style={styles.tileText}>스티커</Text>
