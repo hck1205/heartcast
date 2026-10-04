@@ -65,6 +65,17 @@ export function targetName(targetType: TargetType, targetId: string, people: Per
   return callName(p.name, p.kind, p.role);
 }
 
+/** 리포트 기간: 오늘을 포함한 최근 days일 (첫날 0시 ~ 지금). has(iso) 는 그 안인지 */
+export function reportWindow(now: Date, days: number) {
+  const end = now.getTime();
+  const start = startOfDay(new Date(end - (days - 1) * DAY)).getTime();
+  const has = (iso: string) => {
+    const t = Date.parse(iso);
+    return t >= start && t <= end;
+  };
+  return { start, end, has };
+}
+
 export function summarize(
   targetType: TargetType,
   targetId: string,
@@ -73,16 +84,12 @@ export function summarize(
   now: Date,
   days: number,
 ): TargetSummary {
-  const end = now.getTime();
-  const start = startOfDay(new Date(end - (days - 1) * DAY)).getTime();
+  const { start, end, has } = reportWindow(now, days);
   const prevStart = start - days * DAY;
   const mine = all
     .filter((r) => r.targetType === targetType && r.targetId === targetId)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  const inWin = mine.filter((r) => {
-    const t = Date.parse(r.createdAt);
-    return t >= start && t <= end;
-  });
+  const inWin = mine.filter((r) => has(r.createdAt));
   const inPrev = mine.filter((r) => {
     const t = Date.parse(r.createdAt);
     return t >= prevStart && t < start;

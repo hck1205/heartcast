@@ -1,6 +1,6 @@
 /** 부모 리포트 만들기: 기간 안의 응답 → 요약 + 신호 */
 import type { Person, PlayResponse, TargetType, WeatherCode } from '@/types';
-import { avgToWeather, DAY, dayKey, mean, startOfDay, summarize, type TargetSummary } from './summary';
+import { avgToWeather, dayKey, mean, reportWindow, summarize, type TargetSummary } from './summary';
 import { diarySignals } from './diarySignals';
 import { relationSignals } from './relationSignals';
 import { signalsFor, type Signal, type SignalLevel } from './signals';
@@ -27,15 +27,11 @@ export function buildReport(
   days = 7,
   childName = '아이',
 ): Report {
-  const end = now.getTime();
-  const start = startOfDay(new Date(end - (days - 1) * DAY)).getTime();
+  const { start, has } = reportWindow(now, days);
   const all = responses;
   // 관계도·그림일기 응답은 날씨 흐름(평균)에 섞지 않고, 각자의 신호로 따로 본다 (일기는 한 장에 응답이 여러 개라 평균이 쏠린다)
   responses = responses.filter((r) => r.game !== 'relation' && r.game !== 'diary');
-  const inWin = responses.filter((r) => {
-    const t = Date.parse(r.createdAt);
-    return t >= start && t <= end;
-  });
+  const inWin = responses.filter((r) => has(r.createdAt));
 
   const summ = (t: TargetType, id: string) => summarize(t, id, responses, people, now, days);
   const teachers = people.filter((p) => p.kind === 'teacher').map((p) => summ('person', p.id));

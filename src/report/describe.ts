@@ -1,7 +1,7 @@
 /** 응답 하나를 부모가 읽을 수 있는 문장으로 (날씨·표정·이야기·이미지·관계도·그림) */
 import { describeArtValue } from '@/games/art';
 import { deviceOf, parseDiaryValue } from '@/games/diary';
-import { faceByCode, sceneById, weatherByCode, WEATHERS } from '@/games/content';
+import { FACE_EMOJI, faceByCode, sceneById, WEATHER_EMOJI, weatherByCode, WEATHERS } from '@/games/content';
 import { makeWho, NOBODY, UNKNOWN } from '@/games/people';
 import { choiceEmoji, FACET_LABEL, findChoice, type PersonaFacet } from '@/games/persona';
 import { parsePortraitValue } from '@/games/portrait';
@@ -27,7 +27,7 @@ export function describeResponse(r: PlayResponse, people: Person[], childName = 
   if (r.game === 'art') return describeArtValue(r.value, r.targetId === 'self' ? childName : r.targetId === 'class' ? '우리 반' : who);
   if (r.game === 'weather') {
     const label = weatherByCode(r.value)?.parentLabel ?? r.value;
-    const emoji = weatherEmoji[r.value as WeatherCode] ?? '☁️';
+    const emoji = WEATHER_EMOJI[r.value as WeatherCode] ?? '☁️';
     if (r.targetType === 'topic') {
       const subject = r.targetId === 'self' ? '아이 자신의 마음' : who;
       return { emoji, text: `${subject} 날씨로 '${label}'${josa(label, '을/를').slice(label.length)} 골랐어요` };
@@ -63,22 +63,7 @@ export function describeResponse(r: PlayResponse, people: Person[], childName = 
   };
 }
 
-const weatherEmoji: Record<WeatherCode, string> = {
-  sunny: '☀️',
-  partly: '⛅',
-  cloudy: '☁️',
-  rainy: '🌧️',
-  stormy: '⛈️',
-};
-
-export const faceEmoji: Record<string, string> = {
-  happy: '😄',
-  calm: '😊',
-  neutral: '😐',
-  sad: '😢',
-  angry: '😠',
-  scared: '😨',
-};
+export const faceEmoji: Record<string, string> = FACE_EMOJI;
 
 export const weatherLabel = (w: WeatherCode | null) => (w ? WEATHERS.find((x) => x.code === w)!.parentLabel : '기록 없음');
 

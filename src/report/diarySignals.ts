@@ -3,7 +3,7 @@ import { compareDiary, diaryPages, pageFears, pageScore, parentWords } from '@/g
 import { josa } from '@/lib/josa';
 import type { Person, PlayResponse } from '@/types';
 import type { Signal } from './signals';
-import { DAY, startOfDay, targetName } from './summary';
+import { reportWindow, targetName } from './summary';
 
 /**
  * 그림일기 신호 (사람마다):
@@ -11,12 +11,7 @@ import { DAY, startOfDay, targetName } from './summary';
  * - 기간 안의 마지막 장이 바로 앞 장보다 점수 평균이 1.5 이상 떨어짐 → 살펴보기 (바뀐 칸을 그대로 보여준다)
  */
 export function diarySignals(responses: PlayResponse[], people: Person[], now: Date, days: number): Signal[] {
-  const end = now.getTime();
-  const start = startOfDay(new Date(end - (days - 1) * DAY)).getTime();
-  const inWin = (iso: string) => {
-    const t = Date.parse(iso);
-    return t >= start && t <= end;
-  };
+  const { end, has: inWin } = reportWindow(now, days);
   const out: Signal[] = [];
   for (const p of people) {
     const pages = diaryPages(responses, p.id).filter((pg) => Date.parse(pg.at) <= end);

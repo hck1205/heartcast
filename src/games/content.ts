@@ -1,5 +1,9 @@
 import type { Expression, TopicId, WeatherCode } from '@/types';
 
+/** 날씨·얼굴을 글 속에 짧게 보여줄 때 쓰는 이모지 (그림은 WeatherIcon·Avatar 를 쓴다) */
+export const WEATHER_EMOJI: Record<WeatherCode, string> = { sunny: '☀️', partly: '⛅', cloudy: '☁️', rainy: '🌧️', stormy: '⛈️' };
+export const FACE_EMOJI: Record<Expression, string> = { happy: '😄', calm: '😊', neutral: '😐', sad: '😢', angry: '😠', scared: '😨' };
+
 export interface WeatherOption {
   code: WeatherCode;
   label: string;

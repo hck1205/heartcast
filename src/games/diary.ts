@@ -2,7 +2,7 @@ import { josa } from '@/lib/josa';
 import { uuid } from '@/lib/util';
 import type { PlayResponse } from '@/types';
 import { BUBBLES } from './art';
-import { FACES, WEATHERS } from './content';
+import { FACE_EMOJI, FACES, WEATHER_EMOJI, WEATHERS } from './content';
 import { PERSONA_ANIMALS, PERSONA_COLORS, PERSONA_SHAPES } from './persona';
 
 /**
@@ -57,8 +57,6 @@ export interface DiaryDevice {
 const c = (id: string, emoji: string, label: string, parentLabel: string, score: number | null, fear = false): DiaryChoice => ({ id, emoji, label, parentLabel, score, fear });
 const x = (p: DiaryChoice) => `${p.emoji} ${p.label}`;
 
-const WEATHER_EMOJI: Record<string, string> = { sunny: '☀️', partly: '🌤️', cloudy: '☁️', rainy: '🌧️', stormy: '⛈️' };
-const FACE_EMOJI: Record<string, string> = { happy: '😄', calm: '😌', neutral: '😐', sad: '😢', angry: '😠', scared: '😨' };
 const FACE_LINE: Record<string, string> = { happy: '방긋방긋 웃었어', calm: '포근포근한 얼굴이었어', neutral: '그냥 그런 얼굴이었어', sad: '시무룩했어', angry: '화난 얼굴이었어', scared: '무서운 얼굴이었어' };
 
 export const DIARY_DEVICES: DiaryDevice[] = [

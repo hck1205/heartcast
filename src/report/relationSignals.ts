@@ -4,7 +4,7 @@ import { makeWho, NOBODY, SELF } from '@/games/people';
 import { currentEdges, edgeSentence, parseRelationValue } from '@/games/relations';
 import { josa } from '@/lib/josa';
 import type { Person, PlayResponse } from '@/types';
-import { DAY, startOfDay } from './summary';
+import { reportWindow } from './summary';
 import type { Signal } from './signals';
 
 /**
@@ -16,12 +16,7 @@ import type { Signal } from './signals';
  * 지금 관계도에 남아 있는 선 가운데 기간 안에 이은 것만 본다.
  */
 export function relationSignals(responses: PlayResponse[], people: Person[], now: Date, days: number, childName = '아이'): Signal[] {
-  const end = now.getTime();
-  const start = startOfDay(new Date(end - (days - 1) * DAY)).getTime();
-  const inWin = (iso: string) => {
-    const t = Date.parse(iso);
-    return t >= start && t <= end;
-  };
+  const { has: inWin } = reportWindow(now, days);
   const who = makeWho(people, childName);
   const kindOf = (id: string) => people.find((p) => p.id === id)?.kind;
   const out: Signal[] = [];

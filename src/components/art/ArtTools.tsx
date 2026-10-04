@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BUBBLES, CRAYONS, EXPRESSIONS, SKIES, STAMPS } from '@/games/art';
-import { FACES } from '@/games/content';
+import { FACE_EMOJI, FACES } from '@/games/content';
 import { say, tap } from '@/lib/feedback';
 import { colors, fonts, radius, selectedLook } from '@/theme';
 import type { ArtFigure, ArtSky, AvatarConfig, Expression } from '@/types';
@@ -21,8 +21,6 @@ const TOOLS: Record<Tool, { emoji: string; label: string }> = {
   crayon: { emoji: '🖍️', label: '크레용' },
   sky: { emoji: '🌈', label: '하늘' },
 };
-
-const FACE_EMOJI: Record<Expression, string> = { happy: '😄', calm: '😊', neutral: '😐', sad: '😢', angry: '😠', scared: '😨' };
 
 export function Chip({ emoji, label, on, onPress }: { emoji: string; label: string; on?: boolean; onPress: () => void }) {
   return (
