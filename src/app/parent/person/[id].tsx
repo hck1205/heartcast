@@ -8,11 +8,9 @@ import { MoodLine, TrendBadge, WeatherBar } from '@/components/report/charts';
 import { NoteBox } from '@/components/report/NoteBox';
 import { Panel, ParentShell, Section } from '@/components/report/ParentShell';
 import { SignalCard } from '@/components/report/SignalCard';
+import { PersonDiary } from '@/components/report/PersonDiary';
+import { PersonDrawings } from '@/components/report/PersonDrawings';
 import { PortraitSection } from '@/components/report/PortraitSection';
-import { DrawingStrip } from '@/components/art/DrawingStrip';
-import { DiaryCard } from '@/components/report/DiaryCard';
-import { diaryPages } from '@/games/diary';
-import { bubbleCounts, bubbleOf } from '@/games/art';
 import { PersonCard } from '@/components/studio/PersonCard';
 import { BigButton } from '@/components/ui';
 import { WeatherIcon } from '@/components/WeatherIcon';
@@ -57,36 +55,9 @@ export default function PersonDetail() {
 
       <PortraitSection person={person} responses={responses} />
 
-      {(() => {
-        const mine = drawings.filter((d) => d.figures.some((f) => f.personId === person.id));
-        if (!mine.length) return null;
-        const top = bubbleCounts(mine, person.id).slice(0, 3);
-        return (
-          <Section title="아이가 그린 그림" sub="이 사람이 나온 그림이에요">
-            <DrawingStrip drawings={mine} profile={profile} />
-            {top.length > 0 && (
-              <Text style={styles.bubbles}>
-                자주 그린 말풍선: {top.map((b) => `"${bubbleOf(b.id)?.text}" ${b.n}번`).join(' · ')}
-              </Text>
-            )}
-          </Section>
-        );
-      })()}
+      <PersonDrawings person={person} drawings={drawings} profile={profile} />
 
-      {(() => {
-        const pages = diaryPages(responses, person.id);
-        if (!pages.length) return null;
-        const recent = pages.slice(-5).reverse();
-        return (
-          <Section title="그림일기" sub="아이가 그날 이 사람을 어떻게 느꼈는지 칸마다 고른 거예요. 노란 줄은 지난 장과 달라진 칸이에요">
-            <View style={{ gap: 10 }}>
-              {recent.map((pg) => (
-                <DiaryCard key={pg.id} page={pg} prev={pages[pages.indexOf(pg) - 1]} person={person} profile={profile} />
-              ))}
-            </View>
-          </Section>
-        );
-      })()}
+      <PersonDiary person={person} responses={responses} profile={profile} />
 
       <Section title="날씨 흐름 (14일)" sub="-2(천둥) ~ +2(맑음). 하루에 여러 번 고르면 평균이에요">
         <Panel>
@@ -158,7 +129,6 @@ export default function PersonDetail() {
 }
 
 const styles = StyleSheet.create({
-  bubbles: { fontFamily: fonts.body, fontSize: 14, color: colors.ink },
   big: { fontFamily: fonts.body, fontWeight: '700', fontSize: 19, color: colors.ink },
   meta: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft },
   faceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },

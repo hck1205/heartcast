@@ -9,6 +9,7 @@ import { sceneStats } from '@/games/art';
 import { describeRelation } from '@/report/analyze';
 import { useApp } from '@/state/AppContext';
 import { colors, fonts, radius } from '@/theme';
+import type { Drawing, Person } from '@/types';
 
 
 /** 부모용 관계도: 아이가 이은 지금의 관계 지도 + 걱정되는 선 / 좋은 선 / 대답 기록 */
@@ -88,20 +89,7 @@ export default function ParentRelations() {
         </Section>
       )}
 
-      {(() => {
-        const scene = [...drawings].filter((d) => d.kind === 'scene').sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
-        if (!scene) return null;
-        const st = sceneStats(scene, profile.people);
-        const pairs = st.neighbors.map(([a, b]) => `${who(a)} – ${who(b)}`);
-        return (
-          <Section title="우리 반 그림에서" sub={`${shortDate(scene.createdAt)}에 그린 그림 기준이에요`}>
-            <View style={styles.list}>
-              <Row emoji="🤝" text={`서로 옆에 그린 사람: ${pairs.length ? pairs.join(', ') : '없음'}`} date="" last={!st.missingTeachers.length} />
-              {st.missingTeachers.length > 0 && <Row emoji="❔" text={`그리지 않은 선생님: ${st.missingTeachers.map(who).join(', ')}`} date="" last />}
-            </View>
-          </Section>
-        );
-      })()}
+      <SceneSummary drawings={drawings} people={profile.people} who={who} />
 
       <Section title="관계 스티커 뜻">
         <Panel style={styles.stickers}>
@@ -124,6 +112,22 @@ export default function ParentRelations() {
         </Section>
       )}
     </ParentShell>
+  );
+}
+
+/** "우리 반 그림에서": 가장 최근 장면화에서 서로 옆에 그린 사람 · 그리지 않은 선생님 */
+function SceneSummary({ drawings, people, who }: { drawings: Drawing[]; people: Person[]; who: (id: string) => string }) {
+  const scene = [...drawings].filter((d) => d.kind === 'scene').sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+  if (!scene) return null;
+  const st = sceneStats(scene, people);
+  const pairs = st.neighbors.map(([a, b]) => `${who(a)} – ${who(b)}`);
+  return (
+    <Section title="우리 반 그림에서" sub={`${shortDate(scene.createdAt)}에 그린 그림 기준이에요`}>
+      <View style={styles.list}>
+        <Row emoji="🤝" text={`서로 옆에 그린 사람: ${pairs.length ? pairs.join(', ') : '없음'}`} date="" last={!st.missingTeachers.length} />
+        {st.missingTeachers.length > 0 && <Row emoji="❔" text={`그리지 않은 선생님: ${st.missingTeachers.map(who).join(', ')}`} date="" last />}
+      </View>
+    </Section>
   );
 }
 

@@ -1,5 +1,5 @@
 import { hasBatchim } from '@/lib/josa';
-import type { AvatarConfig, Person, Profile } from '@/types';
+import type { AvatarConfig, Person, PersonKind, Profile } from '@/types';
 import { callName } from './persona';
 
 /**
@@ -31,4 +31,13 @@ export function makeWho(people: Person[], selfName: string, opts: { kid?: boolea
 /** id → 아바타 ('self' 는 아이 아바타). 없는 사람은 null */
 export function avatarFor(profile: Pick<Profile, 'child' | 'people'>): (id: string) => AvatarConfig | null {
   return (id: string) => (id === SELF ? profile.child.avatar : (profile.people.find((p) => p.id === id)?.avatar ?? null));
+}
+
+const GROUP_LABEL: Record<PersonKind, string> = { teacher: '선생님', friend: '친구', parent: '가족·어른' };
+
+/** 사람을 선생님 → 친구 → 가족·어른 순서로 묶는다 (빈 묶음은 뺀다) */
+export function peopleGroups(people: Person[]): { kind: PersonKind; label: string; people: Person[] }[] {
+  return (['teacher', 'friend', 'parent'] as const)
+    .map((kind) => ({ kind, label: GROUP_LABEL[kind], people: people.filter((p) => p.kind === kind) }))
+    .filter((g) => g.people.length);
 }
