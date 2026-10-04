@@ -2,114 +2,106 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Avatar } from '@/components/Avatar';
-import { Floating, MaruSays } from '@/components/Mascot';
-import { BigButton, SkyBackground } from '@/components/ui';
-import { WeatherIcon } from '@/components/WeatherIcon';
+import { BigButton, Screen } from '@/components/ui';
+import { HomeScene } from '@/components/fun/HomeScene';
+import { WeekStamps } from '@/components/fun/WeekStamps';
+import { playedOn, streak, weekStamps } from '@/games/rewards';
 import { say } from '@/lib/feedback';
 import { josa } from '@/lib/josa';
 import { useApp } from '@/state/AppContext';
-import { colors, fonts, radius, shadow } from '@/theme';
+import { colors, fonts, radius } from '@/theme';
 
-function playedToday(dates: string[]) {
-  const today = new Date().toDateString();
-  return dates.some((d) => new Date(d).toDateString() === today);
-}
-
+/** 아이 홈: 인사 한 줄 · 우리 반 모습 · 큰 버튼 하나 · 작은 타일 둘 */
 export default function PlayHome() {
   const { profile, responses, setParentUnlocked } = useApp();
-  const done = playedToday(responses.map((r) => r.createdAt));
+  const done = playedOn(responses);
   const name = profile?.child.name ?? '';
-  const greeting = done
-    ? `${josa(name, '아/야')}, 오늘도 날씨 놀이 해줘서 고마워! 한 번 더 할래?`
-    : `${josa(name, '아/야')}, 안녕! 오늘 마음날씨 마을에 놀러 갈까?`;
+  const greeting = done ? `${josa(name, '아/야')}, 한 번 더 할까?` : `${josa(name, '아/야')}, 안녕!`;
 
   useEffect(() => {
     setParentUnlocked(false);
-    const t = setTimeout(() => say(greeting), 400);
+    const t = setTimeout(() => say(done ? greeting : `${greeting} 오늘 마음 날씨 놀이 하러 가자!`), 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!profile) return null;
-  const teachers = profile.people.filter((p) => p.kind === 'teacher');
-  const friends = profile.people.filter((p) => p.kind === 'friend');
 
   return (
-    <SkyBackground>
+    <Screen>
       <View style={styles.top}>
-        <View style={styles.stars}>
-          <Text style={styles.starsText}>⭐ {profile.stars}</Text>
-        </View>
-        <Pressable accessibilityLabel="부모님 화면" onLongPress={() => router.push('/parent/gate')} onPress={() => router.push('/parent/gate')} style={styles.lock}>
-          <Text style={{ fontSize: 16 }}>🔒</Text>
-          <Text style={styles.lockText}>부모님</Text>
+        <Pressable accessibilityLabel="별 상점" onPress={() => router.push('/play/shop')} style={styles.shop} hitSlop={6}>
+          <Text style={styles.stars}>⭐ {profile.stars}</Text>
+          <Text style={styles.shopText}>상점</Text>
+        </Pressable>
+        <Pressable accessibilityLabel="부모님 화면" onPress={() => router.push('/parent/gate')} style={styles.lock} hitSlop={10}>
+          <Text style={styles.lockText}>🔒</Text>
         </Pressable>
       </View>
 
       <View style={styles.body}>
-        <MaruSays text={greeting} size={80} />
-
-        <View style={styles.village}>
-          <View style={styles.sunSpot}>
-            <Floating distance={10}>
-              <WeatherIcon code="sunny" size={96} />
-            </Floating>
-          </View>
-          {/* 뒷줄: 선생님·친구, 앞줄: 우리 아이 — 단체 사진처럼 */}
-          <View style={styles.people}>
-            {[...teachers.slice(0, 2), ...friends.slice(0, 3)].map((p, i) => (
-              <Floating key={p.id} duration={1700 + i * 350} distance={4}>
-                <Avatar avatar={p.avatar} size={72} expression={p.kind === 'teacher' ? 'calm' : 'happy'} />
-              </Floating>
-            ))}
-          </View>
-          <View style={styles.front}>
-            <Floating duration={1500} distance={6}>
-              <Avatar avatar={profile.child.avatar} size={150} expression="happy" />
-            </Floating>
-          </View>
+        <View>
+          <Text style={styles.hello}>{greeting}</Text>
+          <Text style={styles.helloSub}>{done ? '오늘 놀이는 다 했어요 ☀️' : '오늘 어린이집 날씨는 어땠어?'}</Text>
         </View>
 
-        <BigButton label={done ? '한 번 더 놀기' : '날씨 모험 시작!'} icon="🌈" onPress={() => router.push('/play/session')} />
+        <WeekStamps days={weekStamps(responses)} streak={streak(responses)} />
+
+        {/* 살아 있는 우리 반 모습: 누르면 인사해요 */}
+        <HomeScene profile={profile} responses={responses} />
+
+        <BigButton label={done ? '한 번 더 놀기' : '날씨 놀이 시작'} onPress={() => router.push('/play/session')} style={styles.main} />
+
         <View style={styles.row}>
-          <Pressable onPress={() => router.push('/play/stickers')} style={styles.tile}>
-            <Text style={{ fontSize: 34 }}>📒</Text>
-            <Text style={styles.tileText}>스티커북</Text>
-            <Text style={styles.tileSub}>{profile.stickers.length}개 모았어요</Text>
+          <Pressable onPress={() => router.push('/play/art')} style={styles.tile}>
+            <Text style={styles.tileIcon}>🖍️</Text>
+            <Text style={styles.tileText}>그림</Text>
           </Pressable>
-          <View style={[styles.tile, { backgroundColor: '#FFF6D6' }]}>
-            <Text style={{ fontSize: 34 }}>{done ? '✅' : '🗓️'}</Text>
-            <Text style={styles.tileText}>{done ? '오늘 완료!' : '오늘의 놀이'}</Text>
-            <Text style={styles.tileSub}>{done ? '내일 또 만나요' : '5분이면 끝나요'}</Text>
-          </View>
+          <Pressable onPress={() => router.push('/play/workshop')} style={styles.tile}>
+            <Text style={styles.tileIcon}>🎨</Text>
+            <Text style={styles.tileText}>공방</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/play/relations')} style={styles.tile}>
+            <Text style={styles.tileIcon}>🕸️</Text>
+            <Text style={styles.tileText}>관계도</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/play/diary')} style={styles.tile}>
+            <Text style={styles.tileIcon}>📔</Text>
+            <Text style={styles.tileText}>일기</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/play/stickers')} style={styles.tile}>
+            <Text style={styles.tileIcon}>📒</Text>
+            <Text style={styles.tileText}>스티커</Text>
+          </Pressable>
         </View>
       </View>
-    </SkyBackground>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  top: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8 },
-  stars: { backgroundColor: colors.paper, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 6, ...shadow },
-  starsText: { fontFamily: fonts.title, fontSize: 18, color: colors.ink },
-  lock: {
-    flexDirection: 'row',
+  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8 },
+  stars: { fontFamily: fonts.title, fontSize: 18, color: colors.ink },
+  shop: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.paper, borderRadius: 999, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 12, paddingVertical: 4 },
+  shopText: { fontFamily: fonts.title, fontSize: 14, color: colors.primaryDark },
+  lock: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
+  lockText: { fontSize: 16 },
+  body: { flex: 1, paddingHorizontal: 20, paddingBottom: 20, gap: 14 },
+  hello: { fontFamily: fonts.title, fontSize: 30, color: colors.ink, marginTop: 8 },
+  helloSub: { fontFamily: fonts.body, fontSize: 16, color: colors.inkSoft, marginTop: 4 },
+  main: { minHeight: 64 },
+  row: { flexDirection: 'row', gap: 8 },
+  tile: {
+    flex: 1,
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    justifyContent: 'center',
+    gap: 2,
+    paddingVertical: 12,
+    backgroundColor: colors.paper,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
   },
-  lockText: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft },
-  body: { flex: 1, padding: 20, gap: 18, justifyContent: 'space-between' },
-  village: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', minHeight: 220 },
-  sunSpot: { position: 'absolute', top: 0, right: 10 },
-  people: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-end', gap: 4 },
-  front: { marginTop: -36 },
-  row: { flexDirection: 'row', gap: 12 },
-  tile: { flex: 1, backgroundColor: colors.paper, borderRadius: radius.lg, padding: 14, alignItems: 'center', ...shadow },
-  tileText: { fontFamily: fonts.title, fontSize: 17, color: colors.ink, marginTop: 4 },
-  tileSub: { fontFamily: fonts.body, fontSize: 13, color: colors.inkSoft },
+  tileIcon: { fontSize: 34 },
+  tileText: { fontFamily: fonts.title, fontSize: 16, color: colors.ink },
 });

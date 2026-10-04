@@ -1,29 +1,15 @@
+import { seededRandom, shuffle } from '@/lib/random';
 import type { GameType, Person, PlayResponse, TargetType, TopicId } from '@/types';
 import { SCENES } from './content';
+import type { PersonaFacet } from './persona';
 
 export interface Step {
   game: GameType;
   targetType: TargetType;
   targetId: string;
   sceneId?: string;
-}
-
-/** 작은 시드 난수 (테스트에서 결정적으로 돌리기 위함) */
-export function seededRandom(seed: number) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
-}
-
-function shuffle<T>(arr: T[], rand: () => number): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+  /** portrait 문항: 어떤 이미지(동물·색·모양·성격)를 물을지 */
+  facet?: PersonaFacet;
 }
 
 /** 최근에 적게 물어본 대상을 먼저 고른다 → 선생님별로 고르게 데이터가 쌓인다. */
@@ -61,6 +47,14 @@ export function planSession(people: Person[], history: PlayResponse[], seed = Da
     const scene = pool[Math.floor(rand() * pool.length)];
     const storyTeacher = teachers[2] ?? teachers[0];
     steps.push({ game: 'story', targetType: 'person', targetId: storyTeacher, sceneId: scene.id });
+  }
+
+  // 오늘의 선생님 이미지: "오늘 ○○ 선생님은 어떤 동물 같아?" (동물→색→모양→성격 순으로 돌아가며)
+  if (teachers.length) {
+    const portraitHistory = history.filter((r) => r.game === 'portrait');
+    const who = leastAsked(teachers, portraitHistory, rand)[0];
+    const facets: PersonaFacet[] = ['animal', 'color', 'shape', 'trait'];
+    steps.push({ game: 'portrait', targetType: 'person', targetId: who, facet: facets[portraitHistory.length % facets.length] });
   }
 
   steps.push({ game: 'weather', targetType: 'topic', targetId: 'class' });

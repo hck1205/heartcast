@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing } from 'react-native';
 import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
-
-import { colors, fonts, shadow } from '@/theme';
 
 type Mood = 'happy' | 'wink' | 'wow';
 
@@ -53,41 +51,3 @@ export function Floating({ children, distance = 8, duration = 1800 }: { children
   const translateY = v.interpolate({ inputRange: [0, 1], outputRange: [0, -distance] });
   return <Animated.View style={{ transform: [{ translateY }] }}>{children}</Animated.View>;
 }
-
-/** 마루가 말풍선으로 안내 */
-export function MaruSays({ text, mood = 'happy', size = 96 }: { text: string; mood?: Mood; size?: number }) {
-  return (
-    <View style={styles.row}>
-      <Floating>
-        <Maru size={size} mood={mood} />
-      </Floating>
-      <View style={styles.bubble}>
-        <View style={styles.tail} />
-        <Text style={styles.text}>{text}</Text>
-      </View>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  bubble: {
-    flex: 1,
-    backgroundColor: colors.paper,
-    borderRadius: 22,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    ...shadow,
-  },
-  tail: {
-    position: 'absolute',
-    left: -8,
-    top: '50%',
-    marginTop: -8,
-    width: 16,
-    height: 16,
-    backgroundColor: colors.paper,
-    transform: [{ rotate: '45deg' }],
-  },
-  text: { fontFamily: fonts.body, fontSize: 19, lineHeight: 27, color: colors.ink },
-});

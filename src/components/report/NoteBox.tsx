@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { noteDateTime } from '@/lib/format';
 import { BigButton } from '@/components/ui';
 import { uuid } from '@/lib/util';
 import { useApp } from '@/state/AppContext';
@@ -26,7 +27,7 @@ export function NoteBox({ targetId }: { targetId: string | null }) {
 
   return (
     <Panel>
-      <Text style={styles.title}>📝 대화 기록</Text>
+      <Text style={styles.title}>대화 기록</Text>
       <TextInput
         value={text}
         onChangeText={setText}
@@ -35,10 +36,10 @@ export function NoteBox({ targetId }: { targetId: string | null }) {
         placeholderTextColor={colors.inkMuted}
         style={styles.input}
       />
-      <BigButton small label={saving ? '저장 중…' : '기록하기'} icon="💾" disabled={!text.trim() || saving} onPress={save} />
+      <BigButton small label={saving ? '저장 중…' : '기록하기'} disabled={!text.trim() || saving} onPress={save} />
       {mine.map((n) => (
         <View key={n.id} style={styles.note}>
-          <Text style={styles.date}>{new Date(n.createdAt).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</Text>
+          <Text style={styles.date}>{noteDateTime(n.createdAt)}</Text>
           <Text style={styles.body}>{n.body}</Text>
         </View>
       ))}
@@ -47,10 +48,12 @@ export function NoteBox({ targetId }: { targetId: string | null }) {
 }
 
 const styles = StyleSheet.create({
-  title: { fontFamily: fonts.title, fontSize: 17, color: colors.ink },
+  title: { fontFamily: fonts.body, fontWeight: '700', fontSize: 17, color: colors.ink },
   input: {
     minHeight: 88,
-    backgroundColor: '#F7F5F0',
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.line,
     borderRadius: radius.md,
     padding: 12,
     fontFamily: fonts.body,

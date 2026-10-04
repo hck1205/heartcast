@@ -1,21 +1,32 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 
 import { OnboardingFrame } from '@/components/OnboardingFrame';
 import { PeopleEditor } from '@/components/PeopleEditor';
-import { BigButton, Body } from '@/components/ui';
+import { BigButton, Tabs } from '@/components/ui';
 import { useOnboarding } from '@/state/OnboardingContext';
 
+/** 친구·가족 만들기 (선택): 한 화면에 탭 두 개 */
 export default function FriendsStep() {
-  const { draft, update } = useOnboarding();
-  const count = draft.people.filter((p) => p.kind === 'friend').length;
+  const { draft } = useOnboarding();
+  const [kind, setKind] = useState<'friend' | 'parent'>('friend');
+  const count = draft.people.filter((p) => p.kind !== 'teacher').length;
   return (
     <OnboardingFrame
       step={4}
-      maru="친한 친구들도 있나요? 친구 이야기도 섞어야 아이가 '선생님 시험'이 아니라 놀이로 느껴요."
-      footer={<BigButton label={count ? '다음' : '나중에 할게요'} icon="👉" color={count ? undefined : '#9AA7BD'} onPress={() => router.push('/onboarding/pin')} />}
+      maru="친구·가족도 만들어요"
+      sub="아이가 아는 친구와 어른을 만들어요. 나중에 해도 돼요."
+      footer={<BigButton label={count ? '다음' : '나중에 할게요'} variant={count ? 'primary' : 'secondary'} onPress={() => router.push('/onboarding/pin')} />}
     >
-      <PeopleEditor kind="friend" people={draft.people} onChange={(people) => update({ people })} />
-      <Body muted style={{ textAlign: 'center', fontSize: 14 }}>선택 사항이에요. 설정에서 언제든 추가할 수 있어요.</Body>
+      <Tabs
+        items={[
+          { id: 'friend', label: '친구' },
+          { id: 'parent', label: '가족·어른' },
+        ]}
+        value={kind}
+        onChange={setKind}
+      />
+      <PeopleEditor kind={kind} people={draft.people} studioPath="/onboarding/studio" />
     </OnboardingFrame>
   );
 }

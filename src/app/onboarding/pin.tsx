@@ -42,6 +42,7 @@ export default function PinStep() {
         stickers: app.profile?.stickers ?? [],
         onboardedAt: new Date().toISOString(),
       });
+      await app.saveResponses(draft.pendingResponses);
       router.replace('/onboarding/done');
     } catch (e: any) {
       setFirst(null);
@@ -54,8 +55,8 @@ export default function PinStep() {
   return (
     <OnboardingFrame
       step={5}
-      maru={first ? '한 번 더 눌러서 확인해 주세요!' : '부모님만 아는 비밀번호 4자리를 정해 주세요. 리포트는 이 번호로 잠겨요.'}
-      mood={first ? 'wink' : 'happy'}
+      maru={first ? '한 번 더 눌러 주세요' : '부모 비밀번호 4자리'}
+      sub={first ? undefined : '리포트는 이 번호로 잠겨요.'}
       footer={saving ? <Text style={{ textAlign: 'center', fontFamily: fonts.body, color: colors.inkSoft }}>저장하는 중…</Text> : null}
     >
       <PinPad key={`${first}-${error}`} onComplete={onComplete} error={error} />

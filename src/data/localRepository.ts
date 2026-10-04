@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { ParentNote, PlayResponse, PlaySession, Profile } from '@/types';
+import type { Drawing, ParentNote, PlayResponse, PlaySession, Profile } from '@/types';
 import type { Repository } from './repository';
 
 const K = {
@@ -8,6 +8,7 @@ const K = {
   sessions: 'mn:sessions',
   responses: 'mn:responses',
   notes: 'mn:notes',
+  drawings: 'mn:drawings',
 };
 
 async function getJson<T>(key: string, fallback: T): Promise<T> {
@@ -35,6 +36,14 @@ export const localRepository: Repository = {
   async listResponses(sinceIso: string) {
     const all = await getJson<PlayResponse[]>(K.responses, []);
     return all.filter((r) => r.createdAt >= sinceIso);
+  },
+  async saveDrawing(d: Drawing) {
+    const all = await getJson<Drawing[]>(K.drawings, []);
+    await setJson(K.drawings, [...all.filter((x) => x.id !== d.id), d]);
+  },
+  async listDrawings(sinceIso: string) {
+    const all = await getJson<Drawing[]>(K.drawings, []);
+    return all.filter((d) => d.createdAt >= sinceIso);
   },
   async addNote(note: ParentNote) {
     const notes = await getJson<ParentNote[]>(K.notes, []);

@@ -14,7 +14,7 @@ export default function Talk() {
   const signal = useMemo(() => {
     if (!signalId || !profile) return null;
     for (const days of [7, 30]) {
-      const s = buildReport(responses, profile.people, new Date(), days).signals.find((x) => x.id === signalId);
+      const s = buildReport(responses, profile.people, new Date(), days, profile.child.name).signals.find((x) => x.id === signalId);
       if (s) return s;
     }
     return null;
